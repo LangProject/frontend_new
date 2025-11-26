@@ -1,68 +1,734 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --bg-main: #f5f5f7;
+  --bg-card: #ffffff;
+  --bg-accent: #34c759;
+  --bg-accent-soft: rgba(52, 199, 89, 0.15);
+  --border-muted: rgba(0, 0, 0, 0.06);
+  --text-main: #111111;
+  --text-muted: #6b7280;
+  --radius-lg: 18px;
+  --radius-xl: 999px;
+  --shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.06);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Inter", "Roboto", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-a:hover {
-  color: #535bf2;
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+/* Корневой контейнер "под телефон" */
+.app-shell {
   min-height: 100vh;
+  max-width: 430px; /* ширина макета iPhone */
+  margin: 0 auto;
+  background-color: var(--bg-main);
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Верхняя шапка с логотипом */
+.app-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 10px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+.app-header-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #e5f0ff;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.app-header-logo-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.app-back-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.app-back-button:active {
+  transform: translateY(1px);
+}
+
+/* Контент: центрируем всё по экрану */
+.app-content {
+  flex: 1;
+  padding: 24px 22px 32px;
+  display: flex;
+  justify-content: center; /* по вертикали */
+  align-items: center; /* по горизонтали */
+}
+
+/* Внутренний блок, чтобы всё было по центру и не растягивалось */
+.app-center-block {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Низ страницы */
+.app-footer {
+  padding: 12px 18px 20px;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-muted);
+  margin-top: 8px;
+}
+
+/* ---------- Общий текст ---------- */
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.page-subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- Карточки языка ---------- */
+
+.language-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.language-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-muted);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: all 150ms ease-out;
+}
+
+.language-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.language-card-flag {
+  width: 40px;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.language-card-flag img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.language-card-label {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.language-card-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+.language-card-selected .language-card-label {
+  font-weight: 600;
+}
+
+.language-card-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.5);
+}
+
+.language-card-selected .language-card-indicator {
+  border-color: var(--bg-accent);
+  background: var(--bg-accent);
+}
+
+/* карточки, которые "тухнут" после выбора языка */
+.language-card-dim {
+  opacity: 0.35;
+  transform: none;
+  filter: grayscale(20%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+/* ---------- Кнопка Continue ---------- */
+
+.primary-button {
+  margin-top: 32px;
+  width: 100%;
+  padding: 18px 24px;
+  border-radius: 999px;
+  border: none;
+  background: var(--bg-accent);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(52, 199, 89, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out,
+    background 120ms ease-out;
+}
+
+.primary-button span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 16px rgba(52, 199, 89, 0.35);
+}
+
+.primary-button[disabled] {
+  cursor: default;
+  background: #d4d4d8;
+  box-shadow: none;
+}
+
+/* ---------- Прогресс-линия (для уровней и т.п.) ---------- */
+
+.progress-bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34c759, #22c55e, #16a34a);
+  transition: width 200ms ease-out;
+}
+
+/* ---------- AUTH FORMS (improved) ---------- */
+
+/* Toggle (Sign up / Log in) */
+.auth-toggle {
+  width: 100%;
+  display: flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.auth-toggle-button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 180ms ease;
+}
+
+.auth-toggle-button-active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+/* Form layout */
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Field */
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Inputs */
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #d4d4d8;
+  background: #ffffff;
+  font-size: 15px;
+  outline: none;
+  transition: all 160ms ease;
+}
+
+.auth-input:focus {
+  border-color: #34c759;
+  box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.4);
+}
+
+/* Error messages */
+.auth-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin-left: 4px;
+  margin-top: -2px;
+}
+
+.auth-error-root {
+  margin-top: 4px;
+}
+
+/* Submit buttons */
+.auth-submit {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 16px 24px;
+  background: var(--bg-accent);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  box-shadow: 0 10px 26px rgba(52, 199, 89, 0.35);
+  transition: all 140ms ease;
+}
+
+.auth-submit:hover:not([disabled]) {
+  background: #2fbb53;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(52, 199, 89, 0.45);
+}
+
+.auth-submit:active:not([disabled]) {
+  transform: translateY(1px);
+  box-shadow: 0 8px 20px rgba(52, 199, 89, 0.25);
+}
+
+.auth-submit[disabled] {
+  background: #cbd5e1;
+  color: #ffffff;
+  cursor: default;
+  box-shadow: none;
+}
+
+.auth-forgot {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #4b5563;
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.auth-forgot:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.learning-language-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* чтобы прогресс-бар чуть "внутри" карточки сидел */
+.learning-language-item .progress-bar {
+  margin: 0 4px 0 4px;
+}
+
+/* ---------- LEVEL SELECTION ---------- */
+
+.level-progress-bar {
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 18px;
+}
+
+.level-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.level-pill {
+  width: 100%;
+  border-radius: 18px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  text-align: left;
+  transition: all 150ms ease-out;
+}
+
+.level-pill:hover {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.level-pill-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+.level-pill-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.level-pill-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.level-pill-short {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.level-pill-description {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ---------- LEVEL MODE TOGGLE (Select / Test) ---------- */
+
+.level-mode-toggle {
+  width: 100%;
+  display: flex;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  margin: 4px 0 18px;
+}
+
+.level-mode-toggle-button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 180ms ease;
+}
+
+.level-mode-toggle-button-active {
+  background: #111827;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ---------- BIG LEVEL BUTTONS (A1–C2) ---------- */
+
+.level-chips-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin: 18px 0 14px;
+}
+
+.level-chip {
+  height: 52px;
+  border-radius: 14px; /* более квадратные */
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.level-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.level-chip-selected {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+/* ---------- COLORED BAND (fills up to selected) ---------- */
+
+.level-band {
+  width: 100%;
+  height: 20px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  margin-bottom: 22px;
+}
+
+.level-band-segment {
+  background: #f9fafb; /* базовый фон, когда не заполнено */
+  border-right: 1px solid #e5e7eb;
+}
+
+.level-band-segment:last-child {
+  border-right: none;
+}
+
+.level-band-segment-filled {
+  /* цвет подставляем инлайном из TS, тут только тень и плавность */
+  transition: background-color 160ms ease;
+}
+
+/* ---------- DASHBOARD COMMON ---------- */
+
+.dashboard-section {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dashboard-section-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.dashboard-section-info {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid #d4d4d8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ---------- LEARNING PATH CARDS ---------- */
+
+.lp-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lp-card {
+  flex: 1;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 12px 12px 10px;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+  transition: all 150ms ease;
+}
+
+.lp-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+}
+
+.lp-card-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+.lp-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lp-level {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.lp-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.lp-counter {
+  font-size: 12px;
+  color: #111827;
+}
+
+/* horizontal progress bar inside card */
+.hp-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+/* ---------- RINGS SUMMARY ---------- */
+
+.rings-card {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  margin-top: 10px;
+}
+
+.rings-svg-wrapper {
+  flex-shrink: 0;
+}
+
+.rings-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rings-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rings-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.rings-stat-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rings-stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.rings-stat-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-summary-caption {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
 }
