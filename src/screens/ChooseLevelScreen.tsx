@@ -1,18 +1,21 @@
 import { useState, type FC } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
 const LEVELS = [
-  { code: "a1", label: "A1", bandColor: "#66D977" }, // dark green
-  { code: "a2", label: "A2", bandColor: "#BBE66A" }, // dark lime
-  { code: "b1", label: "B1", bandColor: "#F5E369" }, // dark yellow
-  { code: "b2", label: "B2", bandColor: "#F8B665" }, // dark orange
-  { code: "c1", label: "C1", bandColor: "#F38968" }, // darker orange
-  { code: "c2", label: "C2", bandColor: "#E85B5B" }, // dark red
+  { code: "a1", label: "A1", bandColor: "#66D977" },
+  { code: "a2", label: "A2", bandColor: "#BBE66A" },
+  { code: "b1", label: "B1", bandColor: "#F5E369" },
+  { code: "b2", label: "B2", bandColor: "#F8B665" },
+  { code: "c1", label: "C1", bandColor: "#F38968" },
+  { code: "c2", label: "C2", bandColor: "#E85B5B" },
 ];
 
 type LevelMode = "select" | "test";
 
 interface ChooseLevelScreenProps {
+  uiLanguage: UiLangCode;
   selectedLevel: string | null;
   learningLanguageCode: string | null;
   onChangeLevel: (code: string) => void;
@@ -21,6 +24,7 @@ interface ChooseLevelScreenProps {
 }
 
 export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
+  uiLanguage,
   selectedLevel,
   learningLanguageCode,
   onChangeLevel,
@@ -43,7 +47,6 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
 
   return (
     <>
-      {/* SELECT / TEST TOGGLE */}
       <div className="level-mode-toggle">
         <button
           type="button"
@@ -55,7 +58,6 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
         >
           Select My Level
         </button>
-
         <button
           type="button"
           className={
@@ -70,19 +72,18 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
 
       {mode === "select" && (
         <>
-          <div className="page-title">How well do you know {languageName}?</div>
+          <div className="page-title">
+            {t(uiLanguage, "level.selectTitle")} {languageName}
+          </div>
           <p className="page-subtitle">
-            Choose your current level to get the right exercises.
+            {t(uiLanguage, "level.selectSubtitle")}
           </p>
 
-          {/* LEVEL BUTTONS */}
           <div className="level-chips-row">
             {LEVELS.map((level) => {
               const selected = level.code === selectedLevel;
-
               const bgColor = selected ? level.bandColor : "#ffffff";
               const borderColor = selected ? level.bandColor : "#e5e7eb";
-              const textColor = "#111827";
 
               return (
                 <button
@@ -95,7 +96,7 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
                   style={{
                     backgroundColor: bgColor,
                     borderColor,
-                    color: textColor,
+                    color: "#111827",
                   }}
                 >
                   {level.label}
@@ -104,11 +105,9 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
             })}
           </div>
 
-          {/* PROGRESS BAR — FILLED BY LEVEL */}
           <div className="level-band">
             {LEVELS.map((level, index) => {
               const isFilled = selectedIndex >= 0 && index <= selectedIndex;
-
               return (
                 <div
                   key={level.code}
@@ -134,13 +133,10 @@ export const ChooseLevelScreen: FC<ChooseLevelScreenProps> = ({
         </>
       )}
 
-      {/* LEVEL TEST MODE */}
       {mode === "test" && (
         <>
-          <div className="page-title">Don&apos;t know your level?</div>
-          <p className="page-subtitle">
-            Find your level in a few quick questions.
-          </p>
+          <div className="page-title">{t(uiLanguage, "level.testTitle")}</div>
+          <p className="page-subtitle">{t(uiLanguage, "level.testSubtitle")}</p>
 
           <PrimaryButton onClick={onStartTest}>Take a quick test</PrimaryButton>
         </>

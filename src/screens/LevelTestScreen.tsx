@@ -1,5 +1,7 @@
 import { useState, type FC } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
 const QUESTIONS = [
   "I can introduce myself and ask simple questions in this language.",
@@ -8,11 +10,13 @@ const QUESTIONS = [
 ];
 
 interface LevelTestScreenProps {
+  uiLanguage: UiLangCode;
   learningLanguageCode: string | null;
   onFinish: (detectedLevel: string) => void;
 }
 
 export const LevelTestScreen: FC<LevelTestScreenProps> = ({
+  uiLanguage,
   learningLanguageCode,
   onFinish,
 }) => {
@@ -34,16 +38,15 @@ export const LevelTestScreen: FC<LevelTestScreenProps> = ({
     if (!isLast) {
       setStep((s) => s + 1);
     } else {
-      // TODO: тут потом подставишь реальный найденный уровень
-      onFinish("b2");
+      onFinish("b2"); // заглушка уровня
     }
   };
 
   return (
     <>
-      <div className="page-title">Quick level test</div>
+      <div className="page-title">{t(uiLanguage, "level.testTitle")}</div>
       <p className="page-subtitle">
-        Answer a few short questions to estimate your {languageName} level.
+        {t(uiLanguage, "level.testSubtitle")} {languageName}
       </p>
 
       <div className="level-test-card">

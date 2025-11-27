@@ -1,139 +1,76 @@
-import { useState, type FC } from "react";
-import type { RegisterCredentials } from "../types/auth";
+import { useState } from "react";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
-interface RegisterFormProps {
-  onRegister: (credentials: RegisterCredentials) => Promise<void>;
+type RegisterFormProps = {
+  uiLanguage: UiLangCode;
+  onRegister: (data: {
+    name: string;
+    email: string;
+    password: string;
+  }) => Promise<void> | void;
   isLoading: boolean;
   onSuccess: () => void;
-}
+};
 
-interface RegisterErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-  root?: string;
-}
-
-export const RegisterForm: FC<RegisterFormProps> = ({
+export const RegisterForm: React.FC<RegisterFormProps> = ({
+  uiLanguage,
   onRegister,
   isLoading,
   onSuccess,
 }) => {
-  const [form, setForm] = useState<RegisterCredentials>({
-    email: "",
-    password: "",
-    name: "",
-  });
-
-  const [errors, setErrors] = useState<RegisterErrors>({});
-
-  const validate = (): boolean => {
-    const newErrors: RegisterErrors = {};
-
-    if (!form.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!form.email.includes("@")) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!form.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const isFormValid =
-    form.name.trim().length > 0 &&
-    form.email.trim().length > 0 &&
-    form.email.includes("@") &&
-    form.password.trim().length >= 6;
+    name.trim() !== "" && email.trim() !== "" && password.trim().length >= 6; // ← проверка длины
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!isFormValid) return;
 
-    try {
-      setErrors({});
-      await onRegister(form);
-      onSuccess();
-    } catch (err) {
-      console.error(err);
-      setErrors((prev) => ({
-        ...prev,
-        root: "Registration failed. Please try again.",
-      }));
-    }
+    await onRegister({ name, email, password });
+    onSuccess();
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
-      <div className="auth-field">
-        <input
-          className="auth-input"
-          name="name"
-          placeholder="Your name"
-          value={form.name}
-          onChange={handleChange}
-          disabled={isLoading}
-          required
-        />
-        {errors.name && <div className="auth-error">{errors.name}</div>}
-      </div>
+    <form className="auth-form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        className="auth-input"
+        placeholder={t(uiLanguage, "auth.namePlaceholder")}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
 
-      <div className="auth-field">
-        <input
-          className="auth-input"
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          disabled={isLoading}
-          required
-        />
-        {errors.email && <div className="auth-error">{errors.email}</div>}
-      </div>
+      <input
+        type="email"
+        className="auth-input"
+        placeholder={t(uiLanguage, "auth.emailPlaceholder")}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
 
-      <div className="auth-field">
-        <input
-          className="auth-input"
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          disabled={isLoading}
-          required
-        />
-        {errors.password && <div className="auth-error">{errors.password}</div>}
-      </div>
-
-      {errors.root && (
-        <div className="auth-error auth-error-root">{errors.root}</div>
-      )}
+      <input
+        type="password"
+        className="auth-input"
+        placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        minLength={6} // ← HTML-валидация
+      />
 
       <button
         type="submit"
-        className="auth-submit"
+        className="primary-button"
         disabled={isLoading || !isFormValid}
+        aria-disabled={isLoading || !isFormValid}
       >
-        {isLoading ? "Creating account..." : "Create account"}
+        {isLoading ? "…" : t(uiLanguage, "auth.createAccountButton")}
       </button>
     </form>
   );

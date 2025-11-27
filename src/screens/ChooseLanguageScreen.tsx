@@ -1,8 +1,9 @@
 import type { FC } from "react";
 import { LanguageCard, type LanguageOption } from "../components/LanguageCard";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
-// Импортируем флаги (пути под твой проект)
 import flagDE from "../assets/flags_png/flag-de.png";
 import flagEN from "../assets/flags_png/flag-us.png";
 import flagES from "../assets/flags_png/flag-es.png";
@@ -18,12 +19,14 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 interface ChooseLanguageScreenProps {
+  uiLanguage: UiLangCode;
   selectedCode: string | null;
   onChangeSelected: (code: string) => void;
   onContinue: () => void;
 }
 
 export const ChooseLanguageScreen: FC<ChooseLanguageScreenProps> = ({
+  uiLanguage,
   selectedCode,
   onChangeSelected,
   onContinue,
@@ -32,7 +35,8 @@ export const ChooseLanguageScreen: FC<ChooseLanguageScreenProps> = ({
 
   return (
     <>
-      <div className="page-title">Choose your language</div>
+      <div className="page-title">{t(uiLanguage, "uiLanguage.title")}</div>
+      <p className="page-subtitle">{t(uiLanguage, "uiLanguage.subtitle")}</p>
 
       <div className="language-list">
         {LANGUAGE_OPTIONS.map((option) => (

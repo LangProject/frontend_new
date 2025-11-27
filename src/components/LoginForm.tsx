@@ -1,133 +1,71 @@
-import { useState, type FC } from "react";
-import type { LoginCredentials } from "../types/auth";
+import { useState } from "react";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
-interface LoginFormProps {
-  onLogin: (credentials: LoginCredentials) => Promise<void>;
+type LoginFormProps = {
+  uiLanguage: UiLangCode;
+  onLogin: (data: { email: string; password: string }) => Promise<void> | void;
   isLoading: boolean;
   onSuccess: () => void;
   onForgotPassword: (email: string) => void;
-}
+};
 
-interface LoginErrors {
-  email?: string;
-  password?: string;
-  root?: string;
-}
-
-export const LoginForm: FC<LoginFormProps> = ({
+export const LoginForm: React.FC<LoginFormProps> = ({
+  uiLanguage,
   onLogin,
   isLoading,
   onSuccess,
   onForgotPassword,
 }) => {
-  const [form, setForm] = useState<LoginCredentials>({
-    email: "",
-    password: "",
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const [errors, setErrors] = useState<LoginErrors>({});
+  const isFormValid = email.trim() !== "" && password.trim().length >= 6; // ← проверка длины
 
-  const validate = (): boolean => {
-    const newErrors: LoginErrors = {};
-
-    if (!form.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!form.email.includes("@")) {
-      newErrors.email = "Email is invalid";
-    }
-
-    if (!form.password.trim()) {
-      newErrors.password = "Password is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const isFormValid =
-    form.email.trim().length > 0 &&
-    form.email.includes("@") &&
-    form.password.trim().length > 0;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!isFormValid) return;
 
-    try {
-      setErrors({});
-      await onLogin(form);
-      onSuccess();
-    } catch (err) {
-      console.error(err);
-      setErrors((prev) => ({
-        ...prev,
-        root: "Login failed. Please try again.",
-      }));
-    }
-  };
-
-  const handleForgotClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onForgotPassword(form.email);
+    await onLogin({ email, password });
+    onSuccess();
   };
 
   return (
-    <form className="auth-form" onSubmit={handleSubmit} noValidate>
-      <div className="auth-field">
-        <input
-          className="auth-input"
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          disabled={isLoading}
-          required
-        />
-        {errors.email && <div className="auth-error">{errors.email}</div>}
-      </div>
+    <form className="auth-form" onSubmit={handleSubmit}>
+      <input
+        type="email"
+        className="auth-input"
+        placeholder={t(uiLanguage, "auth.emailPlaceholder")}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
 
-      <div className="auth-field">
-        <input
-          className="auth-input"
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          disabled={isLoading}
-          required
-        />
-        {errors.password && <div className="auth-error">{errors.password}</div>}
-      </div>
-
-      {errors.root && (
-        <div className="auth-error auth-error-root">{errors.root}</div>
-      )}
+      <input
+        type="password"
+        className="auth-input"
+        placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+        minLength={6} // ← HTML-валидация
+      />
 
       <button
         type="submit"
-        className="auth-submit"
+        className="primary-button"
         disabled={isLoading || !isFormValid}
+        aria-disabled={isLoading || !isFormValid}
       >
-        {isLoading ? "Logging in..." : "Log in"}
+        {isLoading ? "…" : t(uiLanguage, "auth.loginButton")}
       </button>
 
       <button
         type="button"
-        className="auth-forgot"
-        onClick={handleForgotClick}
-        disabled={isLoading}
+        className="link-button"
+        onClick={() => onForgotPassword(email)}
       >
-        Forgot password?
+        {t(uiLanguage, "auth.forgotPassword")}
       </button>
     </form>
   );

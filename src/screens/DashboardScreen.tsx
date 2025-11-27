@@ -5,8 +5,11 @@ import {
   type LearningPath,
 } from "../components/LearningPathCard";
 import { ProgressRings } from "../components/ProgressRings";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
 interface DashboardScreenProps {
+  uiLanguage: UiLangCode;
   learningLanguageCode: string | null;
   learningLevel: string | null;
 }
@@ -36,6 +39,7 @@ const PATHS: LearningPath[] = [
 ];
 
 export const DashboardScreen: FC<DashboardScreenProps> = ({
+  uiLanguage,
   learningLanguageCode,
   learningLevel,
 }) => {
@@ -55,16 +59,16 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
 
   const handleStartTest = () => {
     if (!selectedPath) return;
-    // минимальная логика — пока просто логируем
     console.log("Start test for path:", selectedPath.id);
   };
 
   return (
     <>
-      {/* Learning Paths */}
       <section className="dashboard-section">
         <div className="dashboard-section-header">
-          <h2 className="dashboard-section-title">Learning Paths</h2>
+          <h2 className="dashboard-section-title">
+            {t(uiLanguage, "dashboard.learningPathsTitle")}
+          </h2>
           <span className="dashboard-section-info">i</span>
         </div>
 
@@ -88,9 +92,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
         </PrimaryButton>
       </section>
 
-      {/* Summary */}
       <section className="dashboard-section">
-        <h2 className="dashboard-section-title">Summary</h2>
+        <h2 className="dashboard-section-title">
+          {t(uiLanguage, "dashboard.summaryTitle")}
+        </h2>
 
         <ProgressRings />
 

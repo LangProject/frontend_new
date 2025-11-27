@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useState } from "react";
 import { ChooseLanguageScreen } from "./screens/ChooseLanguageScreen";
 import { ChooseLearningLanguageScreen } from "./screens/ChooseLearningLanguageScreen";
@@ -7,6 +8,11 @@ import { DashboardScreen } from "./screens/DashboardScreen";
 import { RegisterForm } from "./components/RegisterForm";
 import { LoginForm } from "./components/LoginForm";
 import { useAuth } from "./hooks/useAuth";
+import {
+  detectInitialUiLanguage,
+  type UiLangCode,
+} from "./utils/detectUiLanguage";
+import { t } from "./i18n";
 import "./index.css";
 
 type ScreenId =
@@ -23,13 +29,25 @@ function App() {
   const [screen, setScreen] = useState<ScreenId>("auth");
   const [authMode, setAuthMode] = useState<AuthMode>("register");
 
-  const [uiLanguage, setUiLanguage] = useState<string | null>(null);
+  // ВАЖНО: первый запуск — всегда "en", дальше из localStorage
+  const [uiLanguage, setUiLanguage] = useState<UiLangCode>(() =>
+    detectInitialUiLanguage()
+  );
+
   const [learningLanguage, setLearningLanguage] = useState<string | null>(null);
   const [learningLevel, setLearningLevel] = useState<string | null>(null);
 
   const { isLoading, login, register } = useAuth();
 
-  // —— AUTH FLOW ——
+  const handleChangeUiLanguage = (code: UiLangCode) => {
+    setUiLanguage(code);
+    try {
+      window.localStorage.setItem("ui_language", code);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const handleAuthSuccess = () => {
     setScreen("choose-ui-language");
   };
@@ -40,63 +58,40 @@ function App() {
       return;
     }
 
-    // TODO: заменить на реальный запрос на бэкенд
-    console.log("Forgot password for:", email);
     alert(
       `If an account exists for ${email}, we’ll send password reset instructions.`
     );
   };
 
-  // —— NAV FROM UI LANGUAGE ——
   const handleContinueFromUiLanguage = () => {
     if (!uiLanguage) return;
     setScreen("choose-learning-language");
   };
 
-  // —— NAV FROM LEARNING LANGUAGE ——
   const handleContinueFromLearningLanguage = () => {
     if (!learningLanguage) return;
     setScreen("choose-level");
   };
 
-  // —— NAV FROM LEVEL (SELECTED) ——
   const handleContinueFromLevel = () => {
     if (!learningLevel) return;
     setScreen("dashboard");
   };
 
-  // —— LEVEL TEST FLOW ——
-  const handleStartLevelTest = () => {
-    setScreen("level-test");
-  };
+  const handleStartLevelTest = () => setScreen("level-test");
 
   const handleFinishLevelTest = (detectedLevel: string) => {
     setLearningLevel(detectedLevel);
     setScreen("dashboard");
   };
 
-  // —— BACK BUTTON ——
   const handleBack = () => {
-    if (screen === "choose-ui-language") {
-      setScreen("auth");
-      return;
-    }
-    if (screen === "choose-learning-language") {
-      setScreen("choose-ui-language");
-      return;
-    }
-    if (screen === "choose-level") {
-      setScreen("choose-learning-language");
-      return;
-    }
-    if (screen === "level-test") {
-      setScreen("choose-level");
-      return;
-    }
-    if (screen === "dashboard") {
-      setScreen("choose-level");
-      return;
-    }
+    if (screen === "choose-ui-language") return setScreen("auth");
+    if (screen === "choose-learning-language")
+      return setScreen("choose-ui-language");
+    if (screen === "choose-level") return setScreen("choose-learning-language");
+    if (screen === "level-test") return setScreen("choose-level");
+    if (screen === "dashboard") return setScreen("choose-level");
   };
 
   const showBackButton = screen !== "auth";
@@ -126,9 +121,11 @@ function App() {
           {/* AUTH */}
           {screen === "auth" && (
             <>
-              <div className="page-title">Welcome</div>
+              <div className="page-title">
+                {t(uiLanguage, "auth.welcomeTitle")}
+              </div>
               <p className="page-subtitle">
-                Create an account or log in to save your progress.
+                {t(uiLanguage, "auth.welcomeSubtitle")}
               </p>
 
               <div className="auth-toggle">
@@ -142,7 +139,7 @@ function App() {
                   }
                   onClick={() => setAuthMode("register")}
                 >
-                  Sign up
+                  {t(uiLanguage, "auth.signUp")}
                 </button>
                 <button
                   type="button"
@@ -152,18 +149,20 @@ function App() {
                   }
                   onClick={() => setAuthMode("login")}
                 >
-                  Log in
+                  {t(uiLanguage, "auth.logIn")}
                 </button>
               </div>
 
               {authMode === "register" ? (
                 <RegisterForm
+                  uiLanguage={uiLanguage}
                   onRegister={register}
                   isLoading={isLoading}
                   onSuccess={handleAuthSuccess}
                 />
               ) : (
                 <LoginForm
+                  uiLanguage={uiLanguage}
                   onLogin={login}
                   isLoading={isLoading}
                   onSuccess={handleAuthSuccess}
@@ -173,27 +172,30 @@ function App() {
             </>
           )}
 
-          {/* UI LANGUAGE */}
+          {/* CHOOSE UI LANGUAGE */}
           {screen === "choose-ui-language" && (
             <ChooseLanguageScreen
+              uiLanguage={uiLanguage}
               selectedCode={uiLanguage}
-              onChangeSelected={setUiLanguage}
+              onChangeSelected={handleChangeUiLanguage}
               onContinue={handleContinueFromUiLanguage}
             />
           )}
 
-          {/* LEARNING LANGUAGE */}
+          {/* CHOOSE LEARNING LANGUAGE */}
           {screen === "choose-learning-language" && (
             <ChooseLearningLanguageScreen
+              uiLanguage={uiLanguage}
               selectedCode={learningLanguage}
               onChangeSelected={setLearningLanguage}
               onContinue={handleContinueFromLearningLanguage}
             />
           )}
 
-          {/* LEVEL SELECT / TEST SWITCH */}
+          {/* LEVEL SELECT / TEST TOGGLE */}
           {screen === "choose-level" && (
             <ChooseLevelScreen
+              uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               selectedLevel={learningLevel}
               onChangeLevel={setLearningLevel}
@@ -202,9 +204,10 @@ function App() {
             />
           )}
 
-          {/* LEVEL TEST */}
+          {/* QUICK LEVEL TEST */}
           {screen === "level-test" && (
             <LevelTestScreen
+              uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               onFinish={handleFinishLevelTest}
             />
@@ -213,6 +216,7 @@ function App() {
           {/* DASHBOARD */}
           {screen === "dashboard" && (
             <DashboardScreen
+              uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               learningLevel={learningLevel}
             />
@@ -222,7 +226,7 @@ function App() {
 
       <footer className="app-footer">
         <span>© 2025 LangProject. All rights reserved.</span>
-        <span>LinkedIn</span>
+        <span>{uiLanguage.toUpperCase()}</span>
       </footer>
     </div>
   );

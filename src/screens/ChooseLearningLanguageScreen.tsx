@@ -1,6 +1,8 @@
 import type { FC } from "react";
 import { LanguageCard, type LanguageOption } from "../components/LanguageCard";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { t } from "../i18n";
+import type { UiLangCode } from "../utils/detectUiLanguage";
 
 import flagDE from "../assets/flags_png/flag-de.png";
 import flagEN from "../assets/flags_png/flag-us.png";
@@ -17,6 +19,7 @@ const LANGUAGES: LanguageOption[] = [
 ];
 
 interface ChooseLearningLanguageScreenProps {
+  uiLanguage: UiLangCode;
   selectedCode: string | null;
   onChangeSelected: (code: string) => void;
   onContinue: () => void;
@@ -24,13 +27,17 @@ interface ChooseLearningLanguageScreenProps {
 
 export const ChooseLearningLanguageScreen: FC<
   ChooseLearningLanguageScreenProps
-> = ({ selectedCode, onChangeSelected, onContinue }) => {
+> = ({ uiLanguage, selectedCode, onChangeSelected, onContinue }) => {
   const hasSelection = Boolean(selectedCode);
 
   return (
     <>
-      <div className="page-title">Choose a learning language</div>
-      <p className="page-subtitle">Select the language you want to study.</p>
+      <div className="page-title">
+        {t(uiLanguage, "learningLanguage.title")}
+      </div>
+      <p className="page-subtitle">
+        {t(uiLanguage, "learningLanguage.subtitle")}
+      </p>
 
       <div className="language-list">
         {LANGUAGES.map((option) => (
