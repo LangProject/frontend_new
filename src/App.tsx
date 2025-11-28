@@ -1,18 +1,21 @@
-// src/App.tsx
 import { useState } from "react";
 import { ChooseLanguageScreen } from "./screens/ChooseLanguageScreen";
 import { ChooseLearningLanguageScreen } from "./screens/ChooseLearningLanguageScreen";
 import { ChooseLevelScreen } from "./screens/ChooseLevelScreen";
 import { LevelTestScreen } from "./screens/LevelTestScreen";
 import { DashboardScreen } from "./screens/DashboardScreen";
+import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
+
 import { RegisterForm } from "./components/RegisterForm";
 import { LoginForm } from "./components/LoginForm";
+
 import { useAuth } from "./hooks/useAuth";
 import {
   detectInitialUiLanguage,
   type UiLangCode,
 } from "./utils/detectUiLanguage";
 import { t } from "./i18n";
+
 import "./index.css";
 
 type ScreenId =
@@ -21,7 +24,8 @@ type ScreenId =
   | "choose-learning-language"
   | "choose-level"
   | "level-test"
-  | "dashboard";
+  | "dashboard"
+  | "forgot-password";
 
 type AuthMode = "register" | "login";
 
@@ -29,7 +33,7 @@ function App() {
   const [screen, setScreen] = useState<ScreenId>("auth");
   const [authMode, setAuthMode] = useState<AuthMode>("register");
 
-  // ВАЖНО: первый запуск — всегда "en", дальше из localStorage
+  // первый запуск — всегда "en", дальше из localStorage
   const [uiLanguage, setUiLanguage] = useState<UiLangCode>(() =>
     detectInitialUiLanguage()
   );
@@ -39,6 +43,7 @@ function App() {
 
   const { isLoading, login, register } = useAuth();
 
+  // смена языка интерфейса
   const handleChangeUiLanguage = (code: UiLangCode) => {
     setUiLanguage(code);
     try {
@@ -48,21 +53,29 @@ function App() {
     }
   };
 
+  // после успешной регистрации/логина
   const handleAuthSuccess = () => {
     setScreen("choose-ui-language");
   };
 
+  // переход на экран восстановления пароля
   const handleForgotPassword = (email: string) => {
-    if (!email || !email.includes("@")) {
-      alert("Please enter your email first.");
-      return;
-    }
-
-    alert(
-      `If an account exists for ${email}, we’ll send password reset instructions.`
-    );
+    // email можем использовать позже для автоподстановки
+    console.log("Forgot password requested for:", email);
+    setScreen("forgot-password");
   };
 
+  // логика отправки reset email с экрана ForgotPassword
+  const handleSendResetEmail = (email: string) => {
+    // TODO: заменить на реальный запрос к бэкенду
+    alert(
+      `If an account exists for ${email}, we sent instructions to reset your password.`
+    );
+    setScreen("auth");
+    setAuthMode("login");
+  };
+
+  // переходы по мастеру выбора языков/уровней
   const handleContinueFromUiLanguage = () => {
     if (!uiLanguage) return;
     setScreen("choose-learning-language");
@@ -86,12 +99,32 @@ function App() {
   };
 
   const handleBack = () => {
-    if (screen === "choose-ui-language") return setScreen("auth");
-    if (screen === "choose-learning-language")
-      return setScreen("choose-ui-language");
-    if (screen === "choose-level") return setScreen("choose-learning-language");
-    if (screen === "level-test") return setScreen("choose-level");
-    if (screen === "dashboard") return setScreen("choose-level");
+    if (screen === "choose-ui-language") {
+      setScreen("auth");
+      return;
+    }
+    if (screen === "choose-learning-language") {
+      setScreen("choose-ui-language");
+      return;
+    }
+    if (screen === "choose-level") {
+      setScreen("choose-learning-language");
+      return;
+    }
+    if (screen === "level-test") {
+      setScreen("choose-level");
+      return;
+    }
+    if (screen === "dashboard") {
+      setScreen("choose-level");
+      return;
+    }
+    if (screen === "forgot-password") {
+      // назад с reset-экрана — просто на логин
+      setScreen("auth");
+      setAuthMode("login");
+      return;
+    }
   };
 
   const showBackButton = screen !== "auth";
@@ -120,7 +153,7 @@ function App() {
         <div className="app-center-block">
           {/* AUTH */}
           {screen === "auth" && (
-            <>
+            <div className="auth-card">
               <div className="page-title">
                 {t(uiLanguage, "auth.welcomeTitle")}
               </div>
@@ -169,7 +202,21 @@ function App() {
                   onForgotPassword={handleForgotPassword}
                 />
               )}
-            </>
+            </div>
+          )}
+
+          {/* FORGOT PASSWORD */}
+          {screen === "forgot-password" && (
+            <div className="auth-card">
+              <ForgotPasswordScreen
+                uiLanguage={uiLanguage}
+                onSendReset={handleSendResetEmail}
+                onBackToLogin={() => {
+                  setScreen("auth");
+                  setAuthMode("login");
+                }}
+              />
+            </div>
           )}
 
           {/* CHOOSE UI LANGUAGE */}

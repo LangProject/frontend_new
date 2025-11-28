@@ -24,7 +24,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [password, setPassword] = useState("");
 
   const isFormValid =
-    name.trim() !== "" && email.trim() !== "" && password.trim().length >= 6; // ← проверка длины
+    name.trim() !== "" && email.trim() !== "" && password.trim().length >= 6;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,12 +61,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        minLength={6} // ← HTML-валидация
+        minLength={6}
       />
 
       <button
         type="submit"
-        className="primary-button"
+        className="auth-submit"
         disabled={isLoading || !isFormValid}
         aria-disabled={isLoading || !isFormValid}
       >

@@ -20,7 +20,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const isFormValid = email.trim() !== "" && password.trim().length >= 6; // ← проверка длины
+  const isFormValid = email.trim() !== "" && password.trim().length >= 6;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,12 +48,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        minLength={6} // ← HTML-валидация
+        minLength={6}
       />
 
       <button
         type="submit"
-        className="primary-button"
+        className="auth-submit"
         disabled={isLoading || !isFormValid}
         aria-disabled={isLoading || !isFormValid}
       >
@@ -62,7 +62,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       <button
         type="button"
-        className="link-button"
+        className="auth-forgot"
         onClick={() => onForgotPassword(email)}
       >
         {t(uiLanguage, "auth.forgotPassword")}
