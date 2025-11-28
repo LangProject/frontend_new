@@ -13,6 +13,26 @@ type RegisterFormProps = {
   onSuccess: () => void;
 };
 
+const validateEmail = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return "Please enter your email.";
+  const simple = /\S+@\S+\.\S+/;
+  if (!simple.test(trimmed)) return "Please enter a valid email.";
+  return "";
+};
+
+const validatePassword = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return "Please enter your password.";
+  if (trimmed.length < 6) return "Password must be at least 6 characters.";
+  return "";
+};
+
+const validateName = (value: string): string => {
+  if (!value.trim()) return "Please enter your name.";
+  return "";
+};
+
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   uiLanguage,
   onRegister,
@@ -23,46 +43,74 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [touchedName, setTouchedName] = useState(false);
+  const [touchedEmail, setTouchedEmail] = useState(false);
+  const [touchedPassword, setTouchedPassword] = useState(false);
+
+  const nameError = touchedName ? validateName(name) : "";
+  const emailError = touchedEmail ? validateEmail(email) : "";
+  const passwordError = touchedPassword ? validatePassword(password) : "";
+
   const isFormValid =
-    name.trim() !== "" && email.trim() !== "" && password.trim().length >= 6;
+    !validateName(name) && !validateEmail(email) && !validatePassword(password);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setTouchedName(true);
+    setTouchedEmail(true);
+    setTouchedPassword(true);
+
     if (!isFormValid) return;
 
-    await onRegister({ name, email, password });
+    await onRegister({
+      name: name.trim(),
+      email: email.trim(),
+      password: password.trim(),
+    });
     onSuccess();
   };
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
-      <input
-        type="text"
-        className="auth-input"
-        placeholder={t(uiLanguage, "auth.namePlaceholder")}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
+      <div className="auth-field">
+        <input
+          type="text"
+          className={"auth-input" + (nameError ? " auth-input-error" : "")}
+          placeholder={t(uiLanguage, "auth.namePlaceholder")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => setTouchedName(true)}
+          required
+        />
+        {nameError && <div className="auth-error">{nameError}</div>}
+      </div>
 
-      <input
-        type="email"
-        className="auth-input"
-        placeholder={t(uiLanguage, "auth.emailPlaceholder")}
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
+      <div className="auth-field">
+        <input
+          type="email"
+          className={"auth-input" + (emailError ? " auth-input-error" : "")}
+          placeholder={t(uiLanguage, "auth.emailPlaceholder")}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => setTouchedEmail(true)}
+          required
+        />
+        {emailError && <div className="auth-error">{emailError}</div>}
+      </div>
 
-      <input
-        type="password"
-        className="auth-input"
-        placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-        minLength={6}
-      />
+      <div className="auth-field">
+        <input
+          type="password"
+          className={"auth-input" + (passwordError ? " auth-input-error" : "")}
+          placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onBlur={() => setTouchedPassword(true)}
+          required
+          minLength={6}
+        />
+        {passwordError && <div className="auth-error">{passwordError}</div>}
+      </div>
 
       <button
         type="submit"

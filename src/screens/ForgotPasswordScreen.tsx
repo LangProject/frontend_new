@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { PrimaryButton } from "../components/PrimaryButton";
-import { t } from "../i18n";
 import type { UiLangCode } from "../utils/detectUiLanguage";
 
 interface ForgotPasswordScreenProps {
@@ -9,19 +7,53 @@ interface ForgotPasswordScreenProps {
   onBackToLogin: () => void;
 }
 
+const validateEmail = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return "Please enter your email.";
+  const simple = /\S+@\S+\.\S+/;
+  if (!simple.test(trimmed)) return "Please enter a valid email.";
+  return "";
+};
+
 export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
-  uiLanguage,
   onSendReset,
   onBackToLogin,
 }) => {
   const [email, setEmail] = useState("");
+  const [touched, setTouched] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
-  const isValid = email.includes("@");
+  const emailError = touched ? validateEmail(email) : "";
+  const isValid = !validateEmail(email);
 
-  const handleSubmit = () => {
-    if (!isValid) return;
-    onSendReset(email);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+
+    const err = validateEmail(email);
+    if (err) return;
+
+    onSendReset(email.trim());
+    setIsSent(true);
+    setSubmittedEmail(email.trim());
   };
+
+  if (isSent && submittedEmail) {
+    return (
+      <>
+        <div className="page-title">Check your inbox</div>
+        <p className="page-subtitle">
+          We’ve sent a password reset link to <br />
+          <strong>{submittedEmail}</strong>.
+        </p>
+
+        <button type="button" className="auth-submit" onClick={onBackToLogin}>
+          Back to login
+        </button>
+      </>
+    );
+  }
 
   return (
     <>
@@ -30,20 +62,24 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
         Enter the email connected to your account.
       </p>
 
-      <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="email"
-          className="auth-input"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="auth-field">
+          <input
+            type="email"
+            className={"auth-input" + (emailError ? " auth-input-error" : "")}
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => setTouched(true)}
+          />
+          {emailError && <div className="auth-error">{emailError}</div>}
+        </div>
 
         <button
-          type="button"
+          type="submit"
           className="auth-submit"
           disabled={!isValid}
-          onClick={handleSubmit}
+          aria-disabled={!isValid}
         >
           Send reset email
         </button>

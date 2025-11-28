@@ -100,8 +100,8 @@ body {
   flex: 1;
   padding: 24px 22px 32px;
   display: flex;
-  justify-content: center; /* по вертикали */
-  align-items: center; /* по горизонтали */
+  justify-content: center;
+  align-items: center;
 }
 
 /* Внутренний блок, чтобы всё было по центру и не растягивалось */
@@ -114,7 +114,7 @@ body {
   gap: 28px;
 }
 
-/* ↓↓↓ НОВОЕ: карточка формы авторизации ↓↓↓ */
+/* Карточка формы авторизации / reset / т.п. */
 .auth-card {
   width: 100%;
   background: var(--bg-card);
@@ -133,6 +133,27 @@ body {
   justify-content: space-between;
   border-top: 1px solid var(--border-muted);
   margin-top: 8px;
+}
+
+/* ---------- Анимация экранов ---------- */
+
+.screen {
+  width: 100%;
+}
+
+.screen-enter {
+  animation: screen-fade-slide 220ms ease-out;
+}
+
+@keyframes screen-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---------- Общий текст ---------- */
@@ -228,7 +249,13 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
-/* ---------- Кнопка Continue ---------- */
+/* лёгкий hover */
+.language-card:hover:not(.language-card-dim) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* ---------- Основная зелёная кнопка (напр. Continue) ---------- */
 
 .primary-button {
   margin-top: 32px;
@@ -266,7 +293,7 @@ body {
   box-shadow: none;
 }
 
-/* ---------- Прогресс-линия (для уровней и т.п.) ---------- */
+/* ---------- Прогресс-линия (универсальная) ---------- */
 
 .progress-bar {
   position: relative;
@@ -286,7 +313,7 @@ body {
   transition: width 200ms ease-out;
 }
 
-/* ---------- AUTH FORMS (improved) ---------- */
+/* ---------- AUTH FORMS ---------- */
 
 /* Toggle (Sign up / Log in) */
 .auth-toggle {
@@ -328,7 +355,7 @@ body {
   margin-top: 12px;
 }
 
-/* Field */
+/* Обёртка для поля + ошибки */
 .auth-field {
   display: flex;
   flex-direction: column;
@@ -352,16 +379,17 @@ body {
   box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.4);
 }
 
-/* Error messages */
+/* Ошибки у полей */
+.auth-input-error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
+}
+
 .auth-error {
   font-size: 12px;
   color: #dc2626;
   margin-left: 4px;
-  margin-top: -2px;
-}
-
-.auth-error-root {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* Submit buttons */
@@ -398,6 +426,7 @@ body {
   box-shadow: none;
 }
 
+/* Forgot password ссылка */
 .auth-forgot {
   margin-top: 8px;
   background: transparent;
@@ -414,6 +443,8 @@ body {
   opacity: 0.6;
   cursor: default;
 }
+
+/* ---------- Learning language item ---------- */
 
 .learning-language-item {
   display: flex;
@@ -533,7 +564,7 @@ body {
 
 .level-chip {
   height: 52px;
-  border-radius: 14px; /* более квадратные */
+  border-radius: 14px;
   border: 1px solid #e5e7eb;
   background: #ffffff;
   font-size: 16px;
@@ -570,7 +601,7 @@ body {
 }
 
 .level-band-segment {
-  background: #f9fafb; /* базовый фон, когда не заполнено */
+  background: #f9fafb;
   border-right: 1px solid #e5e7eb;
 }
 
@@ -579,8 +610,61 @@ body {
 }
 
 .level-band-segment-filled {
-  /* цвет подставляем инлайном из TS, тут только тень и плавность */
   transition: background-color 160ms ease;
+}
+
+/* ---------- LEVEL TEST SCREEN ---------- */
+
+.level-test-card {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 16px 16px 14px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.level-test-progress {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.level-test-question {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.level-test-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.level-test-option {
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.level-test-option:hover {
+  background: #f3f4f6;
+}
+
+.level-test-option-selected {
+  border-color: var(--bg-accent);
+  background: #ecfdf3;
+  box-shadow: 0 0 0 2px var(--bg-accent-soft);
 }
 
 /* ---------- DASHBOARD COMMON ---------- */
@@ -700,8 +784,20 @@ body {
   margin-top: 10px;
 }
 
+/* лёгкое "дыхание" колец */
 .rings-svg-wrapper {
   flex-shrink: 0;
+  animation: rings-pulse 2600ms ease-in-out infinite;
+}
+
+@keyframes rings-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
 }
 
 .rings-stats {

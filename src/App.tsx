@@ -59,20 +59,15 @@ function App() {
   };
 
   // переход на экран восстановления пароля
-  const handleForgotPassword = (email: string) => {
-    // email можем использовать позже для автоподстановки
-    console.log("Forgot password requested for:", email);
+  const handleForgotPassword = (_email: string) => {
     setScreen("forgot-password");
+    setAuthMode("login");
   };
 
-  // логика отправки reset email с экрана ForgotPassword
+  // логика отправки reset email из ForgotPasswordScreen
   const handleSendResetEmail = (email: string) => {
-    // TODO: заменить на реальный запрос к бэкенду
-    alert(
-      `If an account exists for ${email}, we sent instructions to reset your password.`
-    );
-    setScreen("auth");
-    setAuthMode("login");
+    // сюда потом вставишь реальный запрос на бэкенд
+    console.log("Send password reset for:", email);
   };
 
   // переходы по мастеру выбора языков/уровней
@@ -120,7 +115,6 @@ function App() {
       return;
     }
     if (screen === "forgot-password") {
-      // назад с reset-экрана — просто на логин
       setScreen("auth");
       setAuthMode("login");
       return;
@@ -153,7 +147,7 @@ function App() {
         <div className="app-center-block">
           {/* AUTH */}
           {screen === "auth" && (
-            <div className="auth-card">
+            <div className="auth-card screen screen-enter">
               <div className="page-title">
                 {t(uiLanguage, "auth.welcomeTitle")}
               </div>
@@ -207,7 +201,7 @@ function App() {
 
           {/* FORGOT PASSWORD */}
           {screen === "forgot-password" && (
-            <div className="auth-card">
+            <div className="auth-card screen screen-enter">
               <ForgotPasswordScreen
                 uiLanguage={uiLanguage}
                 onSendReset={handleSendResetEmail}
@@ -221,52 +215,62 @@ function App() {
 
           {/* CHOOSE UI LANGUAGE */}
           {screen === "choose-ui-language" && (
-            <ChooseLanguageScreen
-              uiLanguage={uiLanguage}
-              selectedCode={uiLanguage}
-              onChangeSelected={handleChangeUiLanguage}
-              onContinue={handleContinueFromUiLanguage}
-            />
+            <div className="screen screen-enter">
+              <ChooseLanguageScreen
+                uiLanguage={uiLanguage}
+                selectedCode={uiLanguage}
+                onChangeSelected={handleChangeUiLanguage}
+                onContinue={handleContinueFromUiLanguage}
+              />
+            </div>
           )}
 
           {/* CHOOSE LEARNING LANGUAGE */}
           {screen === "choose-learning-language" && (
-            <ChooseLearningLanguageScreen
-              uiLanguage={uiLanguage}
-              selectedCode={learningLanguage}
-              onChangeSelected={setLearningLanguage}
-              onContinue={handleContinueFromLearningLanguage}
-            />
+            <div className="screen screen-enter">
+              <ChooseLearningLanguageScreen
+                uiLanguage={uiLanguage}
+                selectedCode={learningLanguage}
+                onChangeSelected={setLearningLanguage}
+                onContinue={handleContinueFromLearningLanguage}
+              />
+            </div>
           )}
 
           {/* LEVEL SELECT / TEST TOGGLE */}
           {screen === "choose-level" && (
-            <ChooseLevelScreen
-              uiLanguage={uiLanguage}
-              learningLanguageCode={learningLanguage}
-              selectedLevel={learningLevel}
-              onChangeLevel={setLearningLevel}
-              onContinue={handleContinueFromLevel}
-              onStartTest={handleStartLevelTest}
-            />
+            <div className="screen screen-enter">
+              <ChooseLevelScreen
+                uiLanguage={uiLanguage}
+                learningLanguageCode={learningLanguage}
+                selectedLevel={learningLevel}
+                onChangeLevel={setLearningLevel}
+                onContinue={handleContinueFromLevel}
+                onStartTest={handleStartLevelTest}
+              />
+            </div>
           )}
 
           {/* QUICK LEVEL TEST */}
           {screen === "level-test" && (
-            <LevelTestScreen
-              uiLanguage={uiLanguage}
-              learningLanguageCode={learningLanguage}
-              onFinish={handleFinishLevelTest}
-            />
+            <div className="screen screen-enter">
+              <LevelTestScreen
+                uiLanguage={uiLanguage}
+                learningLanguageCode={learningLanguage}
+                onFinish={handleFinishLevelTest}
+              />
+            </div>
           )}
 
           {/* DASHBOARD */}
           {screen === "dashboard" && (
-            <DashboardScreen
-              uiLanguage={uiLanguage}
-              learningLanguageCode={learningLanguage}
-              learningLevel={learningLevel}
-            />
+            <div className="screen screen-enter">
+              <DashboardScreen
+                uiLanguage={uiLanguage}
+                learningLanguageCode={learningLanguage}
+                learningLevel={learningLevel}
+              />
+            </div>
           )}
         </div>
       </main>
