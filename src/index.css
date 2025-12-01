@@ -1,3 +1,4 @@
+/* ------------------ THEME SYSTEM ------------------ */
 :root {
   --bg-main: #f5f5f7;
   --bg-card: #ffffff;
@@ -6,14 +7,23 @@
   --border-muted: rgba(0, 0, 0, 0.06);
   --text-main: #111111;
   --text-muted: #6b7280;
-  --radius-lg: 18px;
-  --radius-xl: 999px;
   --shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.06);
 
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
     "Inter", "Roboto", sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+:root[data-theme="dark"] {
+  --bg-main: #050508;
+  --bg-card: #15151a;
+  --bg-accent: #4ade80;
+  --bg-accent-soft: rgba(74, 222, 128, 0.2);
+  --border-muted: rgba(255, 255, 255, 0.08);
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.7);
 }
 
 *,
@@ -33,6 +43,7 @@ body,
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Корневой контейнер "под телефон" */
@@ -65,6 +76,10 @@ body {
   font-weight: 600;
 }
 
+:root[data-theme="dark"] .app-header-logo {
+  background: rgba(37, 99, 235, 0.15);
+}
+
 .app-header-logo-badge {
   width: 18px;
   height: 18px;
@@ -89,10 +104,39 @@ body {
   font-size: 16px;
   cursor: pointer;
   padding: 0;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+:root[data-theme="dark"] .app-back-button {
+  background: #020617;
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #e5e7eb;
 }
 
 .app-back-button:active {
   transform: translateY(1px);
+}
+
+/* Кнопка переключения темы */
+.theme-toggle {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  font-size: 15px;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle:active {
+  transform: scale(0.92);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
 }
 
 /* Контент: центрируем всё по экрану */
@@ -120,7 +164,7 @@ body {
   background: var(--bg-card);
   border-radius: 24px;
   padding: 20px 18px 18px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
   border: 1px solid var(--border-muted);
 }
 
@@ -252,7 +296,7 @@ body {
 /* лёгкий hover */
 .language-card:hover:not(.language-card-dim) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
 }
 
 /* ---------- Основная зелёная кнопка (напр. Continue) ---------- */
@@ -326,6 +370,10 @@ body {
   margin-bottom: 16px;
 }
 
+:root[data-theme="dark"] .auth-toggle {
+  background: #18181b;
+}
+
 .auth-toggle-button {
   flex: 1;
   border: none;
@@ -339,11 +387,20 @@ body {
   transition: all 180ms ease;
 }
 
+:root[data-theme="dark"] .auth-toggle-button {
+  color: #e5e7eb;
+}
+
 .auth-toggle-button-active {
   background: #ffffff;
   color: #111827;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
+}
+
+:root[data-theme="dark"] .auth-toggle-button-active {
+  background: #020617;
+  color: #f9fafb;
 }
 
 /* Form layout */
@@ -372,8 +429,20 @@ body {
   font-size: 15px;
   outline: none;
   transition: all 160ms ease;
+  color: #111827;
 }
 
+:root[data-theme="dark"] .auth-input {
+  background: #020617;
+  border-color: #1f2937;
+  color: #f9fafb;
+}
+
+.auth-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Focus */
 .auth-input:focus {
   border-color: #34c759;
   box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.4);
@@ -439,6 +508,10 @@ body {
   align-self: flex-end;
 }
 
+:root[data-theme="dark"] .auth-forgot {
+  color: #e5e7eb;
+}
+
 .auth-forgot:disabled {
   opacity: 0.6;
   cursor: default;
@@ -487,6 +560,11 @@ body {
   transition: all 150ms ease-out;
 }
 
+:root[data-theme="dark"] .level-pill {
+  background: #020617;
+  border-color: #111827;
+}
+
 .level-pill:hover {
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
@@ -532,6 +610,10 @@ body {
   margin: 4px 0 18px;
 }
 
+:root[data-theme="dark"] .level-mode-toggle {
+  background: #18181b;
+}
+
 .level-mode-toggle-button {
   flex: 1;
   border: none;
@@ -543,6 +625,10 @@ body {
   cursor: pointer;
   color: #4b5563;
   transition: all 180ms ease;
+}
+
+:root[data-theme="dark"] .level-mode-toggle-button {
+  color: #e5e7eb;
 }
 
 .level-mode-toggle-button-active {
@@ -577,6 +663,12 @@ body {
   transition: all 150ms ease;
 }
 
+:root[data-theme="dark"] .level-chip {
+  background: #020617;
+  border-color: #111827;
+  color: #e5e7eb;
+}
+
 .level-chip:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
@@ -600,9 +692,19 @@ body {
   margin-bottom: 22px;
 }
 
+:root[data-theme="dark"] .level-band {
+  background: #020617;
+  border-color: #111827;
+}
+
 .level-band-segment {
   background: #f9fafb;
   border-right: 1px solid #e5e7eb;
+}
+
+:root[data-theme="dark"] .level-band-segment {
+  background: #020617;
+  border-right-color: #111827;
 }
 
 .level-band-segment:last-child {
@@ -626,6 +728,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+:root[data-theme="dark"] .level-test-card {
+  background: #020617;
+  border-color: #111827;
 }
 
 .level-test-progress {
@@ -657,14 +764,29 @@ body {
   transition: all 140ms ease;
 }
 
+:root[data-theme="dark"] .level-test-option {
+  background: #020617;
+  border-color: #111827;
+  color: #e5e7eb;
+}
+
 .level-test-option:hover {
   background: #f3f4f6;
+}
+
+:root[data-theme="dark"] .level-test-option:hover {
+  background: #020617;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
 }
 
 .level-test-option-selected {
   border-color: var(--bg-accent);
   background: #ecfdf3;
   box-shadow: 0 0 0 2px var(--bg-accent-soft);
+}
+
+:root[data-theme="dark"] .level-test-option-selected {
+  background: #022c22;
 }
 
 /* ---------- DASHBOARD COMMON ---------- */
@@ -699,74 +821,198 @@ body {
   color: #6b7280;
 }
 
-/* ---------- LEARNING PATH CARDS ---------- */
-
-.lp-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+:root[data-theme="dark"] .dashboard-section-info {
+  border-color: #374151;
+  color: #9ca3af;
 }
 
-.lp-card {
-  flex: 1;
-  border-radius: 18px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  padding: 12px 12px 10px;
-  text-align: left;
-  cursor: pointer;
+/* ---------- Learning Paths: список путей ---------- */
+
+.path-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
-  transition: all 150ms ease;
+  gap: 12px;
 }
 
-.lp-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+.path-card {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid #e5e5e5;
+  padding: 12px 14px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: 0.15s ease;
 }
 
-.lp-card-selected {
-  border-color: var(--bg-accent);
-  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+.path-card:active {
+  transform: scale(0.97);
 }
 
-.lp-title {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.lp-level {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.lp-bottom-row {
+.path-card-header {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
-.lp-counter {
-  font-size: 12px;
-  color: #111827;
+.path-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
 }
 
-/* horizontal progress bar inside card */
-.hp-track {
-  flex: 1;
+.path-meta {
+  font-size: 11px;
+  color: #777;
+  margin: 0;
+}
+
+/* прогресс бар внутри карточки пути */
+
+.path-progress-wrapper {
+  margin-top: 4px;
+  width: 100%;
   height: 6px;
+  background: #f0f0f0;
   border-radius: 999px;
-  background: #e5e7eb;
   overflow: hidden;
 }
 
-.hp-fill {
+.path-progress-bar {
   height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
+  width: 0%;
+  background: #111;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ---------- Learning Path Details / уровни ---------- */
+
+.path-progress {
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.path-progress-info {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.path-progress-bar-wrapper {
+  width: 100%;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.path-progress-bar-big {
+  height: 100%;
+  width: 0%;
+  background: #111;
+  transition: width 0.6s ease;
+}
+
+/* карточки уровней */
+
+.level-card {
+  position: relative;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+}
+
+.level-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.level-description {
+  font-size: 12px;
+  color: #666;
+  margin: 4px 0 6px 0;
+}
+
+.level-xp {
+  font-size: 11px;
+  margin: 0;
+  color: #8a8a8a;
+}
+
+.level-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #111;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.level-btn:active {
+  transform: scale(0.94);
+}
+
+.level-btn:disabled {
+  border-color: #3da167;
+  background: #e7f7ed;
+  color: #2e8152;
+  cursor: default;
+  transform: none;
+}
+
+.level-progress {
+  margin-top: 10px;
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.level-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #111;
+  transition: width 0.6s ease;
+  border-radius: 999px;
+}
+
+.level-xp-popup {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2e8152;
+  animation: xpPop 1.2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes xpPop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.92);
+  }
 }
 
 /* ---------- RINGS SUMMARY ---------- */
@@ -782,6 +1028,11 @@ body {
   gap: 14px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
   margin-top: 10px;
+}
+
+:root[data-theme="dark"] .rings-card {
+  background: #020617;
+  border-color: #111827;
 }
 
 /* лёгкое "дыхание" колец */
@@ -837,4 +1088,518 @@ body {
   margin-top: 8px;
   font-size: 12px;
   color: #6b7280;
+}
+
+/* ====== Exercise layout shell ====== */
+
+.exercise-layout {
+  width: 100%;
+  border-radius: 24px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+
+.exercise-header-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.exercise-header-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.exercise-header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.exercise-progress-small {
+  flex: 1;
+  max-width: 140px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.exercise-progress-small-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34c759, #22c55e);
+}
+
+.exercise-progress-small-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.exercise-layout-main {
+  flex: 1;
+  padding: 8px 14px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-layout-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.exercise-layout-title {
+  text-align: center;
+  font-size: 14px;
+}
+
+.exercise-layout-body {
+  margin-top: 4px;
+}
+
+/* sticky footer */
+.exercise-layout-footer {
+  padding: 10px 14px 14px;
+}
+
+.exercise-footer-button {
+  width: 100%;
+}
+
+.exercise-footer-button-success {
+  /* зелёная та же, что и primary-button – можно не менять */
+}
+
+.exercise-footer-button-error {
+  background: #ef4444;
+  box-shadow: 0 10px 26px rgba(239, 68, 68, 0.35);
+}
+
+/* мелкие штуки */
+
+.exercise-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.exercise-grid-2x3 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.exercise-option-definition {
+  text-align: left;
+}
+
+.exercise-match-columns {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.exercise-match-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exercise-match-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.exercise-blank-slot {
+  border-bottom: 2px solid #9ca3af;
+  padding: 0 4px;
+}
+
+.error-span {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.exercise-context-line {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.exercise-inline-input {
+  width: 80px;
+  border: none;
+  border-bottom: 1px solid #d4d4d8;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  background: transparent;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.auth-show-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.path-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.path-header {
+  text-align: center;
+}
+
+.path-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.path-meta {
+  font-size: 13px;
+  color: var(--text-secondary, #777);
+}
+
+.path-timeline {
+  margin-top: 8px;
+  padding: 16px 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* один узел пути */
+.path-node {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* колонка с линией и кружками */
+.path-node-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  position: relative;
+}
+
+.path-line {
+  width: 4px;
+  flex: 1;
+  border-radius: 999px;
+}
+
+.path-line-top {
+  margin-bottom: 6px;
+}
+
+.path-line-bottom {
+  margin-top: 6px;
+}
+
+/* кружок */
+.path-node-icon-wrapper {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.path-node-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+/* цветовые состояния */
+.path-node-done .path-node-icon {
+  background: #22c55e;
+  color: white;
+}
+
+.path-node-current .path-node-icon {
+  background: #16a34a;
+  color: white;
+}
+
+.path-node-locked .path-node-icon {
+  background: #e5e7eb;
+}
+
+.path-node-done .path-line,
+.path-node-current .path-line {
+  background: #86efac;
+}
+
+.path-node-locked .path-line {
+  background: #e5e7eb;
+}
+
+/* текст возле кружка */
+.path-node-content {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 16px;
+  background: #f9fafb;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="dark"] .path-node-content {
+  background: #111827;
+}
+
+.path-node-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.path-node-tasks {
+  font-size: 12px;
+  margin-top: 2px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.path-start-wrapper {
+  margin-top: 8px;
+}
+
+.lp-container {
+  margin-top: 20px;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.lp-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.lp-lessons {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+}
+
+.lp-item {
+  position: relative;
+  width: 180px;
+  padding: 10px 0;
+}
+
+.lp-line {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  background: #ccc;
+  transform: translateX(-50%);
+}
+
+.lp-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.lp-completed .lp-circle {
+  border-color: #3cd27b;
+  background: #eafff1;
+}
+
+.lp-current .lp-circle {
+  border-color: #3cd27b;
+}
+
+.lp-locked .lp-circle {
+  opacity: 0.4;
+}
+
+.lp-check {
+  font-size: 32px;
+  color: #3cd27b;
+}
+
+.lp-lock {
+  font-size: 28px;
+}
+
+.lp-avatar {
+  width: 45px;
+  height: 45px;
+}
+
+.lp-label {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lp-tasks {
+  font-size: 13px;
+  margin-top: 2px;
+  color: #777;
+}
+
+.lp-start-button {
+  margin-top: 15px;
+  width: 160px;
+  padding: 10px;
+  background: #32d368;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.lp-start-button:hover {
+  background: #2abb5a;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- DASHBOARD: LearningPathCard row ---------- */
+
+.lp-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* если хочешь в одну линию — поставь row */
+  gap: 12px;
+}
+
+/* сама карточка пути на дашборде */
+.lp-card {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out,
+    border-color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.lp-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.lp-card:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+/* выделенная карточка */
+.lp-card-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+/* заголовок и подпись уровня внутри карточки */
+.lp-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.lp-level {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* нижняя строка: счётчик и прогресс-бар */
+.lp-bottom-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* на случай, если HorizontalProgressBar использует такие классы */
+.horizontal-progress {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.horizontal-progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34c759, #22c55e, #16a34a);
+  transition: width 200ms ease-out;
 }

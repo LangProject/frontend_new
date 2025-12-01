@@ -1,93 +1,59 @@
 import { useState } from "react";
-import type { UiLangCode } from "../utils/detectUiLanguage";
+import { PrimaryButton } from "../components/PrimaryButton";
 
 interface ForgotPasswordScreenProps {
-  uiLanguage: UiLangCode;
-  onSendReset: (email: string) => void;
-  onBackToLogin: () => void;
+  initialEmail?: string;
+  onBack: () => void;
 }
 
-const validateEmail = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return "Please enter your email.";
-  const simple = /\S+@\S+\.\S+/;
-  if (!simple.test(trimmed)) return "Please enter a valid email.";
-  return "";
-};
+export const ForgotPasswordScreen = ({
+  initialEmail,
+  onBack,
+}: ForgotPasswordScreenProps) => {
+  const [email, setEmail] = useState(initialEmail ?? "");
 
-export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
-  onSendReset,
-  onBackToLogin,
-}) => {
-  const [email, setEmail] = useState("");
-  const [touched, setTouched] = useState(false);
-  const [isSent, setIsSent] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const handleSubmit = () => {
+    if (!email.includes("@")) {
+      alert("Please enter a valid email.");
+      return;
+    }
 
-  const emailError = touched ? validateEmail(email) : "";
-  const isValid = !validateEmail(email);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTouched(true);
-
-    const err = validateEmail(email);
-    if (err) return;
-
-    onSendReset(email.trim());
-    setIsSent(true);
-    setSubmittedEmail(email.trim());
-  };
-
-  if (isSent && submittedEmail) {
-    return (
-      <>
-        <div className="page-title">Check your inbox</div>
-        <p className="page-subtitle">
-          We’ve sent a password reset link to <br />
-          <strong>{submittedEmail}</strong>.
-        </p>
-
-        <button type="button" className="auth-submit" onClick={onBackToLogin}>
-          Back to login
-        </button>
-      </>
+    alert(
+      `If an account exists for ${email}, we’ll send password reset instructions.`
     );
-  }
+    onBack();
+  };
 
   return (
     <>
       <div className="page-title">Reset password</div>
       <p className="page-subtitle">
-        Enter the email connected to your account.
+        Enter the email you used to create your account – we'll send you a reset
+        link.
       </p>
 
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <div className="auth-field">
-          <input
-            type="email"
-            className={"auth-input" + (emailError ? " auth-input-error" : "")}
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setTouched(true)}
-          />
-          {emailError && <div className="auth-error">{emailError}</div>}
-        </div>
+      <div className="auth-field">
+        <label className="auth-label">Email</label>
+        <input
+          className="auth-input"
+          type="email"
+          placeholder="email@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </div>
 
-        <button
-          type="submit"
-          className="auth-submit"
-          disabled={!isValid}
-          aria-disabled={!isValid}
-        >
-          Send reset email
-        </button>
+      <PrimaryButton onClick={handleSubmit} disabled={!email}>
+        Send reset link
+      </PrimaryButton>
 
-        <button type="button" className="auth-forgot" onClick={onBackToLogin}>
-          Back to login
-        </button>
-      </form>
+      <button
+        className="auth-forgot"
+        onClick={onBack}
+        style={{ marginTop: "20px" }}
+      >
+        Back to login
+      </button>
     </>
   );
 };

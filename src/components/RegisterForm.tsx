@@ -1,124 +1,131 @@
-import { useState } from "react";
-import { t } from "../i18n";
+// src/components/RegisterForm.tsx
+import React, { useState } from "react";
 import type { UiLangCode } from "../utils/detectUiLanguage";
+import { t } from "../i18n";
 
-type RegisterFormProps = {
+interface RegisterFormProps {
   uiLanguage: UiLangCode;
+  isLoading: boolean;
+  // onRegister должен делать реальный запрос (или мок),
+  // App передаёт сюда функцию из useAuth()
   onRegister: (data: {
-    name: string;
+    fullName: string;
+    nickname: string;
     email: string;
     password: string;
   }) => Promise<void> | void;
-  isLoading: boolean;
+  // КОГДА регистрация прошла успешно — вызываем это,
+  // и App переключает screen на "choose-ui-language"
   onSuccess: () => void;
-};
-
-const validateEmail = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return "Please enter your email.";
-  const simple = /\S+@\S+\.\S+/;
-  if (!simple.test(trimmed)) return "Please enter a valid email.";
-  return "";
-};
-
-const validatePassword = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return "Please enter your password.";
-  if (trimmed.length < 6) return "Password must be at least 6 characters.";
-  return "";
-};
-
-const validateName = (value: string): string => {
-  if (!value.trim()) return "Please enter your name.";
-  return "";
-};
+}
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   uiLanguage,
-  onRegister,
   isLoading,
+  onRegister,
   onSuccess,
 }) => {
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [pass1, setPass1] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const [touchedName, setTouchedName] = useState(false);
-  const [touchedEmail, setTouchedEmail] = useState(false);
-  const [touchedPassword, setTouchedPassword] = useState(false);
+  const isValid =
+    fullName.trim().length > 1 &&
+    nickname.trim().length > 1 &&
+    email.includes("@") &&
+    pass1.length >= 6 &&
+    pass1 === pass2;
 
-  const nameError = touchedName ? validateName(name) : "";
-  const emailError = touchedEmail ? validateEmail(email) : "";
-  const passwordError = touchedPassword ? validatePassword(password) : "";
-
-  const isFormValid =
-    !validateName(name) && !validateEmail(email) && !validatePassword(password);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouchedName(true);
-    setTouchedEmail(true);
-    setTouchedPassword(true);
+    if (!isValid || isLoading) return;
 
-    if (!isFormValid) return;
+    setError(null);
 
-    await onRegister({
-      name: name.trim(),
-      email: email.trim(),
-      password: password.trim(),
-    });
-    onSuccess();
+    try {
+      await onRegister({
+        fullName: fullName.trim(),
+        nickname: nickname.trim(),
+        email: email.trim(),
+        password: pass1,
+      });
+
+      // 🔥 ВАЖНО: сообщаем App, что всё ок — он переключит экран
+      onSuccess();
+    } catch (err) {
+      console.error("REGISTER ERROR:", err);
+      setError("Something went wrong. Please try again.");
+    }
   };
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
-      <div className="auth-field">
+      <label className="auth-label">
+        {t(uiLanguage, "auth.fullName") ?? "Full name"}
         <input
-          type="text"
-          className={"auth-input" + (nameError ? " auth-input-error" : "")}
-          placeholder={t(uiLanguage, "auth.namePlaceholder")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => setTouchedName(true)}
-          required
+          className="auth-input"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="Andrii Rybak"
         />
-        {nameError && <div className="auth-error">{nameError}</div>}
-      </div>
+      </label>
 
-      <div className="auth-field">
+      <label className="auth-label">
+        {t(uiLanguage, "auth.nickname") ?? "Nickname"}
         <input
+          className="auth-input"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          placeholder="andrii_01"
+        />
+      </label>
+
+      <label className="auth-label">
+        {t(uiLanguage, "auth.email") ?? "Email"}
+        <input
+          className="auth-input"
           type="email"
-          className={"auth-input" + (emailError ? " auth-input-error" : "")}
-          placeholder={t(uiLanguage, "auth.emailPlaceholder")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onBlur={() => setTouchedEmail(true)}
-          required
+          placeholder="you@example.com"
         />
-        {emailError && <div className="auth-error">{emailError}</div>}
-      </div>
+      </label>
 
-      <div className="auth-field">
+      <label className="auth-label">
+        {t(uiLanguage, "auth.password") ?? "Password"}
         <input
+          className="auth-input"
           type="password"
-          className={"auth-input" + (passwordError ? " auth-input-error" : "")}
-          placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onBlur={() => setTouchedPassword(true)}
-          required
-          minLength={6}
+          value={pass1}
+          onChange={(e) => setPass1(e.target.value)}
+          placeholder="●●●●●●●●"
         />
-        {passwordError && <div className="auth-error">{passwordError}</div>}
-      </div>
+      </label>
+
+      <label className="auth-label">
+        {t(uiLanguage, "auth.repeatPassword") ?? "Repeat password"}
+        <input
+          className="auth-input"
+          type="password"
+          value={pass2}
+          onChange={(e) => setPass2(e.target.value)}
+          placeholder="●●●●●●●●"
+        />
+      </label>
+
+      {error && <div className="auth-error">{error}</div>}
 
       <button
         type="submit"
-        className="auth-submit"
-        disabled={isLoading || !isFormValid}
-        aria-disabled={isLoading || !isFormValid}
+        className="primary-btn auth-submit"
+        disabled={!isValid || isLoading}
       >
-        {isLoading ? "…" : t(uiLanguage, "auth.createAccountButton")}
+        {isLoading
+          ? t(uiLanguage, "auth.loading") ?? "Please wait..."
+          : t(uiLanguage, "auth.signUpCta") ?? "Create account"}
       </button>
     </form>
   );

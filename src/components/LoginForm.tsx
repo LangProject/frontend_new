@@ -1,103 +1,91 @@
-import { useState } from "react";
-import { t } from "../i18n";
+// src/components/LoginForm.tsx
+import React, { useState } from "react";
 import type { UiLangCode } from "../utils/detectUiLanguage";
+import { t } from "../i18n";
 
-type LoginFormProps = {
+interface LoginFormProps {
   uiLanguage: UiLangCode;
-  onLogin: (data: { email: string; password: string }) => Promise<void> | void;
   isLoading: boolean;
+  onLogin: (data: { email: string; password: string }) => Promise<void> | void;
   onSuccess: () => void;
   onForgotPassword: (email: string) => void;
-};
-
-const validateEmail = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return "Please enter your email.";
-  const simple = /\S+@\S+\.\S+/;
-  if (!simple.test(trimmed)) return "Please enter a valid email.";
-  return "";
-};
-
-const validatePassword = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed) return "Please enter your password.";
-  if (trimmed.length < 6) return "Password must be at least 6 characters.";
-  return "";
-};
+}
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   uiLanguage,
-  onLogin,
   isLoading,
+  onLogin,
   onSuccess,
   onForgotPassword,
 }) => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  const [touchedEmail, setTouchedEmail] = useState(false);
-  const [touchedPassword, setTouchedPassword] = useState(false);
+  const isValid = email.includes("@") && pass.length >= 6;
 
-  const emailError = touchedEmail ? validateEmail(email) : "";
-  const passwordError = touchedPassword ? validatePassword(password) : "";
-
-  const isFormValid = !validateEmail(email) && !validatePassword(password);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouchedEmail(true);
-    setTouchedPassword(true);
+    if (!isValid || isLoading) return;
 
-    if (!isFormValid) return;
+    setError(null);
 
-    await onLogin({ email: email.trim(), password: password.trim() });
-    onSuccess();
+    try {
+      await onLogin({
+        email: email.trim(),
+        password: pass,
+      });
+
+      // 🔥 ТУТ ТОЖЕ ОБЯЗАТЕЛЬНО:
+      onSuccess();
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      setError("Incorrect email or password.");
+    }
+  };
+
+  const handleForgot = () => {
+    onForgotPassword(email.trim());
   };
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
-      <div className="auth-field">
+      <label className="auth-label">
+        {t(uiLanguage, "auth.email") ?? "Email"}
         <input
+          className="auth-input"
           type="email"
-          className={"auth-input" + (emailError ? " auth-input-error" : "")}
-          placeholder={t(uiLanguage, "auth.emailPlaceholder")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          onBlur={() => setTouchedEmail(true)}
-          required
+          placeholder="you@example.com"
         />
-        {emailError && <div className="auth-error">{emailError}</div>}
-      </div>
+      </label>
 
-      <div className="auth-field">
+      <label className="auth-label">
+        {t(uiLanguage, "auth.password") ?? "Password"}
         <input
+          className="auth-input"
           type="password"
-          className={"auth-input" + (passwordError ? " auth-input-error" : "")}
-          placeholder={t(uiLanguage, "auth.passwordPlaceholder")}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onBlur={() => setTouchedPassword(true)}
-          required
-          minLength={6}
+          value={pass}
+          onChange={(e) => setPass(e.target.value)}
+          placeholder="●●●●●●●●"
         />
-        {passwordError && <div className="auth-error">{passwordError}</div>}
-      </div>
+      </label>
+
+      <button type="button" className="auth-forgot" onClick={handleForgot}>
+        {t(uiLanguage, "auth.forgotPassword") ?? "Forgot password?"}
+      </button>
+
+      {error && <div className="auth-error">{error}</div>}
 
       <button
         type="submit"
-        className="auth-submit"
-        disabled={isLoading || !isFormValid}
-        aria-disabled={isLoading || !isFormValid}
+        className="primary-btn auth-submit"
+        disabled={!isValid || isLoading}
       >
-        {isLoading ? "…" : t(uiLanguage, "auth.loginButton")}
-      </button>
-
-      <button
-        type="button"
-        className="auth-forgot"
-        onClick={() => onForgotPassword(email)}
-      >
-        {t(uiLanguage, "auth.forgotPassword")}
+        {isLoading
+          ? t(uiLanguage, "auth.loading") ?? "Please wait..."
+          : t(uiLanguage, "auth.logInCta") ?? "Log in"}
       </button>
     </form>
   );

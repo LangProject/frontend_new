@@ -1,0 +1,114 @@
+.lp-container {
+  margin-top: 20px;
+  text-align: center;
+  animation: fadeIn 0.5s ease;
+}
+
+.lp-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.lp-lessons {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+}
+
+.lp-item {
+  position: relative;
+  width: 200px;
+  padding: 10px 0;
+}
+
+.lp-line {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  background: #ccc;
+  transform: translateX(-50%);
+}
+
+.lp-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: 0.2s ease;
+}
+
+.lp-completed .lp-circle {
+  border-color: #3cd27b;
+  background: #eafff1;
+}
+
+.lp-current .lp-circle {
+  border-color: #3cd27b;
+}
+
+.lp-locked .lp-circle {
+  opacity: 0.4;
+}
+
+.lp-check {
+  font-size: 32px;
+  color: #3cd27b;
+}
+
+.lp-lock {
+  font-size: 28px;
+}
+
+.lp-avatar {
+  width: 45px;
+  height: 45px;
+}
+
+.lp-label {
+  margin-top: 10px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lp-tasks {
+  font-size: 13px;
+  margin-top: 2px;
+  color: #777;
+}
+
+.lp-start-button {
+  margin-top: 15px;
+  width: 160px;
+  padding: 10px;
+  background: #32d368;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.lp-start-button:hover {
+  background: #2abb5a;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

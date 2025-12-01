@@ -18,16 +18,19 @@ const LANGUAGES: LanguageOption[] = [
   { code: "pl", label: "Polish", flagSrc: flagPL },
 ];
 
-interface ChooseLearningLanguageScreenProps {
+interface Props {
   uiLanguage: UiLangCode;
   selectedCode: string | null;
   onChangeSelected: (code: string) => void;
   onContinue: () => void;
 }
 
-export const ChooseLearningLanguageScreen: FC<
-  ChooseLearningLanguageScreenProps
-> = ({ uiLanguage, selectedCode, onChangeSelected, onContinue }) => {
+export const ChooseLearningLanguageScreen: FC<Props> = ({
+  uiLanguage,
+  selectedCode,
+  onChangeSelected,
+  onContinue,
+}) => {
   const hasSelection = Boolean(selectedCode);
 
   return (

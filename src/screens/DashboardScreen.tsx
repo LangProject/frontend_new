@@ -1,3 +1,4 @@
+// src/screens/DashboardScreen.tsx
 import { useState, type FC } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
 import {

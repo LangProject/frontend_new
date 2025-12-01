@@ -18,14 +18,14 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
   { code: "pl", label: "Polski", flagSrc: flagPL },
 ];
 
-interface ChooseLanguageScreenProps {
+interface Props {
   uiLanguage: UiLangCode;
   selectedCode: string | null;
   onChangeSelected: (code: string) => void;
   onContinue: () => void;
 }
 
-export const ChooseLanguageScreen: FC<ChooseLanguageScreenProps> = ({
+export const ChooseLanguageScreen: FC<Props> = ({
   uiLanguage,
   selectedCode,
   onChangeSelected,

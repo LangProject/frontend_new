@@ -1,31 +1,31 @@
+// src/App.tsx
 import { useState } from "react";
 import { ChooseLanguageScreen } from "./screens/ChooseLanguageScreen";
 import { ChooseLearningLanguageScreen } from "./screens/ChooseLearningLanguageScreen";
 import { ChooseLevelScreen } from "./screens/ChooseLevelScreen";
 import { LevelTestScreen } from "./screens/LevelTestScreen";
 import { DashboardScreen } from "./screens/DashboardScreen";
-import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
-
 import { RegisterForm } from "./components/RegisterForm";
 import { LoginForm } from "./components/LoginForm";
-
 import { useAuth } from "./hooks/useAuth";
 import {
   detectInitialUiLanguage,
   type UiLangCode,
 } from "./utils/detectUiLanguage";
 import { t } from "./i18n";
-
 import "./index.css";
+
+// 🔹 новый импорт
+import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
 
 type ScreenId =
   | "auth"
+  | "forgot-password" // 🔹 новый экран
   | "choose-ui-language"
   | "choose-learning-language"
   | "choose-level"
   | "level-test"
-  | "dashboard"
-  | "forgot-password";
+  | "dashboard";
 
 type AuthMode = "register" | "login";
 
@@ -33,7 +33,7 @@ function App() {
   const [screen, setScreen] = useState<ScreenId>("auth");
   const [authMode, setAuthMode] = useState<AuthMode>("register");
 
-  // первый запуск — всегда "en", дальше из localStorage
+  // ВАЖНО: первый запуск — всегда "en", дальше из localStorage
   const [uiLanguage, setUiLanguage] = useState<UiLangCode>(() =>
     detectInitialUiLanguage()
   );
@@ -41,9 +41,11 @@ function App() {
   const [learningLanguage, setLearningLanguage] = useState<string | null>(null);
   const [learningLevel, setLearningLevel] = useState<string | null>(null);
 
+  // временно храним email для передачи на экран "забыли пароль"
+  const [tempEmail, setTempEmail] = useState<string>("");
+
   const { isLoading, login, register } = useAuth();
 
-  // смена языка интерфейса
   const handleChangeUiLanguage = (code: UiLangCode) => {
     setUiLanguage(code);
     try {
@@ -53,24 +55,16 @@ function App() {
     }
   };
 
-  // после успешной регистрации/логина
   const handleAuthSuccess = () => {
     setScreen("choose-ui-language");
   };
 
-  // переход на экран восстановления пароля
-  const handleForgotPassword = (_email: string) => {
+  // теперь вместо alert — просто переход на экран восстановления
+  const handleForgotPassword = (email: string) => {
+    setTempEmail(email);
     setScreen("forgot-password");
-    setAuthMode("login");
   };
 
-  // логика отправки reset email из ForgotPasswordScreen
-  const handleSendResetEmail = (email: string) => {
-    // сюда потом вставишь реальный запрос на бэкенд
-    console.log("Send password reset for:", email);
-  };
-
-  // переходы по мастеру выбора языков/уровней
   const handleContinueFromUiLanguage = () => {
     if (!uiLanguage) return;
     setScreen("choose-learning-language");
@@ -94,31 +88,13 @@ function App() {
   };
 
   const handleBack = () => {
-    if (screen === "choose-ui-language") {
-      setScreen("auth");
-      return;
-    }
-    if (screen === "choose-learning-language") {
-      setScreen("choose-ui-language");
-      return;
-    }
-    if (screen === "choose-level") {
-      setScreen("choose-learning-language");
-      return;
-    }
-    if (screen === "level-test") {
-      setScreen("choose-level");
-      return;
-    }
-    if (screen === "dashboard") {
-      setScreen("choose-level");
-      return;
-    }
-    if (screen === "forgot-password") {
-      setScreen("auth");
-      setAuthMode("login");
-      return;
-    }
+    if (screen === "choose-ui-language") return setScreen("auth");
+    if (screen === "choose-learning-language")
+      return setScreen("choose-ui-language");
+    if (screen === "choose-level") return setScreen("choose-learning-language");
+    if (screen === "level-test") return setScreen("choose-level");
+    if (screen === "dashboard") return setScreen("choose-level");
+    if (screen === "forgot-password") return setScreen("auth"); // 🔹 назад с экрана сброса пароля
   };
 
   const showBackButton = screen !== "auth";
@@ -147,7 +123,7 @@ function App() {
         <div className="app-center-block">
           {/* AUTH */}
           {screen === "auth" && (
-            <div className="auth-card screen screen-enter">
+            <>
               <div className="page-title">
                 {t(uiLanguage, "auth.welcomeTitle")}
               </div>
@@ -196,81 +172,65 @@ function App() {
                   onForgotPassword={handleForgotPassword}
                 />
               )}
-            </div>
+            </>
           )}
 
           {/* FORGOT PASSWORD */}
           {screen === "forgot-password" && (
-            <div className="auth-card screen screen-enter">
-              <ForgotPasswordScreen
-                uiLanguage={uiLanguage}
-                onSendReset={handleSendResetEmail}
-                onBackToLogin={() => {
-                  setScreen("auth");
-                  setAuthMode("login");
-                }}
-              />
-            </div>
+            <ForgotPasswordScreen
+              initialEmail={tempEmail}
+              onBack={() => setScreen("auth")}
+            />
           )}
 
           {/* CHOOSE UI LANGUAGE */}
           {screen === "choose-ui-language" && (
-            <div className="screen screen-enter">
-              <ChooseLanguageScreen
-                uiLanguage={uiLanguage}
-                selectedCode={uiLanguage}
-                onChangeSelected={handleChangeUiLanguage}
-                onContinue={handleContinueFromUiLanguage}
-              />
-            </div>
+            <ChooseLanguageScreen
+              uiLanguage={uiLanguage}
+              selectedCode={uiLanguage}
+              onChangeSelected={handleChangeUiLanguage}
+              onContinue={handleContinueFromUiLanguage}
+            />
           )}
 
           {/* CHOOSE LEARNING LANGUAGE */}
           {screen === "choose-learning-language" && (
-            <div className="screen screen-enter">
-              <ChooseLearningLanguageScreen
-                uiLanguage={uiLanguage}
-                selectedCode={learningLanguage}
-                onChangeSelected={setLearningLanguage}
-                onContinue={handleContinueFromLearningLanguage}
-              />
-            </div>
+            <ChooseLearningLanguageScreen
+              uiLanguage={uiLanguage}
+              selectedCode={learningLanguage}
+              onChangeSelected={setLearningLanguage}
+              onContinue={handleContinueFromLearningLanguage}
+            />
           )}
 
           {/* LEVEL SELECT / TEST TOGGLE */}
           {screen === "choose-level" && (
-            <div className="screen screen-enter">
-              <ChooseLevelScreen
-                uiLanguage={uiLanguage}
-                learningLanguageCode={learningLanguage}
-                selectedLevel={learningLevel}
-                onChangeLevel={setLearningLevel}
-                onContinue={handleContinueFromLevel}
-                onStartTest={handleStartLevelTest}
-              />
-            </div>
+            <ChooseLevelScreen
+              uiLanguage={uiLanguage}
+              learningLanguageCode={learningLanguage}
+              selectedLevel={learningLevel}
+              onChangeLevel={setLearningLevel}
+              onContinue={handleContinueFromLevel}
+              onStartTest={handleStartLevelTest}
+            />
           )}
 
           {/* QUICK LEVEL TEST */}
           {screen === "level-test" && (
-            <div className="screen screen-enter">
-              <LevelTestScreen
-                uiLanguage={uiLanguage}
-                learningLanguageCode={learningLanguage}
-                onFinish={handleFinishLevelTest}
-              />
-            </div>
+            <LevelTestScreen
+              uiLanguage={uiLanguage}
+              learningLanguageCode={learningLanguage}
+              onFinish={handleFinishLevelTest}
+            />
           )}
 
           {/* DASHBOARD */}
           {screen === "dashboard" && (
-            <div className="screen screen-enter">
-              <DashboardScreen
-                uiLanguage={uiLanguage}
-                learningLanguageCode={learningLanguage}
-                learningLevel={learningLevel}
-              />
-            </div>
+            <DashboardScreen
+              uiLanguage={uiLanguage}
+              learningLanguageCode={learningLanguage}
+              learningLevel={learningLevel}
+            />
           )}
         </div>
       </main>

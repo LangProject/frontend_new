@@ -1,42 +1,361 @@
+/* базовые стили */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background-color: #ffffff;
+  color: #111111;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* layout приложения */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+.app-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid #111111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.app-title-block {
+  line-height: 1.1;
+}
+
+.app-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-subtitle {
+  font-size: 11px;
+  margin: 0;
+  color: #777777;
+}
+
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* экран */
+
+.screen {
+  padding: 16px;
+}
+
+.screen-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.screen-description {
+  font-size: 13px;
+  color: #666666;
+  margin: 0 0 16px 0;
+}
+
+/* форма регистрации */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 360px;
+  margin-top: 8px;
+}
+
+.form-label {
+  font-size: 13px;
+  color: #444;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 13px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #111;
+}
+
+/* кнопки */
+
+.primary-btn {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.primary-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.primary-btn:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+/* кнопка назад */
+
+.back-btn {
+  font-size: 12px;
+  color: #666;
+  border: none;
+  background: none;
+  padding: 6px 0;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.back-btn:hover {
+  color: #111;
+}
+
+.back-btn:active {
+  transform: scale(0.94);
+}
+
+/* список путей */
+
+.path-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.path-card {
+  width: 100%;
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid #e5e5e5;
+  padding: 12px 14px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.path-card:active {
+  transform: scale(0.97);
+}
+
+.path-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.path-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.path-meta {
+  font-size: 11px;
+  color: #777;
+  margin: 0;
+}
+
+/* прогресс бар внутри карточки пути */
+
+.path-progress-wrapper {
+  margin-top: 4px;
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.path-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #111;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* общий прогресс по пути в деталях */
+
+.path-progress {
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.path-progress-info {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.path-progress-bar-wrapper {
+  width: 100%;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.path-progress-bar-big {
+  height: 100%;
+  width: 0%;
+  background: #111;
+  transition: width 0.6s ease;
+}
+
+/* карточки уровней */
+
+.level-card {
+  position: relative;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+}
+
+.level-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.level-description {
+  font-size: 12px;
+  color: #666;
+  margin: 4px 0 6px 0;
+}
+
+.level-xp {
+  font-size: 11px;
+  margin: 0;
+  color: #8a8a8a;
+}
+
+.level-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #111;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.level-btn:active {
+  transform: scale(0.94);
+}
+
+.level-btn:disabled {
+  border-color: #3da167;
+  background: #e7f7ed;
+  color: #2e8152;
+  cursor: default;
+  transform: none;
+}
+
+.level-progress {
+  margin-top: 10px;
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.level-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #111;
+  transition: width 0.6s ease;
+  border-radius: 999px;
+}
+
+.level-xp-popup {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2e8152;
+  animation: xpPop 1.2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes xpPop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
   }
-  to {
-    transform: rotate(360deg);
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  80% {
+    opacity: 1;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.92);
+  }
 }
