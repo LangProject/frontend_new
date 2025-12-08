@@ -6,8 +6,6 @@ import { t } from "../i18n";
 interface RegisterFormProps {
   uiLanguage: UiLangCode;
   isLoading: boolean;
-  // onRegister должен делать реальный запрос (или мок),
-  // App передаёт сюда функцию из useAuth()
   onRegister: (data: {
     fullName: string;
     nickname: string;
@@ -15,7 +13,7 @@ interface RegisterFormProps {
     password: string;
   }) => Promise<void> | void;
   // КОГДА регистрация прошла успешно — вызываем это,
-  // и App переключает screen на "choose-ui-language"
+  // App переключит нас на экран логина
   onSuccess: () => void;
 }
 
@@ -46,14 +44,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     setError(null);
 
     try {
+      const trimmedEmail = email.trim();
+
       await onRegister({
         fullName: fullName.trim(),
         nickname: nickname.trim(),
-        email: email.trim(),
+        email: trimmedEmail,
         password: pass1,
       });
 
-      // 🔥 ВАЖНО: сообщаем App, что всё ок — он переключит экран
+      // 💾 сохраняем email для автоподстановки на странице логина
+      try {
+        window.localStorage.setItem("last_auth_email", trimmedEmail);
+      } catch {
+        // игнорируем ошибки доступа к localStorage
+      }
+
+      // сообщаем App, что всё ок — он переключит нас на Login
       onSuccess();
     } catch (err) {
       console.error("REGISTER ERROR:", err);
@@ -69,7 +76,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           className="auth-input"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Andrii Rybak"
+          placeholder=""
         />
       </label>
 
@@ -79,7 +86,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           className="auth-input"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          placeholder="andrii_01"
+          placeholder=""
         />
       </label>
 
@@ -101,7 +108,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           type="password"
           value={pass1}
           onChange={(e) => setPass1(e.target.value)}
-          placeholder="●●●●●●●●"
+          placeholder=""
         />
       </label>
 
@@ -112,7 +119,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           type="password"
           value={pass2}
           onChange={(e) => setPass2(e.target.value)}
-          placeholder="●●●●●●●●"
+          placeholder=""
         />
       </label>
 

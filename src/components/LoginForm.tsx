@@ -18,7 +18,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
   onForgotPassword,
 }) => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return window.localStorage.getItem("last_auth_email") ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [pass, setPass] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -31,12 +38,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setError(null);
 
     try {
+      const trimmedEmail = email.trim();
+
       await onLogin({
-        email: email.trim(),
+        email: trimmedEmail,
         password: pass,
       });
 
-      // 🔥 ТУТ ТОЖЕ ОБЯЗАТЕЛЬНО:
+      // обновляем last_auth_email на успешный логин
+      try {
+        window.localStorage.setItem("last_auth_email", trimmedEmail);
+      } catch {
+        /* ignore */
+      }
+
       onSuccess();
     } catch (err) {
       console.error("LOGIN ERROR:", err);

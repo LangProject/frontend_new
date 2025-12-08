@@ -14,13 +14,11 @@ import {
 } from "./utils/detectUiLanguage";
 import { t } from "./i18n";
 import "./index.css";
-
-// 🔹 новый импорт
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
 
 type ScreenId =
   | "auth"
-  | "forgot-password" // 🔹 новый экран
+  | "forgot-password"
   | "choose-ui-language"
   | "choose-learning-language"
   | "choose-level"
@@ -29,19 +27,71 @@ type ScreenId =
 
 type AuthMode = "register" | "login";
 
+const SESSION_TTL_MS = 10 * 60 * 1000; // 10 минут
+
+function getInitialScreen(): ScreenId {
+  if (typeof window === "undefined") return "auth";
+
+  try {
+    const token = window.localStorage.getItem("token");
+    const issuedAtStr = window.localStorage.getItem("token_issued_at");
+
+    if (!token || !issuedAtStr) return "auth";
+
+    const issuedAt = Number(issuedAtStr);
+    const now = Date.now();
+
+    // если токен протух — чистим и кидаем на авторизацию
+    if (!Number.isFinite(issuedAt) || now - issuedAt > SESSION_TTL_MS) {
+      window.localStorage.removeItem("token");
+      window.localStorage.removeItem("token_issued_at");
+      return "auth";
+    }
+
+    // токен жив → смотрим, что уже выбрано
+    const uiLang = window.localStorage.getItem("ui_language");
+    const learningLang = window.localStorage.getItem("learning_language");
+    const learningLevel = window.localStorage.getItem("learning_level");
+
+    if (learningLevel) return "dashboard";
+    if (learningLang) return "choose-level";
+    if (uiLang) return "choose-learning-language";
+    return "choose-ui-language";
+  } catch {
+    return "auth";
+  }
+}
+
 function App() {
-  const [screen, setScreen] = useState<ScreenId>("auth");
+  // стартовый экран зависит от токена + выбранных шагов до дэшборда
+  const [screen, setScreen] = useState<ScreenId>(() => getInitialScreen());
   const [authMode, setAuthMode] = useState<AuthMode>("register");
 
-  // ВАЖНО: первый запуск — всегда "en", дальше из localStorage
   const [uiLanguage, setUiLanguage] = useState<UiLangCode>(() =>
     detectInitialUiLanguage()
   );
 
-  const [learningLanguage, setLearningLanguage] = useState<string | null>(null);
-  const [learningLevel, setLearningLevel] = useState<string | null>(null);
+  const [learningLanguage, setLearningLanguage] = useState<string | null>(
+    () => {
+      if (typeof window === "undefined") return null;
+      try {
+        return window.localStorage.getItem("learning_language");
+      } catch {
+        return null;
+      }
+    }
+  );
 
-  // временно храним email для передачи на экран "забыли пароль"
+  const [learningLevel, setLearningLevel] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return window.localStorage.getItem("learning_level");
+    } catch {
+      return null;
+    }
+  });
+
+  // email для экрана "забыли пароль"
   const [tempEmail, setTempEmail] = useState<string>("");
 
   const { isLoading, login, register } = useAuth();
@@ -55,11 +105,53 @@ function App() {
     }
   };
 
-  const handleAuthSuccess = () => {
+  const handleChangeLearningLanguage = (code: string) => {
+    setLearningLanguage(code);
+    try {
+      window.localStorage.setItem("learning_language", code);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleChangeLearningLevel = (level: string) => {
+    setLearningLevel(level);
+    try {
+      window.localStorage.setItem("learning_level", level);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // успешный ЛОГИН → запускаем онбординг (если он ещё не пройден)
+  const handleLoginSuccess = () => {
+    // если уже всё выбрано до уровня → можно сразу в дэшборд
+    const savedLevel = window.localStorage.getItem("learning_level");
+    const savedLearningLang = window.localStorage.getItem("learning_language");
+    const savedUiLang = window.localStorage.getItem("ui_language");
+
+    if (savedLevel) {
+      setScreen("dashboard");
+      return;
+    }
+    if (savedLearningLang) {
+      setScreen("choose-level");
+      return;
+    }
+    if (savedUiLang) {
+      setScreen("choose-learning-language");
+      return;
+    }
+
     setScreen("choose-ui-language");
   };
 
-  // теперь вместо alert — просто переход на экран восстановления
+  // успешная РЕГИСТРАЦИЯ → на Login (email у нас уже в localStorage)
+  const handleRegisterSuccess = () => {
+    setAuthMode("login");
+    setScreen("auth");
+  };
+
   const handleForgotPassword = (email: string) => {
     setTempEmail(email);
     setScreen("forgot-password");
@@ -84,6 +176,11 @@ function App() {
 
   const handleFinishLevelTest = (detectedLevel: string) => {
     setLearningLevel(detectedLevel);
+    try {
+      window.localStorage.setItem("learning_level", detectedLevel);
+    } catch {
+      /* ignore */
+    }
     setScreen("dashboard");
   };
 
@@ -94,7 +191,7 @@ function App() {
     if (screen === "choose-level") return setScreen("choose-learning-language");
     if (screen === "level-test") return setScreen("choose-level");
     if (screen === "dashboard") return setScreen("choose-level");
-    if (screen === "forgot-password") return setScreen("auth"); // 🔹 назад с экрана сброса пароля
+    if (screen === "forgot-password") return setScreen("auth");
   };
 
   const showBackButton = screen !== "auth";
@@ -161,14 +258,14 @@ function App() {
                   uiLanguage={uiLanguage}
                   onRegister={register}
                   isLoading={isLoading}
-                  onSuccess={handleAuthSuccess}
+                  onSuccess={handleRegisterSuccess}
                 />
               ) : (
                 <LoginForm
                   uiLanguage={uiLanguage}
                   onLogin={login}
                   isLoading={isLoading}
-                  onSuccess={handleAuthSuccess}
+                  onSuccess={handleLoginSuccess}
                   onForgotPassword={handleForgotPassword}
                 />
               )}
@@ -198,18 +295,18 @@ function App() {
             <ChooseLearningLanguageScreen
               uiLanguage={uiLanguage}
               selectedCode={learningLanguage}
-              onChangeSelected={setLearningLanguage}
+              onChangeSelected={handleChangeLearningLanguage}
               onContinue={handleContinueFromLearningLanguage}
             />
           )}
 
-          {/* LEVEL SELECT / TEST TOGGLE */}
+          {/* CHOOSE LEVEL */}
           {screen === "choose-level" && (
             <ChooseLevelScreen
               uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               selectedLevel={learningLevel}
-              onChangeLevel={setLearningLevel}
+              onChangeLevel={handleChangeLearningLevel}
               onContinue={handleContinueFromLevel}
               onStartTest={handleStartLevelTest}
             />
