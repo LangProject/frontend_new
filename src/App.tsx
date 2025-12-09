@@ -15,6 +15,7 @@ import {
 import { t } from "./i18n";
 import "./index.css";
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
+import { LessonEngine } from "./lessons/LessonEngine";
 
 type ScreenId =
   | "auth"
@@ -23,76 +24,23 @@ type ScreenId =
   | "choose-learning-language"
   | "choose-level"
   | "level-test"
-  | "dashboard";
+  | "dashboard"
+  | "lesson";
 
 type AuthMode = "register" | "login";
 
-const SESSION_TTL_MS = 10 * 60 * 1000; // 10 минут
-
-function getInitialScreen(): ScreenId {
-  if (typeof window === "undefined") return "auth";
-
-  try {
-    const token = window.localStorage.getItem("token");
-    const issuedAtStr = window.localStorage.getItem("token_issued_at");
-
-    if (!token || !issuedAtStr) return "auth";
-
-    const issuedAt = Number(issuedAtStr);
-    const now = Date.now();
-
-    // если токен протух — чистим и кидаем на авторизацию
-    if (!Number.isFinite(issuedAt) || now - issuedAt > SESSION_TTL_MS) {
-      window.localStorage.removeItem("token");
-      window.localStorage.removeItem("token_issued_at");
-      return "auth";
-    }
-
-    // токен жив → смотрим, что уже выбрано
-    const uiLang = window.localStorage.getItem("ui_language");
-    const learningLang = window.localStorage.getItem("learning_language");
-    const learningLevel = window.localStorage.getItem("learning_level");
-
-    if (learningLevel) return "dashboard";
-    if (learningLang) return "choose-level";
-    if (uiLang) return "choose-learning-language";
-    return "choose-ui-language";
-  } catch {
-    return "auth";
-  }
-}
-
 function App() {
-  // стартовый экран зависит от токена + выбранных шагов до дэшборда
-  const [screen, setScreen] = useState<ScreenId>(() => getInitialScreen());
+  const [screen, setScreen] = useState<ScreenId>("auth");
   const [authMode, setAuthMode] = useState<AuthMode>("register");
 
-  const [uiLanguage, setUiLanguage] = useState<UiLangCode>(() =>
+  const [uiLanguage, setUiLanguage] = useState<UiLangCode>(
     detectInitialUiLanguage()
   );
-
-  const [learningLanguage, setLearningLanguage] = useState<string | null>(
-    () => {
-      if (typeof window === "undefined") return null;
-      try {
-        return window.localStorage.getItem("learning_language");
-      } catch {
-        return null;
-      }
-    }
-  );
-
-  const [learningLevel, setLearningLevel] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return window.localStorage.getItem("learning_level");
-    } catch {
-      return null;
-    }
-  });
-
-  // email для экрана "забыли пароль"
+  const [learningLanguage, setLearningLanguage] = useState<string | null>(null);
+  const [learningLevel, setLearningLevel] = useState<string | null>(null);
   const [tempEmail, setTempEmail] = useState<string>("");
+
+  const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
 
   const { isLoading, login, register } = useAuth();
 
@@ -105,51 +53,8 @@ function App() {
     }
   };
 
-  const handleChangeLearningLanguage = (code: string) => {
-    setLearningLanguage(code);
-    try {
-      window.localStorage.setItem("learning_language", code);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const handleChangeLearningLevel = (level: string) => {
-    setLearningLevel(level);
-    try {
-      window.localStorage.setItem("learning_level", level);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  // успешный ЛОГИН → запускаем онбординг (если он ещё не пройден)
-  const handleLoginSuccess = () => {
-    // если уже всё выбрано до уровня → можно сразу в дэшборд
-    const savedLevel = window.localStorage.getItem("learning_level");
-    const savedLearningLang = window.localStorage.getItem("learning_language");
-    const savedUiLang = window.localStorage.getItem("ui_language");
-
-    if (savedLevel) {
-      setScreen("dashboard");
-      return;
-    }
-    if (savedLearningLang) {
-      setScreen("choose-level");
-      return;
-    }
-    if (savedUiLang) {
-      setScreen("choose-learning-language");
-      return;
-    }
-
+  const handleAuthSuccess = () => {
     setScreen("choose-ui-language");
-  };
-
-  // успешная РЕГИСТРАЦИЯ → на Login (email у нас уже в localStorage)
-  const handleRegisterSuccess = () => {
-    setAuthMode("login");
-    setScreen("auth");
   };
 
   const handleForgotPassword = (email: string) => {
@@ -172,44 +77,14 @@ function App() {
     setScreen("dashboard");
   };
 
-  const handleStartLevelTest = () => setScreen("level-test");
-
-  const handleFinishLevelTest = (detectedLevel: string) => {
-    setLearningLevel(detectedLevel);
-    try {
-      window.localStorage.setItem("learning_level", detectedLevel);
-    } catch {
-      /* ignore */
-    }
-    setScreen("dashboard");
+  const handleStartLessonFromDashboard = (lessonId: string) => {
+    setCurrentLessonId(lessonId);
+    setScreen("lesson");
   };
-
-  const handleBack = () => {
-    if (screen === "choose-ui-language") return setScreen("auth");
-    if (screen === "choose-learning-language")
-      return setScreen("choose-ui-language");
-    if (screen === "choose-level") return setScreen("choose-learning-language");
-    if (screen === "level-test") return setScreen("choose-level");
-    if (screen === "dashboard") return setScreen("choose-level");
-    if (screen === "forgot-password") return setScreen("auth");
-  };
-
-  const showBackButton = screen !== "auth";
 
   return (
     <div className="app-shell">
       <header className="app-header">
-        {showBackButton && (
-          <button
-            type="button"
-            className="app-back-button"
-            onClick={handleBack}
-            aria-label="Back"
-          >
-            ←
-          </button>
-        )}
-
         <div className="app-header-logo">
           <span className="app-header-logo-badge">L</span>
           <span>LangProject</span>
@@ -258,14 +133,14 @@ function App() {
                   uiLanguage={uiLanguage}
                   onRegister={register}
                   isLoading={isLoading}
-                  onSuccess={handleRegisterSuccess}
+                  onSuccess={handleAuthSuccess}
                 />
               ) : (
                 <LoginForm
                   uiLanguage={uiLanguage}
                   onLogin={login}
                   isLoading={isLoading}
-                  onSuccess={handleLoginSuccess}
+                  onSuccess={handleAuthSuccess}
                   onForgotPassword={handleForgotPassword}
                 />
               )}
@@ -295,7 +170,7 @@ function App() {
             <ChooseLearningLanguageScreen
               uiLanguage={uiLanguage}
               selectedCode={learningLanguage}
-              onChangeSelected={handleChangeLearningLanguage}
+              onChangeSelected={setLearningLanguage}
               onContinue={handleContinueFromLearningLanguage}
             />
           )}
@@ -306,18 +181,18 @@ function App() {
               uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               selectedLevel={learningLevel}
-              onChangeLevel={handleChangeLearningLevel}
+              onChangeLevel={setLearningLevel}
               onContinue={handleContinueFromLevel}
-              onStartTest={handleStartLevelTest}
+              onStartTest={() => setScreen("level-test")}
             />
           )}
 
-          {/* QUICK LEVEL TEST */}
+          {/* LEVEL TEST */}
           {screen === "level-test" && (
             <LevelTestScreen
               uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
-              onFinish={handleFinishLevelTest}
+              onFinish={() => setScreen("dashboard")}
             />
           )}
 
@@ -327,6 +202,16 @@ function App() {
               uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               learningLevel={learningLevel}
+              onStartLesson={handleStartLessonFromDashboard}
+            />
+          )}
+
+          {/* LESSON ENGINE */}
+          {screen === "lesson" && currentLessonId && (
+            <LessonEngine
+              lessonId={currentLessonId}
+              onBack={() => setScreen("dashboard")}
+              onFinish={() => setScreen("dashboard")}
             />
           )}
         </div>

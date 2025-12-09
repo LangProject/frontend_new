@@ -13,6 +13,7 @@ interface DashboardScreenProps {
   uiLanguage: UiLangCode;
   learningLanguageCode: string | null;
   learningLevel: string | null;
+  onStartLesson: (lessonId: string) => void;
 }
 
 const PATHS: LearningPath[] = [
@@ -43,6 +44,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
   uiLanguage,
   learningLanguageCode,
   learningLevel,
+  onStartLesson,
 }) => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
@@ -60,7 +62,9 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
 
   const handleStartTest = () => {
     if (!selectedPath) return;
-    console.log("Start test for path:", selectedPath.id);
+
+    // пока что любая выбранная ветка запускает один и тот же урок
+    onStartLesson("spanish_basic_1");
   };
 
   return (

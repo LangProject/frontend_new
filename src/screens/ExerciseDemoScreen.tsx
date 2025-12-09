@@ -1,6 +1,7 @@
+// src/screens/ExerciseDemoScreen.tsx
 import type { FC } from "react";
 import { useState } from "react";
-import { ExerciseLayout, type FooterState } from "./ExerciseLayout";
+import "./lesson.css";
 
 export type ExerciseType =
   | "single_choice"
@@ -14,494 +15,601 @@ export type ExerciseType =
   | "error_identification"
   | "verb_conjugation";
 
-// ---------------- MOCK-ДАННЫЕ ---------------- //
-
-const singleChoiceMock = {
-  type: "single_choice" as const,
-  prompt: "Choose the correct translation for **cat**",
-  options: [
-    { id: 1, choice: "Perro", is_correct: false },
-    { id: 2, choice: "Gato", is_correct: true },
-    { id: 3, choice: "Casa", is_correct: false },
-    { id: 4, choice: "Auto", is_correct: false },
-  ],
-};
-
-const multipleChoiceMock = {
-  type: "multiple_choice" as const,
-  prompt: "Select all words that are fruits",
-  category: "fruits",
-  options: [
-    { id: 1, choice: "Manzana", is_correct: true },
-    { id: 2, choice: "Perro", is_correct: false },
-    { id: 3, choice: "Naranja", is_correct: true },
-    { id: 4, choice: "Casa", is_correct: false },
-    { id: 5, choice: "Banana", is_correct: true },
-    { id: 6, choice: "Auto", is_correct: false },
-  ],
-};
-
-const matchPairsMock = {
-  type: "match_pairs" as const,
-  prompt: "Match the words with their translations",
-  pairs: [
-    { id: "p1", left: "Gato", right: "Cat" },
-    { id: "p2", left: "Perro", right: "Dog" },
-    { id: "p3", left: "Casa", right: "House" },
-    { id: "p4", left: "Libro", right: "Book" },
-  ],
-};
-
-const definitionMatchMock = {
-  type: "definition_match" as const,
-  prompt: "Choose the correct definition for the word:",
-  word: "Gato",
-  definitions: [
-    {
-      id: "d1",
-      definition: "A small domesticated carnivorous mammal",
-      is_correct: true,
-    },
-    {
-      id: "d2",
-      definition: "A large herbivorous mammal",
-      is_correct: false,
-    },
-    {
-      id: "d3",
-      definition: "A flying vehicle that transports people",
-      is_correct: false,
-    },
-  ],
-};
-
-const translationMock = {
-  type: "translation" as const,
-  prompt: "Translate to Spanish",
-  source_text: "The cat is sleeping.",
-  correct_translations: ["El gato está durmiendo.", "El gato duerme."],
-};
-
-const sentenceReorderMock = {
-  type: "sentence_reorder" as const,
-  prompt: "Reorder the words to form a correct sentence.",
-  words: ["muy", "El", "es", "gato", "bonito"],
-  correct_order: ["El", "gato", "es", "muy", "bonito"],
-};
-
-const errorCorrectionMock = {
-  type: "error_correction" as const,
-  prompt: "Correct the error in this sentence",
-  incorrect_sentence_html: "Yo <span class='error'>es</span> un estudiante.",
-  correct_sentence: "Yo soy un estudiante.",
-  explanation:
-    "The verb 'ser' must be conjugated as 'soy' for first person singular (yo).",
-};
-
-const fillBlankMock = {
-  type: "fill_blank" as const,
-  sentence_parts: ["El ", " es muy bonito."],
-  correct_answer: "gato",
-  distractors: ["perro", "casa"],
-};
-
-const errorIdentificationMock = {
-  type: "error_identification" as const,
-  prompt: "Identify the error in this sentence",
-  sentence_words: [
-    { id: 1, text: "El", is_error: false },
-    { id: 2, text: "gatos", is_error: true },
-    { id: 3, text: "es", is_error: false },
-    { id: 4, text: "muy", is_error: false },
-    { id: 5, text: "bonito.", is_error: false },
-  ],
-  explanation: "Should be 'gato' (singular) to agree with 'El'.",
-};
-
-const verbConjugationMock = {
-  type: "verb_conjugation" as const,
-  prompt: "Conjugate the verb correctly",
-  verb_infinitive: "hablar",
-  tags: ["Present", "First person singular"],
-  context_pre: "Yo ",
-  context_post: " español.",
-  correct_answer: "hablo",
-  explanation:
-    "The present tense, first person singular form of 'hablar' is 'hablo'.",
-};
-
-// ---------------- Сам экран-демо ---------------- //
-
 interface ExerciseDemoScreenProps {
   type: ExerciseType;
-  // можно потом пробрасывать onBack/step/total из Dashboard
   step?: number;
   total?: number;
   onBack?: () => void;
+  onComplete?: (result: { correct: boolean }) => void;
 }
+
+const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
 export const ExerciseDemoScreen: FC<ExerciseDemoScreenProps> = ({
   type,
-  step = 2,
+  step = 1,
   total = 10,
   onBack,
+  onComplete,
 }) => {
-  // общее состояние для кнопки/цвета – просто заглушка
   const [checked, setChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
 
-  const getFooterState = (): FooterState => {
-    if (!checked) return "check";
-    return "continue-success"; // всегда как будто всё ок
+  // состояния под разные типы
+  const [singleSelected, setSingleSelected] = useState<number | null>(null);
+  const [multiSelected, setMultiSelected] = useState<number[]>([]);
+  const [translationValue, setTranslationValue] = useState(
+    "El gato está durmiendo."
+  );
+  const [reorderSelected, setReorderSelected] = useState<number[]>([]);
+  const [errorCorrectionValue, setErrorCorrectionValue] = useState(
+    "Yo soy un estudiante."
+  );
+  const [fillBlankSelected, setFillBlankSelected] = useState<string | null>(
+    null
+  );
+  const [errorIdSelected, setErrorIdSelected] = useState<string | null>(null);
+  const [conjugationValue, setConjugationValue] = useState("hablo");
+  const [definitionSelected, setDefinitionSelected] = useState<number | null>(
+    null
+  );
+  const [matchSelectedLeft, setMatchSelectedLeft] = useState<string | null>(
+    null
+  );
+  const [matchPairs, setMatchPairs] = useState<
+    { left: string; right: string }[]
+  >([]);
+
+  // данные для конкретных мок-заданий
+  const singleOptions = ["Casa", "Perro", "Gato", "Auto"];
+  const singleCorrectIndex = 2;
+
+  const multiOptions = [
+    "Manzana",
+    "Pera",
+    "Mesa",
+    "Plátano",
+    "Casa",
+    "Naranja",
+  ];
+  const multiCorrectIndices = [0, 1, 3, 5]; // фрукты
+
+  const reorderWords = ["El", "es", "gato"];
+  const reorderCorrectOrder = [0, 2, 1]; // El gato es
+
+  const fillBlankOptions = ["perro", "gato", "casa"];
+  const fillBlankCorrect = "gato";
+
+  const errorSentenceWords = ["El", "gatos", "es", "muy", "bonito."];
+  const errorCorrectWord = "gatos";
+
+  const definitionOptions = [
+    "A small domesticated carnivorous mammal",
+    "A large herbivorous mammal",
+  ];
+  const definitionCorrectIndex = 0;
+
+  const matchLeft = ["Gato", "Perro", "Casa"];
+  const matchRight = ["Dog", "Cat", "House"];
+  const matchCorrect: Record<string, string> = {
+    Gato: "Cat",
+    Perro: "Dog",
+    Casa: "House",
   };
 
-  const handleFooterClick = () => {
-    if (!checked) {
-      setChecked(true);
-    } else {
-      // Continue – тут пока просто сбрасываем
-      setChecked(false);
+  const evaluate = (): boolean => {
+    switch (type) {
+      case "single_choice":
+        return singleSelected === singleCorrectIndex;
+
+      case "multiple_choice": {
+        const sel = new Set(multiSelected);
+        const correct = new Set(multiCorrectIndices);
+        if (sel.size !== correct.size) return false;
+        for (const idx of correct) if (!sel.has(idx)) return false;
+        return true;
+      }
+
+      case "translation": {
+        const correct = "El gato está durmiendo.";
+        return normalize(translationValue) === normalize(correct);
+      }
+
+      case "sentence_reorder": {
+        if (reorderSelected.length !== reorderWords.length) return false;
+        for (let i = 0; i < reorderCorrectOrder.length; i++) {
+          if (reorderSelected[i] !== reorderCorrectOrder[i]) return false;
+        }
+        return true;
+      }
+
+      case "error_correction": {
+        const correct = "Yo soy un estudiante.";
+        return normalize(errorCorrectionValue) === normalize(correct);
+      }
+
+      case "fill_blank":
+        return fillBlankSelected === fillBlankCorrect;
+
+      case "error_identification":
+        return errorIdSelected === errorCorrectWord;
+
+      case "verb_conjugation":
+        return normalize(conjugationValue) === normalize("hablo");
+
+      case "definition_match":
+        return definitionSelected === definitionCorrectIndex;
+
+      case "match_pairs": {
+        // считаем правильным, если все три пары выбраны и совпадают с correct
+        if (matchPairs.length !== matchLeft.length) return false;
+        for (const p of matchPairs) {
+          if (matchCorrect[p.left] !== p.right) return false;
+        }
+        return true;
+      }
+
+      default:
+        return true;
     }
   };
 
-  // ---- рендер по типу ---- //
+  const resetForNext = () => {
+    setChecked(false);
+    setIsCorrect(null);
+    setFeedback(null);
+  };
 
-  if (type === "single_choice") {
-    const mock = singleChoiceMock;
-    return (
-      <ExerciseLayout
-        step={step}
-        total={total}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-options">
-          {mock.options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              className="exercise-option-button"
-            >
-              {opt.choice}
-            </button>
-          ))}
-        </div>
-      </ExerciseLayout>
+  const footerLabel = !checked ? "Check" : isCorrect ? "Continue" : "Try again";
+
+  const handleFooterClick = () => {
+    if (!checked) {
+      const ok = evaluate();
+      setChecked(true);
+      setIsCorrect(ok);
+      setFeedback(ok ? "Correct! 🎉" : "Not quite, try again.");
+    } else {
+      if (isCorrect) {
+        resetForNext();
+        onComplete?.({ correct: true });
+      } else {
+        // даём попробовать ещё раз
+        resetForNext();
+      }
+    }
+  };
+
+  // ----- выбор для разных типов -----
+
+  const toggleMultiIndex = (idx: number) => {
+    setMultiSelected((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
     );
-  }
+  };
 
-  if (type === "multiple_choice") {
-    const mock = multipleChoiceMock;
-    return (
-      <ExerciseLayout
-        step={step}
-        total={total}
-        onBack={onBack}
-        title={
+  const handleReorderClick = (idx: number) => {
+    if (reorderSelected.includes(idx)) return;
+    setReorderSelected((prev) => [...prev, idx]);
+  };
+
+  const handleReorderReset = () => {
+    setReorderSelected([]);
+  };
+
+  const handleMatchLeftClick = (word: string) => {
+    setMatchSelectedLeft(word);
+  };
+
+  const handleMatchRightClick = (word: string) => {
+    if (!matchSelectedLeft) return;
+    // не даём использовать правое слово дважды
+    if (matchPairs.some((p) => p.right === word)) return;
+    setMatchPairs((prev) => [
+      ...prev.filter((p) => p.left !== matchSelectedLeft),
+      { left: matchSelectedLeft, right: word },
+    ]);
+    setMatchSelectedLeft(null);
+  };
+
+  // ----- рендер контента -----
+
+  const renderExerciseContent = () => {
+    switch (type) {
+      case "single_choice":
+        return (
           <>
-            <b>{mock.prompt}</b>
-            <div className="exercise-subtitle">
-              Category: <b>{mock.category}</b>
+            <p className="exercise-prompt">
+              Choose the correct translation for "Cat"
+            </p>
+            {singleOptions.map((opt, idx) => {
+              const selected = singleSelected === idx;
+              const classes = [
+                "choice-item",
+                selected && "choice-item-selected",
+                checked &&
+                  isCorrect &&
+                  idx === singleCorrectIndex &&
+                  "choice-item-correct",
+                checked &&
+                  !isCorrect &&
+                  selected &&
+                  idx !== singleCorrectIndex &&
+                  "choice-item-wrong",
+              ]
+                .filter(Boolean)
+                .join(" ");
+
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  className={classes}
+                  onClick={() => !checked && setSingleSelected(idx)}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </>
+        );
+
+      case "multiple_choice":
+        return (
+          <>
+            <p className="exercise-prompt">Select all words that are fruits</p>
+            <div className="choice-grid">
+              {multiOptions.map((opt, idx) => {
+                const selected = multiSelected.includes(idx);
+                const isCorrectIdx = multiCorrectIndices.includes(idx);
+                const classes = [
+                  "choice-item",
+                  selected && "choice-item-selected",
+                  checked && isCorrectIdx && "choice-item-correct",
+                  checked &&
+                    !isCorrect &&
+                    selected &&
+                    !isCorrectIdx &&
+                    "choice-item-wrong",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    className={classes}
+                    onClick={() => !checked && toggleMultiIndex(idx)}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
             </div>
           </>
-        }
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-grid-2x3">
-          {mock.options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              className="exercise-option-button"
-            >
-              {opt.choice}
-            </button>
-          ))}
-        </div>
-      </ExerciseLayout>
-    );
-  }
+        );
 
-  if (type === "match_pairs") {
-    const mock = matchPairsMock;
-    return (
-      <ExerciseLayout
-        step={step}
-        total={total}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel="(no Check — pairs are auto-checked)"
-        footerState="disabled"
-      >
-        <div className="exercise-match-columns">
-          <div className="exercise-match-column">
-            {mock.pairs.map((p) => (
-              <div key={p.id} className="exercise-match-card">
-                {p.left}
-              </div>
-            ))}
-          </div>
-          <div className="exercise-match-column">
-            {mock.pairs
-              .slice()
-              .reverse()
-              .map((p) => (
-                <div key={p.id} className="exercise-match-card">
-                  {p.right}
-                </div>
+      case "translation":
+        return (
+          <>
+            <p className="exercise-prompt">Translate to Spanish</p>
+            <div className="sentence-big">The cat is sleeping.</div>
+            <textarea
+              className="text-input"
+              value={translationValue}
+              onChange={(e) => setTranslationValue(e.target.value)}
+            />
+            {checked && !isCorrect && (
+              <p className="hint-line">
+                Correct answer:{" "}
+                <span className="hint-strong">El gato está durmiendo.</span>
+              </p>
+            )}
+          </>
+        );
+
+      case "sentence_reorder":
+        return (
+          <>
+            <p className="exercise-prompt">
+              Reorder the words to form a sentence
+            </p>
+            <div className="assembly-area">
+              {reorderSelected.length === 0 && (
+                <span className="assembly-placeholder">
+                  Tap words below to add them here
+                </span>
+              )}
+              {reorderSelected.map((idx) => (
+                <span key={idx} className="word-chip word-chip-selected">
+                  {reorderWords[idx]}
+                </span>
               ))}
-          </div>
-        </div>
-        <div className="exercise-hint">
-          Pairs are checked instantly when user taps left + right card. Here
-          it's just a visual stub.
-        </div>
-      </ExerciseLayout>
-    );
-  }
-
-  if (type === "definition_match") {
-    const mock = definitionMatchMock;
-    return (
-      <ExerciseLayout
-        step={5}
-        total={10}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-word-big">{mock.word}</div>
-        <div className="exercise-options">
-          {mock.definitions.map((opt) => (
+            </div>
+            <div className="word-bank">
+              {reorderWords.map((w, idx) => (
+                <button
+                  key={w}
+                  type="button"
+                  className={
+                    "word-chip" +
+                    (reorderSelected.includes(idx) ? " word-chip-disabled" : "")
+                  }
+                  onClick={() => !checked && handleReorderClick(idx)}
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
             <button
-              key={opt.id}
               type="button"
-              className="exercise-option-button exercise-option-definition"
+              className="secondary-btn small-btn"
+              onClick={handleReorderReset}
+              disabled={checked}
             >
-              {opt.definition}
+              Reset order
             </button>
-          ))}
-        </div>
-      </ExerciseLayout>
-    );
-  }
+          </>
+        );
 
-  if (type === "translation") {
-    const mock = translationMock;
-    return (
-      <ExerciseLayout
-        step={6}
-        total={10}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-source-sentence">{mock.source_text}</div>
-        <textarea
-          className="exercise-input"
-          placeholder="Type your translation here..."
-          rows={3}
-        />
-        {checked && (
-          <div className="exercise-explanation-card">
-            <div className="exercise-explanation-title">
-              Model translations:
+      case "error_correction":
+        return (
+          <>
+            <p className="exercise-prompt">Rewrite the sentence correctly</p>
+            <p className="sentence-big">Yo es un estudiante.</p>
+            <input
+              className="text-input"
+              value={errorCorrectionValue}
+              onChange={(e) => setErrorCorrectionValue(e.target.value)}
+            />
+            {checked && !isCorrect && (
+              <p className="hint-line">
+                Correct:{" "}
+                <span className="hint-strong">Yo soy un estudiante.</span>
+              </p>
+            )}
+          </>
+        );
+
+      case "fill_blank":
+        return (
+          <>
+            <p className="exercise-prompt">Fill in the blank</p>
+            <p className="sentence-big">
+              El{" "}
+              <span className="blank-underline">
+                {fillBlankSelected ?? "______"}
+              </span>{" "}
+              es muy bonito.
+            </p>
+            <div className="word-bank">
+              {fillBlankOptions.map((w) => {
+                const selected = fillBlankSelected === w;
+                const isCorrectWord = w === fillBlankCorrect;
+                const classes = [
+                  "word-chip",
+                  selected && "word-chip-selected",
+                  checked && isCorrect && isCorrectWord && "word-chip-correct",
+                  checked &&
+                    !isCorrect &&
+                    selected &&
+                    !isCorrectWord &&
+                    "word-chip-wrong",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <button
+                    key={w}
+                    type="button"
+                    className={classes}
+                    onClick={() => !checked && setFillBlankSelected(w)}
+                  >
+                    {w}
+                  </button>
+                );
+              })}
             </div>
-            <div className="exercise-explanation-text">
-              {mock.correct_translations.join(" / ")}
+          </>
+        );
+
+      case "error_identification":
+        return (
+          <>
+            <p className="exercise-prompt">
+              Identify the error in this sentence
+            </p>
+            <p className="sentence-big">
+              {errorSentenceWords.map((w) => {
+                const selected = errorIdSelected === w;
+                const isError = w === errorCorrectWord;
+                const classes = [
+                  "word-chip",
+                  selected && "word-chip-selected",
+                  checked && isError && "word-chip-error-correct",
+                  checked &&
+                    !isCorrect &&
+                    selected &&
+                    !isError &&
+                    "word-chip-error-wrong",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+
+                return (
+                  <button
+                    key={w + Math.random()}
+                    type="button"
+                    className={classes}
+                    onClick={() => !checked && setErrorIdSelected(w)}
+                  >
+                    {w}
+                  </button>
+                );
+              })}
+            </p>
+          </>
+        );
+
+      case "verb_conjugation":
+        return (
+          <>
+            <p className="exercise-prompt">Conjugate the verb correctly</p>
+            <h2 className="word-big">hablar</h2>
+            <p className="tag-row">
+              <span className="tag-pill">Present</span>
+              <span className="tag-pill">1st person singular</span>
+            </p>
+            <p className="sentence-big">Yo ______ español.</p>
+            <input
+              className="text-input"
+              value={conjugationValue}
+              onChange={(e) => setConjugationValue(e.target.value)}
+            />
+            {checked && !isCorrect && (
+              <p className="hint-line">
+                Correct form: <span className="hint-strong">hablo</span>
+              </p>
+            )}
+          </>
+        );
+
+      case "definition_match":
+        return (
+          <>
+            <p className="exercise-prompt">Choose the correct definition</p>
+            <h2 className="word-big">Gato</h2>
+            {definitionOptions.map((opt, idx) => {
+              const selected = definitionSelected === idx;
+              const isCorrectIdx = idx === definitionCorrectIndex;
+              const classes = [
+                "choice-item",
+                selected && "choice-item-selected",
+                checked && isCorrectIdx && "choice-item-correct",
+                checked &&
+                  !isCorrect &&
+                  selected &&
+                  !isCorrectIdx &&
+                  "choice-item-wrong",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  className={classes}
+                  onClick={() => !checked && setDefinitionSelected(idx)}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </>
+        );
+
+      case "match_pairs":
+        return (
+          <>
+            <p className="exercise-prompt">
+              Match the Spanish words with their English translations
+            </p>
+            <div className="match-grid">
+              <div className="match-column">
+                {matchLeft.map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    className={
+                      "match-item" +
+                      (matchSelectedLeft === w ? " match-item-selected" : "")
+                    }
+                    onClick={() => !checked && handleMatchLeftClick(w)}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+              <div className="match-column">
+                {matchRight.map((w) => (
+                  <button
+                    key={w}
+                    type="button"
+                    className={
+                      "match-item" +
+                      (matchPairs.some((p) => p.right === w)
+                        ? " match-item-disabled"
+                        : "")
+                    }
+                    onClick={() => !checked && handleMatchRightClick(w)}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </ExerciseLayout>
-    );
-  }
+            {matchPairs.length > 0 && (
+              <div className="match-result">
+                {matchPairs.map((p) => (
+                  <div key={p.left + p.right}>
+                    {p.left} → {p.right}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
 
-  if (type === "sentence_reorder") {
-    const mock = sentenceReorderMock;
-    return (
-      <ExerciseLayout
-        step={7}
-        total={10}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-sentence-area">
-          <div className="exercise-assembly-label">Assembly area</div>
-          <div className="exercise-assembly-box">El gato es muy bonito</div>
-        </div>
-        <div className="exercise-word-bank">
-          {mock.words.map((w, idx) => (
-            <button key={idx} className="exercise-word-chip" type="button">
-              {w}
-            </button>
-          ))}
-        </div>
-      </ExerciseLayout>
-    );
-  }
+      default:
+        return <p>Unknown exercise type</p>;
+    }
+  };
 
-  if (type === "error_correction") {
-    const mock = errorCorrectionMock;
-    return (
-      <ExerciseLayout
-        step={8}
-        total={10}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div
-          className="exercise-source-sentence error-highlight"
-          dangerouslySetInnerHTML={{
-            __html: mock.incorrect_sentence_html.replace(
-              "class='error'",
-              "class='error-span'"
-            ),
-          }}
-        />
-        <input
-          className="exercise-input"
-          placeholder="Rewrite the sentence correctly..."
-        />
-        {checked && (
-          <div className="exercise-explanation-card">
-            <div className="exercise-explanation-title">Correct sentence:</div>
-            <div className="exercise-explanation-text">
-              {mock.correct_sentence}
-            </div>
-            <div className="exercise-explanation-title mt-6">Explanation:</div>
-            <div className="exercise-explanation-text">{mock.explanation}</div>
-          </div>
-        )}
-      </ExerciseLayout>
-    );
-  }
-
-  if (type === "fill_blank") {
-    const mock = fillBlankMock;
-    return (
-      <ExerciseLayout
-        step={9}
-        total={10}
-        onBack={onBack}
-        title={<b>Fill in the blank</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-source-sentence">
-          {mock.sentence_parts[0]}
-          <span className="exercise-blank-slot">______</span>
-          {mock.sentence_parts[1]}
-        </div>
-        <div className="exercise-word-bank">
-          {[mock.correct_answer, ...mock.distractors].map((w) => (
-            <button key={w} className="exercise-word-chip" type="button">
-              {w}
-            </button>
-          ))}
-        </div>
-      </ExerciseLayout>
-    );
-  }
-
-  if (type === "error_identification") {
-    const mock = errorIdentificationMock;
-    return (
-      <ExerciseLayout
-        step={10}
-        total={10}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-word-row">
-          {mock.sentence_words.map((w) => (
-            <button key={w.id} type="button" className="exercise-word-token">
-              {w.text}
-            </button>
-          ))}
-        </div>
-        {checked && (
-          <div className="exercise-explanation-card">
-            <div className="exercise-explanation-title">Explanation:</div>
-            <div className="exercise-explanation-text">{mock.explanation}</div>
-          </div>
-        )}
-      </ExerciseLayout>
-    );
-  }
-
-  if (type === "verb_conjugation") {
-    const mock = verbConjugationMock;
-    return (
-      <ExerciseLayout
-        step={11}
-        total={11}
-        onBack={onBack}
-        title={<b>{mock.prompt}</b>}
-        footerLabel={checked ? "Continue" : "Check"}
-        footerState={getFooterState()}
-        onFooterClick={handleFooterClick}
-      >
-        <div className="exercise-word-big">{mock.verb_infinitive}</div>
-        <div className="exercise-tag-row">
-          {mock.tags.map((tag) => (
-            <span key={tag} className="exercise-tag">
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="exercise-context-line">
-          {mock.context_pre}
-          <input
-            className="exercise-inline-input"
-            placeholder="..."
-            autoComplete="off"
-          />
-          {mock.context_post}
-        </div>
-
-        {checked && (
-          <div className="exercise-explanation-card">
-            <div className="exercise-explanation-title">Correct answer:</div>
-            <div className="exercise-explanation-text">
-              {mock.correct_answer}
-            </div>
-            <div className="exercise-explanation-title mt-6">Explanation:</div>
-            <div className="exercise-explanation-text">{mock.explanation}</div>
-          </div>
-        )}
-      </ExerciseLayout>
-    );
-  }
-
-  // fallback
   return (
-    <ExerciseLayout
-      step={1}
-      total={1}
-      title="Exercise preview"
-      footerLabel="Check"
-      footerState="disabled"
-    >
-      <div>Unknown exercise type</div>
-    </ExerciseLayout>
+    <div className="lesson-screen">
+      {/* HEADER */}
+      <div className="lesson-header">
+        {onBack && (
+          <button className="back-btn" onClick={onBack}>
+            ←
+          </button>
+        )}
+
+        <div className="lesson-progress">
+          <div className="bar">
+            <div
+              className="bar-fill"
+              style={{ width: `${(step / total) * 100}%` }}
+            />
+          </div>
+          <span className="step-label">
+            {step}/{total}
+          </span>
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      <div className="lesson-content">{renderExerciseContent()}</div>
+
+      {/* FEEDBACK */}
+      {feedback && (
+        <div
+          className={
+            "feedback " + (isCorrect ? "feedback-correct" : "feedback-wrong")
+          }
+        >
+          {feedback}
+        </div>
+      )}
+
+      {/* FOOTЕР */}
+      <div className="lesson-footer">
+        <button className="footer-btn" onClick={handleFooterClick}>
+          {footerLabel}
+        </button>
+      </div>
+    </div>
   );
 };
