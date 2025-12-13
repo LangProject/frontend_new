@@ -83,7 +83,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           type="password"
           value={pass}
           onChange={(e) => setPass(e.target.value)}
-          placeholder="●●●●●●●●"
+          placeholder="Enter your password"
         />
       </label>
 

@@ -1,114 +1,288 @@
-.lp-container {
-  margin-top: 20px;
-  text-align: center;
-  animation: fadeIn 0.5s ease;
-}
+/* ===== Общий layout экрана пути (внутри app-center-block) ===== */
 
-.lp-title {
-  font-size: 20px;
-  margin-bottom: 20px;
-  font-weight: 600;
-}
-
-.lp-lessons {
+.path-layout {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 40px;
+  justify-content: center;
+}
+
+.path-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+  padding: 20px 22px 24px;
+}
+
+/* ===== Хедер ===== */
+
+.path-header {
+  display: flex;
   align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.lp-item {
-  position: relative;
-  width: 200px;
-  padding: 10px 0;
-}
-
-.lp-line {
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  width: 2px;
-  height: 40px;
-  background: #ccc;
-  transform: translateX(-50%);
-}
-
-.lp-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: white;
-  border: 3px solid #ddd;
+.path-back-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
-  transition: 0.2s ease;
+  cursor: pointer;
 }
 
-.lp-completed .lp-circle {
-  border-color: #3cd27b;
-  background: #eafff1;
+.path-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.lp-current .lp-circle {
-  border-color: #3cd27b;
+.path-title {
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.lp-locked .lp-circle {
-  opacity: 0.4;
+.path-level-label {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  display: inline-block;
 }
 
-.lp-check {
-  font-size: 32px;
-  color: #3cd27b;
+/* ===== Вертикальная цепочка уроков ===== */
+
+.path-timeline {
+  margin-top: 12px;
+  padding: 8px 0 16px;
 }
 
-.lp-lock {
-  font-size: 28px;
+.path-step {
+  position: relative;
+  padding-left: 60px;
+  margin-bottom: 22px;
 }
 
-.lp-avatar {
-  width: 45px;
-  height: 45px;
+/* соединительная линия вверх от кружка */
+
+.path-line {
+  position: absolute;
+  left: 27px;
+  top: -18px;
+  width: 4px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
 }
 
-.lp-label {
-  margin-top: 10px;
-  font-size: 16px;
+/* активная линия — с анимацией «проявления» */
+
+.path-line-active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #22c55e;
+  transform: translateY(100%);
+  animation: path-line-draw 0.5s ease-out forwards;
+}
+
+/* кружки-узлы */
+
+.path-node {
+  position: absolute;
+  left: 17px;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.path-node-completed {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.path-node-current {
+  background: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+  animation: path-node-pulse 1.4s ease-out infinite;
+}
+
+.path-node-locked {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* подписи уроков */
+
+.path-step-labels {
+  text-align: left;
+}
+
+.path-lesson-title {
+  font-size: 14px;
   font-weight: 600;
 }
 
-.lp-tasks {
-  font-size: 13px;
-  margin-top: 2px;
-  color: #777;
+.path-lesson-meta {
+  font-size: 11px;
+  color: #6b7280;
 }
 
-.lp-start-button {
-  margin-top: 15px;
-  width: 160px;
-  padding: 10px;
-  background: #32d368;
-  color: white;
+/* ===== Кнопка Start Lesson X.X ===== */
+
+.path-start-btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 13px 22px;
+  border-radius: 999px;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.lp-start-button:hover {
-  background: #2abb5a;
+/* ===== Анимации ===== */
+
+@keyframes path-node-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+    transform: scale(1);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
 }
 
-@keyframes fadeIn {
+@keyframes path-line-draw {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(100%);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0%);
+  }
+}
+
+.lesson-node-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.lesson-node-tasks {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.lesson-node-check {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.path-subtitle {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+/* === NODE BASE === */
+.path-node {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ICON */
+.path-node-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* STATES */
+.path-node-current {
+  background: #4ade80;
+  color: #064e3b;
+  animation: pulse 1.5s infinite;
+}
+
+.path-node-locked {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.path-node-completed {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+/* LINE */
+.path-line {
+  position: absolute;
+  top: -48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 48px;
+  background: #e5e7eb;
+  z-index: -1;
+}
+
+.path-line-active {
+  background: #22c55e;
+}
+
+/* START BUTTON */
+.path-start-btn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* PULSE ANIMATION */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
 }

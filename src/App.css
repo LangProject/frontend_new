@@ -1,361 +1,557 @@
-/* базовые стили */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/* ===== Общий layout приложения ===== */
 
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background-color: #ffffff;
-  color: #111111;
-}
-
-/* layout приложения */
-
-.app {
+.app-root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background: #f3f4f6;
+  color: #111827;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
 }
 
+/* ===== Header ===== */
+
 .app-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e5e5e5;
+  height: 56px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.app-header-left {
+.app-header-logo {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-.app-logo {
-  width: 28px;
-  height: 28px;
+.app-header-logo-badge {
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
-  border: 1px solid #111111;
+  background: #22c55e;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
 }
 
-.app-title-block {
-  line-height: 1.1;
+.app-back-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.app-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
+.settings-button {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: none;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.app-subtitle {
-  font-size: 11px;
-  margin: 0;
-  color: #777777;
-}
+/* ===== Content ===== */
 
 .app-content {
   flex: 1;
-  overflow-y: auto;
-}
-
-/* экран */
-
-.screen {
-  padding: 16px;
-}
-
-.screen-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-}
-
-.screen-description {
-  font-size: 13px;
-  color: #666666;
-  margin: 0 0 16px 0;
-}
-
-/* форма регистрации */
-
-.form {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 360px;
-  margin-top: 8px;
+  justify-content: center;
+  padding: 24px 16px;
 }
 
-.form-label {
-  font-size: 13px;
-  color: #444;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-input {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  font-size: 13px;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #111;
-}
-
-/* кнопки */
-
-.primary-btn {
-  margin-top: 8px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: none;
-  background: #111;
-  color: #fff;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
-
-.primary-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.primary-btn:not(:disabled):active {
-  transform: scale(0.96);
-}
-
-/* кнопка назад */
-
-.back-btn {
-  font-size: 12px;
-  color: #666;
-  border: none;
-  background: none;
-  padding: 6px 0;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: 0.15s;
-}
-
-.back-btn:hover {
-  color: #111;
-}
-
-.back-btn:active {
-  transform: scale(0.94);
-}
-
-/* список путей */
-
-.path-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.path-card {
+.app-center-block {
   width: 100%;
-  text-align: left;
-  border-radius: 16px;
-  border: 1px solid #e5e5e5;
-  padding: 12px 14px;
-  background: #ffffff;
-  cursor: pointer;
-  transition: 0.15s ease;
+  max-width: 480px;
 }
 
-.path-card:active {
-  transform: scale(0.97);
+/* ===== Общие заголовки/тексты ===== */
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
-.path-card-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.path-title {
+.page-subtitle {
   font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 2px 0;
-}
-
-.path-meta {
-  font-size: 11px;
-  color: #777;
-  margin: 0;
-}
-
-/* прогресс бар внутри карточки пути */
-
-.path-progress-wrapper {
-  margin-top: 4px;
-  width: 100%;
-  height: 6px;
-  background: #f0f0f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.path-progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #111;
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-/* общий прогресс по пути в деталях */
-
-.path-progress {
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 14px 16px;
+  color: #6b7280;
   margin-bottom: 16px;
 }
 
-.path-progress-info {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
+/* ===== AUTH (первая страница) ===== */
+
+.auth-tabs {
+  margin-top: 16px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 18px 20px 22px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
 }
 
-.path-progress-bar-wrapper {
-  width: 100%;
-  height: 8px;
-  background: #f0f0f0;
+.auth-tabs-switch {
+  display: inline-flex;
   border-radius: 999px;
+  background: #f3f4f6;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+
+.auth-tabs-btn {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.auth-tabs-btn-active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+/* ===== Dashboard layout ===== */
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-section {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dashboard-section-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dashboard-section-info {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.dashboard-summary-caption {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ===== Learning path cards на дашборде ===== */
+
+.lp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lp-card {
+  width: 100%;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 14px;
+  background: #f9fafb;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: 0.18s ease;
+}
+
+.lp-card-selected {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25),
+    0 12px 32px rgba(16, 185, 129, 0.3);
+}
+
+.lp-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lp-level {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.lp-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lp-counter {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.lp-percent {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* ===== Horizontal progress bar ===== */
+
+.hp-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
   overflow: hidden;
 }
 
-.path-progress-bar-big {
+.hp-fill {
   height: 100%;
-  width: 0%;
-  background: #111;
-  transition: width 0.6s ease;
+  border-radius: 999px;
+  background: #22c55e;
+  transition: width 0.2s ease-out;
 }
 
-/* карточки уровней */
+/* ===== Progress rings ===== */
 
-.level-card {
+.rings-root {
+  margin-top: 6px;
+}
+
+.rings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rings-item {
   position: relative;
-  border: 1px solid #e5e5e5;
-  border-radius: 16px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-  background: #ffffff;
+  text-align: center;
 }
 
-.level-title {
-  font-size: 15px;
+.rings-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.rings-track {
+  fill: none;
+  stroke: #e5e7eb;
+}
+
+.rings-progress {
+  fill: none;
+  stroke-linecap: round;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 0.3s ease-out;
+}
+
+.rings-center-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -54%);
+  font-size: 14px;
   font-weight: 600;
-  margin: 0;
 }
 
-.level-description {
-  font-size: 12px;
-  color: #666;
-  margin: 4px 0 6px 0;
-}
-
-.level-xp {
+.rings-label {
+  margin-top: 2px;
   font-size: 11px;
-  margin: 0;
-  color: #8a8a8a;
 }
 
-.level-btn {
+.rings-sub {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ===== Settings заглушка ===== */
+
+.settings-placeholder {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 18px 20px 22px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+/* ===== Footer ===== */
+
+.app-footer {
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid #111;
-  background: #fff;
+  color: #6b7280;
+}
+
+.logout-link {
+  border: none;
+  background: transparent;
+  color: #ef4444;
   cursor: pointer;
-  transition: 0.2s ease;
+  font-size: 12px;
 }
 
-.level-btn:active {
-  transform: scale(0.94);
+/* ===== Choose level (A1–C2) ===== */
+
+.level-band-row {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px auto 18px;
 }
 
-.level-btn:disabled {
-  border-color: #3da167;
-  background: #e7f7ed;
-  color: #2e8152;
-  cursor: default;
+.level-band {
+  width: 100%;
+  height: 46px;
+  border-radius: 999px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.15s ease;
+}
+
+.level-band:hover {
+  background: #f9fafb;
+}
+
+.level-band-active {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.25);
+}
+
+.level-band-color {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  flex: 0 0 auto;
+}
+
+.level-band-label {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  color: #111827;
+  letter-spacing: 0.2px;
+}
+
+/* блок "Not sure about your level?" */
+
+.level-test-block {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.level-test-label {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.level-test-link {
+  border: 2px solid #111827;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.level-test-link:hover {
+  background: #111827;
+  color: #ffffff;
+}
+
+/* ===== Choose Level (Duolingo-like) ===== */
+
+.lvl-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 16px 26px;
+}
+
+.lvl-top-spacer {
+  height: 8px;
+}
+
+.lvl-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 6px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.14);
+  margin: 14px 0 24px;
+}
+
+.lvl-tab {
+  border: none;
+  background: transparent;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #6b7280;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.lvl-tab--active {
+  background: #111827;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.lvl-title {
+  width: 100%;
+  max-width: 520px;
+  text-align: left;
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.12;
+  margin: 0 0 18px;
+}
+
+.lvl-pills {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lvl-pill {
+  flex: 1;
+  height: 48px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  color: #6b7280;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.lvl-pill--active {
+  color: #111827;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.14);
+}
+
+.lvl-bar {
+  width: 100%;
+  max-width: 620px;
+  height: 56px;
+  border-radius: 14px;
+  border: 2px solid #d1d5db;
+  background: #ffffff;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.lvl-bar-seg {
+  border-right: 2px solid #d1d5db;
+  background: transparent;
+}
+.lvl-bar-seg:last-child {
+  border-right: none;
+}
+
+.lvl-bar-seg.is-filled {
+  /* цвет задаём инлайном */
+}
+
+.lvl-bottom-spacer {
+  flex: 1;
+  min-height: 180px;
+}
+
+.lvl-continue {
+  width: 100%;
+  max-width: 520px;
+  height: 74px;
+  border-radius: 999px;
+  border: none;
+  background: #7edb7a;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 18px 34px rgba(16, 185, 129, 0.28);
+  transition: 0.15s ease;
+}
+
+.lvl-continue:hover {
+  transform: translateY(-1px);
+}
+
+.lvl-continue.is-disabled,
+.lvl-continue:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
   transform: none;
 }
 
-.level-progress {
-  margin-top: 10px;
-  width: 100%;
-  height: 6px;
-  background: #f0f0f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.level-progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #111;
-  transition: width 0.6s ease;
-  border-radius: 999px;
-}
-
-.level-xp-popup {
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #2e8152;
-  animation: xpPop 1.2s ease forwards;
-  pointer-events: none;
-}
-
-@keyframes xpPop {
-  0% {
-    opacity: 0;
-    transform: translateY(6px) scale(0.9);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.92);
-  }
+/* страховка от агрессивного reset */
+.lvl-tab,
+.lvl-pill,
+.lvl-continue {
+  font: inherit;
 }

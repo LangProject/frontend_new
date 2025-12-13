@@ -1,5 +1,6 @@
 // src/screens/DashboardScreen.tsx
-import { useState, type FC } from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
 import {
   LearningPathCard,
@@ -13,7 +14,7 @@ interface DashboardScreenProps {
   uiLanguage: UiLangCode;
   learningLanguageCode: string | null;
   learningLevel: string | null;
-  onStartLesson: (lessonId: string) => void;
+  onOpenPath?: (pathId: string) => void; // делаем опциональным на всякий случай
 }
 
 const PATHS: LearningPath[] = [
@@ -40,35 +41,42 @@ const PATHS: LearningPath[] = [
   },
 ];
 
+const languageNameFromCode = (code: string | null): string => {
+  if (!code) return "Language not set yet";
+  switch (code) {
+    case "es":
+      return "Spanish";
+    case "en":
+      return "English";
+    case "de":
+      return "German";
+    case "fr":
+      return "French";
+    default:
+      return code.toUpperCase();
+  }
+};
+
 export const DashboardScreen: FC<DashboardScreenProps> = ({
   uiLanguage,
   learningLanguageCode,
   learningLevel,
-  onStartLesson,
+  onOpenPath,
 }) => {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
 
-  const selectedPath = PATHS.find((p) => p.id === selectedPathId) ?? null;
-  const canStartTest = Boolean(selectedPath);
+  const selectedPath = PATHS.find((path) => path.id === selectedPathId) ?? null;
 
-  const languageName =
-    {
-      en: "English",
-      de: "German",
-      es: "Spanish",
-      fr: "French",
-      pl: "Polish",
-    }[learningLanguageCode ?? "en"] || "English";
+  const languageName = languageNameFromCode(learningLanguageCode);
 
-  const handleStartTest = () => {
-    if (!selectedPath) return;
-
-    // пока что любая выбранная ветка запускает один и тот же урок
-    onStartLesson("spanish_basic_1");
+  const handleStart = () => {
+    if (!selectedPathId || !onOpenPath) return;
+    onOpenPath(selectedPathId);
   };
 
   return (
-    <>
+    <div className="dashboard-container">
+      {/* блок Learning Paths */}
       <section className="dashboard-section">
         <div className="dashboard-section-header">
           <h2 className="dashboard-section-title">
@@ -89,14 +97,15 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
         </div>
 
         <PrimaryButton
-          disabled={!canStartTest}
-          onClick={handleStartTest}
-          aria-disabled={!canStartTest}
+          disabled={!selectedPath || !onOpenPath}
+          onClick={handleStart}
+          aria-disabled={!selectedPath || !onOpenPath}
         >
-          Start Test
+          {t(uiLanguage, "dashboard.startTestButton")}
         </PrimaryButton>
       </section>
 
+      {/* блок Summary */}
       <section className="dashboard-section">
         <h2 className="dashboard-section-title">
           {t(uiLanguage, "dashboard.summaryTitle")}
@@ -108,6 +117,6 @@ export const DashboardScreen: FC<DashboardScreenProps> = ({
           {languageName} · {learningLevel ?? "Level not set yet"}
         </div>
       </section>
-    </>
+    </div>
   );
 };

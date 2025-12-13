@@ -383,3 +383,131 @@
 .lesson-finish:hover {
   background: #2cb95e;
 }
+
+.path-screen {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f3f4f6;
+}
+
+.path-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
+  padding: 18px 20px 24px;
+}
+
+.path-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.path-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.path-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  border-radius: 999px;
+  background: #f3f4f6;
+  padding: 4px 10px;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+/* вертикальный путь */
+
+.path-timeline {
+  position: relative;
+  padding: 8px 0 16px;
+}
+
+.path-step {
+  position: relative;
+  padding-left: 60px;
+  margin-bottom: 18px;
+}
+
+.path-line {
+  position: absolute;
+  left: 26px;
+  top: -18px;
+  width: 4px;
+  height: 36px;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.path-line-active {
+  background: #22c55e;
+}
+
+/* кружки */
+
+.path-node {
+  position: absolute;
+  left: 16px;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.path-node-completed {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.path-node-current {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.path-node-locked {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* подписи уроков */
+
+.path-labels {
+  text-align: left;
+}
+
+.path-lesson-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.path-lesson-meta {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* кнопка Start lesson */
+
+.path-start-btn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 13px 22px;
+  border-radius: 999px;
+  border: none;
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+}

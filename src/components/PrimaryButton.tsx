@@ -1,3 +1,4 @@
+// src/components/PrimaryButton.tsx
 import type { ButtonHTMLAttributes, FC, ReactNode } from "react";
 
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -1,90 +1,103 @@
-// src/screens/LearningPathScreen.tsx
-import React, { useState } from "react";
+// src/screens/LearningPathDetailsScreen.tsx
+import type { FC } from "react";
+import { PATH_CONFIGS } from "../lessons/paths.ts";
 
-type Difficulty = "beginner" | "intermediate" | "advanced";
+type LessonStatus = "completed" | "current" | "locked";
 
-interface LearningPath {
-  id: string;
-  title: string;
-  language: string;
-  difficulty: Difficulty;
-  levelsCount: number;
-  completedLevels: number;
+interface LearningPathDetailsScreenProps {
+  pathId: string; // "reading", "vocabulary", ...
+  onBack: () => void;
+  onStartLesson: (lessonId: string) => void;
 }
 
-const MOCK_PATHS: LearningPath[] = [
-  {
-    id: "path-1",
-    title: "Basic Grammar & Core Vocabulary",
-    language: "English",
-    difficulty: "beginner",
-    levelsCount: 10,
-    completedLevels: 3,
-  },
-  {
-    id: "path-2",
-    title: "Listening & Everyday Phrases",
-    language: "German",
-    difficulty: "intermediate",
-    levelsCount: 8,
-    completedLevels: 1,
-  },
-];
-
-interface LearningPathsScreenProps {
-  onOpenPath: (pathId: string) => void;
-  onBack?: () => void; // 👈 появился onBack
-}
-
-export const LearningPathsScreen: React.FC<LearningPathsScreenProps> = ({
-  onOpenPath,
+export const LearningPathDetailsScreen: FC<LearningPathDetailsScreenProps> = ({
+  pathId,
   onBack,
+  onStartLesson,
 }) => {
-  const [paths] = useState<LearningPath[]>(MOCK_PATHS);
+  const config = PATH_CONFIGS[pathId];
+
+  if (!config) {
+    return (
+      <div className="path-screen">
+        <div className="path-card">
+          <div className="path-header">
+            <button className="back-btn" onClick={onBack}>
+              ←
+            </button>
+            <h2 className="path-title">Path not found</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const statuses: LessonStatus[] = config.lessons.map((_, index) => {
+    // сюда вставляем логику getLessonStatus из пункта 2
+    // для краткости вызову хелпер:
+    return getLessonStatus(config.lessons, index);
+  });
+
+  const currentIndex = statuses.findIndex((s) => s === "current");
+  const currentLesson = currentIndex >= 0 ? config.lessons[currentIndex] : null;
 
   return (
-    <div className="screen">
-      {onBack && (
-        <button className="back-btn" onClick={onBack}>
-          <span>←</span>
-          <span>Назад к регистрации</span>
-        </button>
-      )}
+    <div className="path-screen">
+      <div className="path-card">
+        {/* Header */}
+        <div className="path-header">
+          <button className="back-btn" onClick={onBack}>
+            ←
+          </button>
+          <h2 className="path-title">{config.title}</h2>
+        </div>
 
-      <h1 className="screen-title">Learning paths</h1>
-      <p className="screen-description">
-        Моковые маршруты обучения, чтобы показать прогресс и переход к уровням.
-      </p>
+        <div className="path-subtitle">{config.levelLabel}</div>
 
-      <div className="path-list">
-        {paths.map((path) => {
-          const progress = (path.completedLevels / path.levelsCount) * 100 || 0;
+        {/* Вертикальный путь */}
+        <div className="path-timeline">
+          {config.lessons.map((lesson, index) => {
+            const status = statuses[index];
+            const isCurrent = status === "current";
+            const isCompleted = status === "completed";
 
-          return (
-            <button
-              key={path.id}
-              onClick={() => onOpenPath(path.id)}
-              className="path-card"
-            >
-              <div className="path-card-header">
-                <div>
-                  <p className="path-title">{path.title}</p>
-                  <p className="path-meta">
-                    {path.language} · {path.difficulty} · {path.completedLevels}
-                    /{path.levelsCount} levels
-                  </p>
+            return (
+              <div key={lesson.id} className="path-step">
+                {/* линия между кружками */}
+                {index > 0 && (
+                  <div
+                    className={`path-line ${
+                      isCompleted ? "path-line-active" : ""
+                    }`}
+                  />
+                )}
+
+                {/* сам кружок */}
+                <div className={`path-node path-node-${status}`}>
+                  {isCompleted ? "✓" : isCurrent ? "🙂" : "🔒"}
+                </div>
+
+                {/* подпись урока */}
+                <div className="path-labels">
+                  <div className="path-lesson-title">{lesson.title}</div>
+                  <div className="path-lesson-meta">
+                    {lesson.tasksCount} tasks
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              <div className="path-progress-wrapper">
-                <div
-                  className="path-progress-bar"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            </button>
-          );
-        })}
+        {/* большая зелёная кнопка Start lesson */}
+        {currentLesson && (
+          <button
+            className="path-start-btn"
+            onClick={() => onStartLesson(currentLesson.id)}
+          >
+            Start {currentLesson.title}
+          </button>
+        )}
       </div>
     </div>
   );

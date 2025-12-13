@@ -1,5 +1,5 @@
 // src/lessons/types.ts
-import type { ExerciseType } from "../ExerciseDemoScreen";
+import type { ExerciseType } from "../screens/ExerciseDemoScreen";
 
 export interface LessonExercise {
   id: string;
@@ -13,8 +13,8 @@ export interface Lesson {
 }
 
 export interface LessonProgress {
-  currentIndex: number; // индекс текущего задания
-  total: number; // всего заданий
-  completed: boolean; // урок завершён или нет
-  correctCount: number; // сколько "правильных" ответов (пока заглушка)
+  currentIndex: number;
+  total: number;
+  completed: boolean;
+  correctCount: number;
 }

@@ -1,3 +1,4 @@
+// src/components/LearningPathCard.tsx
 import type { FC } from "react";
 import { HorizontalProgressBar } from "./HorizontalProgressBar";
 
@@ -20,6 +21,8 @@ export const LearningPathCard: FC<LearningPathCardProps> = ({
   selected,
   onSelect,
 }) => {
+  const percent = Math.round((path.current / path.total) * 100);
+
   return (
     <button
       type="button"
@@ -35,6 +38,8 @@ export const LearningPathCard: FC<LearningPathCardProps> = ({
         </span>
         <HorizontalProgressBar value={path.current} max={path.total} />
       </div>
+
+      <div className="lp-percent">{percent}%</div>
     </button>
   );
 };

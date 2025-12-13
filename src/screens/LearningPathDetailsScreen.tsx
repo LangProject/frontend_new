@@ -1,96 +1,87 @@
 // src/screens/LearningPathDetailsScreen.tsx
-import React, { useState } from "react";
-import { LevelCard } from "../components/LevelCard";
+import type { FC } from "react";
+import { PATH_CONFIGS } from "../lessons/paths";
+import { getLessonStatuses } from "../lessons/paths";
+import "./learningPath.css";
 
-interface Level {
-  id: string;
-  title: string;
-  description: string;
-  xp: number;
-  isCompleted: boolean;
-}
-
-const MOCK_LEVELS: Level[] = [
-  {
-    id: "lvl-1",
-    title: "Present Simple",
-    description: "Собери правильное предложение из слов. 5 примеров.",
-    xp: 10,
-    isCompleted: false,
-  },
-  {
-    id: "lvl-2",
-    title: "to be / there is / there are",
-    description: "Выбери правильный вариант из 4. 8 вопросов.",
-    xp: 12,
-    isCompleted: false,
-  },
-  {
-    id: "lvl-3",
-    title: "Basic vocabulary: home & family",
-    description: "Матчинг карточек: слово — перевод. 10 карточек.",
-    xp: 15,
-    isCompleted: false,
-  },
-];
-
-interface LearningPathDetailsScreenProps {
-  pathTitle: string;
+interface Props {
+  pathId: string;
   onBack: () => void;
+  onStartLesson: (lessonId: string) => void;
 }
 
-export const LearningPathDetailsScreen: React.FC<
-  LearningPathDetailsScreenProps
-> = ({ pathTitle, onBack }) => {
-  const [levels, setLevels] = useState<Level[]>(MOCK_LEVELS);
+export const LearningPathDetailsScreen: FC<Props> = ({
+  pathId,
+  onBack,
+  onStartLesson,
+}) => {
+  const config = PATH_CONFIGS[pathId];
 
-  const completedCount = levels.filter((l) => l.isCompleted).length;
-  const progress = (completedCount / levels.length) * 100 || 0;
+  if (!config) {
+    return <div className="path-card">Lesson not found</div>;
+  }
 
-  const handleCompleteLevel = (id: string) => {
-    setLevels((prev) =>
-      prev.map((lvl) => (lvl.id === id ? { ...lvl, isCompleted: true } : lvl))
-    );
-  };
+  const statuses = getLessonStatuses(config.lessons);
 
   return (
-    <div className="screen">
-      <button className="back-btn" onClick={onBack}>
-        <span>←</span>
-        <span>Назад к списку путей</span>
-      </button>
+    <div className="path-layout">
+      <div className="path-card">
+        {/* HEADER */}
+        <div className="path-header">
+          <button className="path-back-btn" onClick={onBack}>
+            ←
+          </button>
 
-      <h1 className="screen-title">{pathTitle}</h1>
-      <p className="screen-description">
-        Заглушка с уровнями. Нажимай «Пройти уровень», чтобы показать прогресс и
-        анимацию.
-      </p>
-
-      <div className="path-progress">
-        <div className="path-progress-info">
-          <span>
-            Progress · {completedCount}/{levels.length} levels
-          </span>
-          <span>{Math.round(progress)}%</span>
+          <div className="path-header-text">
+            <div className="path-title">{config.title}</div>
+            <div className="path-level-label">{config.levelLabel}</div>
+          </div>
         </div>
-        <div className="path-progress-bar-wrapper">
-          <div
-            className="path-progress-bar-big"
-            style={{ width: `${progress}%` }}
-          />
+
+        {/* TIMELINE */}
+        <div className="path-timeline">
+          {config.lessons.map((lesson, index) => {
+            const status = statuses[index];
+
+            return (
+              <div className="path-step" key={lesson.id}>
+                {index > 0 && (
+                  <div
+                    className={
+                      "path-line " +
+                      (status !== "locked" ? "path-line-active" : "")
+                    }
+                  />
+                )}
+
+                <div className={"path-node path-node-" + status}>
+                  <span className="path-node-icon">
+                    {status === "completed" && "✓"}
+                    {status === "current" && "🙂"}
+                    {status === "locked" && "🔒"}
+                  </span>
+                </div>
+
+                <div className="path-step-labels">
+                  <div className="path-lesson-title">{lesson.title}</div>
+                  <div className="path-lesson-meta">
+                    {lesson.tasksCount} tasks
+                  </div>
+
+                  {status === "current" && (
+                    <button
+                      className="path-start-btn"
+                      onClick={() => onStartLesson(lesson.id)}
+                    >
+                      Start {lesson.title}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-
-      {levels.map((level) => (
-        <LevelCard
-          key={level.id}
-          title={level.title}
-          description={level.description}
-          xp={level.xp}
-          isCompleted={level.isCompleted}
-          onComplete={() => handleCompleteLevel(level.id)}
-        />
-      ))}
     </div>
   );
 };

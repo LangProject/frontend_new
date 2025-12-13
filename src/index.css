@@ -1603,3 +1603,238 @@ body {
   background: linear-gradient(90deg, #34c759, #22c55e, #16a34a);
   transition: width 200ms ease-out;
 }
+
+/* === Learning Paths — карточки на дашборде (обновлённые) === */
+
+.lp-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* сама карточка пути */
+.lp-card {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out,
+    border-color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.lp-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.lp-card:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+}
+
+/* выделенная карточка (как на правом скрине) */
+.lp-card-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+/* заголовок и подпись уровня внутри карточки */
+.lp-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.lp-level {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* нижняя строка: счётчик и прогресс-бар */
+.lp-bottom-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* маленький прогресс как на макете */
+.hp-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34c759, #22c55e, #16a34a);
+  transition: width 200ms ease-out;
+}
+
+/* чуть компактнее на узких экранах */
+@media (max-width: 480px) {
+  .lp-row {
+    flex-direction: row;
+  }
+
+  .lp-card {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+/* === Dashboard layout === */
+
+.dashboard-container {
+  max-width: 420px; /* как мобильное приложение */
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+/* === Learning Paths — карточки === */
+
+.lp-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* каждая карточка занимает ~треть ширины */
+.lp-card {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out,
+    border-color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.lp-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.lp-card:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+/* выделенная карточка (как на правом макете) */
+.lp-card-selected {
+  border-color: var(--bg-accent);
+  box-shadow: 0 0 0 2px var(--bg-accent-soft), var(--shadow-soft);
+}
+
+/* заголовок + подпись уровня */
+
+.lp-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.lp-level {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* нижняя строка: "3/5" + прогресс-бар */
+
+.lp-bottom-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-counter {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* прогресс-бар внутри карточки */
+
+.hp-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34c759, #22c55e, #16a34a);
+  transition: width 200ms ease-out;
+}
+
+/* адаптивность: на очень узком экране — по две карточки в ряд */
+
+@media (max-width: 480px) {
+  .lp-row {
+    flex-wrap: wrap;
+  }
+
+  .lp-card {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+/* Кнопка настроек (шестерёнка в хедере) */
+.settings-button {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-muted);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  font-size: 16px;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.settings-button:hover {
+  background: #f3f4f6;
+}
+
+.settings-button:active {
+  transform: scale(0.92);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] .settings-button {
+  background: #020617;
+  border-color: rgba(148, 163, 184, 0.45);
+  color: #e5e7eb;
+}
