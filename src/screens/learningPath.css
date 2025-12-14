@@ -286,3 +286,174 @@
     box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
   }
 }
+
+/* src/screens/learningPath.css */
+
+.dashboard-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  font-family: "Nunito", sans-serif;
+}
+
+.dashboard-section {
+  margin-bottom: 30px;
+}
+
+.dashboard-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dashboard-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.info-icon {
+  width: 24px;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* === КАРТОЧКА ПУТИ (КАК НА МАКЕТЕ) === */
+.lp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lp-card {
+  background: #ffffff;
+  border-radius: 20px; /* Скругленные углы */
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Легкая тень */
+  border: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.lp-card:active {
+  transform: scale(0.98);
+}
+
+.lp-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.lp-level {
+  font-size: 14px;
+  color: #9ca3af; /* Серый цвет текста уровня */
+  margin-bottom: 20px;
+}
+
+/* Ряд с прогрессом */
+.lp-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.lp-counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+  width: 24px; /* Фикс ширина, чтобы не прыгало */
+}
+
+/* ПОЛОСА ПРОГРЕССА */
+.lp-track {
+  flex: 1; /* Занимает все оставшееся место */
+  height: 8px;
+  background-color: #e5e7eb; /* Серый фон полоски */
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lp-fill {
+  height: 100%;
+  background-color: #58cc02; /* ТОТ САМЫЙ ЗЕЛЕНЫЙ ЦВЕТ */
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-percent-text {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* КНОПКА START TEST */
+.start-btn-container {
+  margin-top: 24px;
+}
+.big-start-btn {
+  width: 100%;
+  background-color: #58cc02;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 0 #46a302;
+  cursor: pointer;
+}
+.big-start-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* === SUMMARY CARD (НИЖНЯЯ) === */
+.summary-card {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.stats-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.stat-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1f2937;
+}

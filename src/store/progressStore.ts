@@ -1,25 +1,55 @@
 // src/store/progressStore.ts
 
-const KEY_PREFIX = "lesson_progress_";
+// 👇 ВАЖНО: слово export перед interface обязательно!
+export interface UserStats {
+  totalWords: number;
+  totalMinutes: number;
+  streakDays: number;
+  completedLessons: string[]; // ID пройденных уроков
+}
 
-export const isLessonCompleted = (lessonId: string): boolean => {
-  if (typeof window === "undefined") return false;
+const STORAGE_KEY = "lang_app_progress";
 
-  try {
-    const raw = localStorage.getItem(KEY_PREFIX + lessonId);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw) as { completed?: boolean };
-    return !!parsed.completed;
-  } catch {
-    return false;
-  }
+// Начальные данные
+const defaultStats: UserStats = {
+  totalWords: 151,
+  totalMinutes: 11,
+  streakDays: 4,
+  completedLessons: [],
 };
 
-export const markLessonCompleted = (lessonId: string) => {
-  if (typeof window === "undefined") return;
+// 1. Получить данные
+export const getStats = (): UserStats => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : defaultStats;
+};
 
-  localStorage.setItem(
-    KEY_PREFIX + lessonId,
-    JSON.stringify({ completed: true, completedAt: Date.now() })
-  );
+// 2. Сохранить данные (внутренняя функция)
+const saveStats = (stats: UserStats) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+  // Генерируем событие для обновления UI
+  window.dispatchEvent(new Event("storage-update"));
+};
+
+// 3. Функция завершения урока (экспортируемая)
+export const finishLesson = (lessonId: string) => {
+  const stats = getStats();
+
+  // Если урок еще не был пройден
+  if (!stats.completedLessons.includes(lessonId)) {
+    stats.completedLessons.push(lessonId);
+
+    // Добавляем фиктивный прогресс за урок
+    stats.totalWords += 15;
+    stats.totalMinutes += 2;
+  }
+
+  // Сохраняем и уведомляем Dashboard
+  saveStats(stats);
+};
+
+// 4. Проверка (экспортируемая)
+export const isLessonCompleted = (lessonId: string) => {
+  const stats = getStats();
+  return stats.completedLessons.includes(lessonId);
 };

@@ -1,513 +1,400 @@
-/* Общий layout для упражнений */
+/* src/screens/lesson.css */
 
-.lesson-screen {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 24px 16px 32px;
+/* --- LAYOUT --- */
+.lesson-container {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  box-sizing: border-box;
+  height: 100%;
+  background-color: white;
+  max-width: 600px; /* Ограничим ширину для красоты на десктопе */
+  margin: 0 auto;
+  width: 100%;
 }
 
-.lesson-header {
+/* --- HEADER --- */
+.lesson-top-bar {
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
 }
 
-.back-btn {
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 999px;
-  transition: background 0.15s ease;
-}
-
-.back-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.lesson-progress {
+.bar-container {
   flex: 1;
-}
-
-.bar {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: #e5e7eb;
+  height: 16px;
+  background-color: #e5e5e5;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 4px;
 }
 
 .bar-fill {
   height: 100%;
-  background: #32d368;
-  border-radius: inherit;
-  transition: width 0.2s ease;
+  background-color: #58cc02;
+  transition: width 0.4s ease;
 }
 
-.step-label {
-  font-size: 12px;
-  color: #6b7280;
+.hearts-container {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff4b4b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.lesson-content {
+/* --- SCROLL AREA (MAIN CONTENT) --- */
+.lesson-scroll-area {
   flex: 1;
+  padding: 20px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  align-items: stretch;
-  text-align: center;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.exercise-prompt {
-  font-weight: 600;
-  font-size: 16px;
-  margin-bottom: 4px;
-}
-
-.sentence-big {
-  font-size: 22px;
-  font-weight: 600;
-  margin: 8px 0 12px;
-}
-
-.word-big {
-  font-size: 32px;
-  font-weight: 700;
-  margin: 4px 0 8px;
-}
-
-/* Кнопки вариантов */
-
-.choice-item {
+  align-items: center;
   width: 100%;
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  border-radius: 18px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  cursor: pointer;
-  text-align: center;
-  font-size: 15px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease,
-    background 0.15s ease;
-}
-
-.choice-item:hover {
-  border-color: #9ca3af;
-}
-
-.choice-item-selected {
-  border-color: #32d368;
-  box-shadow: 0 0 0 2px rgba(50, 211, 104, 0.16);
-}
-
-.choice-item-correct {
-  background: #e6f8ee;
-  border-color: #32d368;
-}
-
-.choice-item-wrong {
-  background: #ffeaea;
-  border-color: #ef4444;
-}
-
-/* Грид для multiple choice */
-
-.choice-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-/* Инпуты */
-
-.text-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid #d1d5db;
-  font-size: 15px;
-  resize: vertical;
-  min-height: 44px;
   box-sizing: border-box;
 }
 
-.text-input:focus {
-  outline: none;
-  border-color: #32d368;
-  box-shadow: 0 0 0 1px rgba(50, 211, 104, 0.3);
+/* Тексты и заголовки */
+.lesson-instruction {
+  font-size: 22px;
+  font-weight: 700;
+  color: #3c3c3c;
+  margin-bottom: 24px;
+  text-align: center;
+  line-height: 1.4;
 }
 
-/* Word bank / chips */
+.sub-instruction {
+  font-size: 16px;
+  color: #777;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.lesson-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #58cc02;
+}
+
+.lesson-text {
+  font-size: 18px;
+  line-height: 1.6;
+  text-align: center;
+  color: #4b4b4b;
+}
+
+.centered-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.word-hero {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 30px;
+  color: #4b4b4b;
+}
+
+/* --- 1. SELECT ONE / OPTIONS --- */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.option-card {
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 16px;
+  border-bottom-width: 4px;
+  padding: 16px 20px;
+  font-size: 18px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s;
+  color: #4b4b4b;
+  position: relative;
+}
+
+.option-card:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.option-card.selected {
+  border-color: #84d8ff;
+  background-color: #ddf4ff;
+  color: #1899d6;
+}
+
+.key-hint {
+  float: right;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #afafaf;
+}
+
+/* --- 2. MATCH PAIRS (ВАЖНО! ЭТОГО НЕ ХВАТАЛО) --- */
+.match-container {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.match-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.match-card {
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  border-bottom-width: 4px;
+  padding: 14px;
+  font-size: 16px;
+  text-align: center;
+  cursor: pointer;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.match-card:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+}
+
+.match-card.active {
+  border-color: #84d8ff;
+  background-color: #ddf4ff;
+  color: #1899d6;
+}
+
+.match-card.paired {
+  background-color: #e5e5e5;
+  color: #afafaf;
+  border-color: #d1d1d1;
+  pointer-events: none;
+  border-bottom-width: 2px;
+  transform: translateY(2px);
+}
+
+/* --- 3. REORDER (WORD BANK) --- */
+.assembly-area {
+  min-height: 60px;
+  border-bottom: 2px solid #e5e5e5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 30px;
+  align-items: flex-start;
+}
 
 .word-bank {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin-top: 4px;
+  width: 100%;
 }
 
 .word-chip {
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  font-size: 14px;
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 12px;
+  border-bottom-width: 4px;
+  padding: 10px 16px;
+  font-size: 16px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  color: #4b4b4b;
 }
 
-.word-chip-selected {
-  background: #32d368;
-  border-color: #32d368;
-  color: #ffffff;
+.word-chip:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
 }
 
-.word-chip-disabled {
-  opacity: 0.5;
-  cursor: default;
+/* --- 4. INPUT TEXT --- */
+.lesson-textarea {
+  width: 100%;
+  height: 120px;
+  padding: 16px;
+  border: 2px solid #e5e5e5;
+  border-radius: 16px;
+  font-size: 18px;
+  resize: none;
+  font-family: inherit;
+  background: #f7f7f7;
 }
 
-.word-chip-error-correct {
-  background: #e6f8ee;
-  border-color: #32d368;
+.lesson-textarea:focus {
+  outline: none;
+  border-color: #e5e5e5;
+  background: white;
 }
 
-.word-chip-error-wrong {
-  background: #ffeaea;
-  border-color: #ef4444;
+/* --- 5. FILL BLANK / SENTENCE --- */
+.sentence-big {
+  font-size: 24px;
+  line-height: 1.6;
+  text-align: center;
+  margin: 20px 0;
+  color: #4b4b4b;
 }
 
-/* Fill blank */
-
-.blank-underline {
+.blank-slot {
   display: inline-block;
   min-width: 80px;
-  border-bottom: 2px solid #9ca3af;
-  padding: 0 4px;
+  border-bottom: 2px solid #4b4b4b;
+  margin: 0 8px;
+  text-align: center;
+  font-weight: bold;
+  color: #1cb0f6;
 }
 
-/* Sentence reorder */
-
-.assembly-area {
-  min-height: 40px;
-  border-radius: 16px;
-  padding: 8px 10px;
-  background: #f9fafb;
+/* --- 6. FIND THE ERROR --- */
+.sentence-container {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-top: 20px;
 }
 
-.assembly-placeholder {
-  font-size: 13px;
-  color: #9ca3af;
+.clickable-word {
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 16px;
+  border-bottom-width: 4px;
+  padding: 12px 24px;
+  font-size: 20px;
+  font-family: inherit;
+  font-weight: 600;
+  color: #4b4b4b;
+  cursor: pointer;
+  transition: all 0.1s;
 }
 
-/* Match pairs */
-
-.match-grid {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 8px;
+.clickable-word:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
 }
 
-.match-column {
+.clickable-word.selected-error {
+  background-color: #ffdfe0;
+  border-color: #ea2b2b;
+  color: #ea2b2b;
+}
+
+/* --- FOOTER --- */
+.lesson-footer-area {
+  border-top: 2px solid #e5e5e5;
+  padding: 20px;
+  background: white;
+}
+
+.primary-button-duo {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  background-color: #58cc02;
+  color: white;
+  border-bottom: 4px solid #46a302;
+  transition: filter 0.2s;
+}
+
+.primary-button-duo:active {
+  transform: translateY(2px);
+  border-bottom: 0px solid transparent;
+}
+
+.primary-button-duo:disabled {
+  background-color: #e5e5e5;
+  color: #afafaf;
+  border-bottom-color: #afafaf;
+  cursor: default;
+  transform: none;
+}
+
+/* --- FEEDBACK --- */
+.feedback-sheet {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
+  animation: slideUp 0.3s ease-out;
 }
 
-.match-item {
-  min-width: 90px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.match-item-selected {
-  border-color: #32d368;
-  box-shadow: 0 0 0 2px rgba(50, 211, 104, 0.16);
-}
-
-.match-item-disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.match-result {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #4b5563;
-}
-
-/* Теги для спряжения */
-
-.tag-row {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.tag-pill {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  font-size: 11px;
-  color: #4b5563;
-}
-
-/* Кнопки футера */
-
-.lesson-footer {
-  margin-top: 16px;
-}
-
-.footer-btn {
-  width: 100%;
-  padding: 12px 20px;
-  border-radius: 999px;
-  border: none;
-  background: #32d368;
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.05s ease;
-}
-
-.footer-btn:hover {
-  background: #2cb95e;
-}
-
-.footer-btn:active {
-  transform: translateY(1px);
-}
-
-/* Secondary */
-
-.secondary-btn {
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.secondary-btn.small-btn {
-  align-self: center;
-}
-
-/* Feedback */
-
-.feedback {
-  margin-top: 10px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-}
-
-.feedback-correct {
-  background: #e6f8ee;
-  color: #15803d;
-}
-
-.feedback-wrong {
-  background: #ffeaea;
-  color: #b91c1c;
-}
-
-.hint-line {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.hint-strong {
-  font-weight: 600;
-}
-
-/* Анимация */
-
-@keyframes fadeIn {
+@keyframes slideUp {
   from {
+    transform: translateY(20px);
     opacity: 0;
-    transform: translateY(4px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+    opacity: 1;
   }
 }
 
-/* СТАРЫЕ классы (для LessonScreen placeholder) */
-
-.lesson-container {
-  text-align: center;
-  margin-top: 40px;
+.sheet-success .feedback-title {
+  color: #58cc02;
+}
+.sheet-error .feedback-title {
+  color: #ea2b2b;
 }
 
-.lesson-finish {
-  margin-top: 40px;
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 20px;
-  background: #32d368;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.lesson-finish:hover {
-  background: #2cb95e;
-}
-
-.path-screen {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #f3f4f6;
-}
-
-.path-card {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border-radius: 32px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.15);
-  padding: 18px 20px 24px;
-}
-
-.path-header {
+.feedback-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.feedback-icon {
+  font-size: 32px;
+}
+
+.feedback-title {
+  font-weight: 800;
+  font-size: 24px;
   margin-bottom: 4px;
 }
 
-.path-title {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.path-subtitle {
-  font-size: 12px;
-  color: #6b7280;
-  border-radius: 999px;
-  background: #f3f4f6;
-  padding: 4px 10px;
-  display: inline-block;
-  margin-bottom: 16px;
-}
-
-/* вертикальный путь */
-
-.path-timeline {
-  position: relative;
-  padding: 8px 0 16px;
-}
-
-.path-step {
-  position: relative;
-  padding-left: 60px;
-  margin-bottom: 18px;
-}
-
-.path-line {
-  position: absolute;
-  left: 26px;
-  top: -18px;
-  width: 4px;
-  height: 36px;
-  border-radius: 999px;
-  background: #e5e7eb;
-}
-
-.path-line-active {
-  background: #22c55e;
-}
-
-/* кружки */
-
-.path-node {
-  position: absolute;
-  left: 16px;
-  top: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-}
-
-.path-node-completed {
-  background: #22c55e;
-  color: #ffffff;
-}
-
-.path-node-current {
-  background: #22c55e;
-  color: #ffffff;
-}
-
-.path-node-locked {
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-/* подписи уроков */
-
-.path-labels {
-  text-align: left;
-}
-
-.path-lesson-title {
+.feedback-correct-answer {
+  color: #ea2b2b;
   font-size: 14px;
-  font-weight: 600;
 }
 
-.path-lesson-meta {
-  font-size: 11px;
-  color: #6b7280;
+.btn-success {
+  background-color: #58cc02;
+  border-bottom-color: #46a302;
 }
 
-/* кнопка Start lesson */
-
-.path-start-btn {
-  margin-top: 12px;
-  width: 100%;
-  padding: 13px 22px;
-  border-radius: 999px;
-  border: none;
-  background: #22c55e;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
+.btn-error {
+  background-color: #ff4b4b;
+  border-bottom-color: #d40000;
 }

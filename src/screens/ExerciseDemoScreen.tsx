@@ -1,93 +1,80 @@
 // src/screens/ExerciseDemoScreen.tsx
-import { useState } from "react";
-import { LESSONS_DATA } from "../lessons/lessonsData";
 import "./lesson.css";
 
-interface Props {
-  lessonId: string;
-  onFinish: () => void;
+interface ChoiceOption {
+  id: string;
+  label: string;
+  correct?: boolean;
 }
 
-export const ExerciseDemoScreen = ({ lessonId, onFinish }: Props) => {
-  const lesson = LESSONS_DATA[lessonId];
-  const [step, setStep] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [showResult, setShowResult] = useState(false);
+interface Props {
+  question?: string;
+  options?: ChoiceOption[];
+  selectedOption?: string | null;
+  onSelect?: (optionId: string) => void;
+  onCheck?: () => void;
+  isCorrect?: boolean | null;
+}
 
-  if (!lesson) {
-    return <div className="lesson-card">Lesson not found</div>;
+export const ExerciseDemoScreen = ({
+  question,
+  options,
+  selectedOption,
+  onSelect,
+  onCheck,
+  isCorrect,
+}: Props) => {
+  // 🛡️ ЗАЩИТА ОТ КРАША
+  if (!question || !options || !Array.isArray(options)) {
+    return (
+      <div className="lesson-card">
+        <div className="lesson-feedback error">Exercise data is not ready</div>
+      </div>
+    );
   }
-
-  const exercise = lesson.exercises[step];
-
-  const next = () => {
-    setSelected(null);
-    setShowResult(false);
-
-    if (step + 1 >= lesson.exercises.length) {
-      onFinish();
-    } else {
-      setStep(step + 1);
-    }
-  };
 
   return (
     <div className="lesson-card">
-      <div className="lesson-progress">
-        {step + 1}/{lesson.exercises.length}
+      <h2 className="lesson-question">{question}</h2>
+
+      <div className="lesson-options">
+        {options.map((opt) => {
+          const isSelected = selectedOption === opt.id;
+
+          let stateClass = "";
+          if (isCorrect !== null && isCorrect !== undefined) {
+            if (opt.correct) stateClass = "correct";
+            else if (isSelected) stateClass = "wrong";
+          } else if (isSelected) {
+            stateClass = "selected";
+          }
+
+          return (
+            <button
+              key={opt.id}
+              className={`lesson-option-btn ${stateClass}`}
+              onClick={() => onSelect?.(opt.id)}
+              disabled={isCorrect !== null && isCorrect !== undefined}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* INFO */}
-      {exercise.type === "info" && (
-        <>
-          <h2>{exercise.text}</h2>
-          <button className="primary-btn" onClick={next}>
-            Continue
-          </button>
-        </>
+      <button
+        className="lesson-primary-btn"
+        disabled={!selectedOption || isCorrect !== null}
+        onClick={onCheck}
+      >
+        Check
+      </button>
+
+      {isCorrect === true && (
+        <div className="lesson-feedback success">Correct!</div>
       )}
-
-      {/* CHOICE */}
-      {exercise.type === "choice" && (
-        <>
-          <h2>{exercise.question}</h2>
-
-          <div className="options">
-            {exercise.options.map((opt, i) => (
-              <button
-                key={i}
-                className={`option-btn ${
-                  showResult
-                    ? i === exercise.correctIndex
-                      ? "correct"
-                      : i === selected
-                      ? "wrong"
-                      : ""
-                    : selected === i
-                    ? "selected"
-                    : ""
-                }`}
-                onClick={() => !showResult && setSelected(i)}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-
-          {!showResult ? (
-            <button
-              className="primary-btn"
-              disabled={selected === null}
-              onClick={() => setShowResult(true)}
-            >
-              Check
-            </button>
-          ) : (
-            <button className="primary-btn" onClick={next}>
-              Continue
-            </button>
-          )}
-        </>
+      {isCorrect === false && (
+        <div className="lesson-feedback error">Try again</div>
       )}
     </div>
   );
