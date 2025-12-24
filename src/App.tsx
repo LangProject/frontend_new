@@ -7,8 +7,16 @@ import { ChooseLevelScreen } from "./screens/ChooseLevelScreen";
 import { LevelTestScreen } from "./screens/LevelTestScreen";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
-import { LearningPathDetailsScreen } from "./screens/LearningPathDetailsScreen";
 import { LessonScreen } from "./screens/LessonScreen";
+
+/* Hooks & utils */
+import { useAuth } from "./hooks/useAuth";
+import { useSession } from "./hooks/useSession";
+import {
+  detectInitialUiLanguage,
+  type UiLangCode,
+} from "./utils/detectUiLanguage";
+import { t } from "./i18n";
 
 /* Styles */
 import "./screens/learningPath.css";
@@ -20,14 +28,6 @@ import "./App.css";
 import { RegisterForm } from "./components/RegisterForm";
 import { LoginForm } from "./components/LoginForm";
 
-/* Hooks & utils */
-import { useAuth } from "./hooks/useAuth";
-import {
-  detectInitialUiLanguage,
-  type UiLangCode,
-} from "./utils/detectUiLanguage";
-import { t } from "./i18n";
-
 type ScreenId =
   | "auth"
   | "forgot-password"
@@ -36,206 +36,289 @@ type ScreenId =
   | "choose-level"
   | "level-test"
   | "dashboard"
-  | "path-details"
   | "lesson";
-
 type AuthMode = "login" | "register";
 
+// Маппинг для ОТПРАВКИ на бэкенд
+const LANG_MAP: Record<string, string> = {
+  ru: "Russian",
+  de: "German",
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  pl: "Polish",
+};
+
+// Маппинг для ПОЛУЧЕНИЯ с бэкенда (обратный)
+const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
+  Russian: "ru",
+  German: "de",
+  English: "en",
+  Spanish: "es",
+  French: "fr",
+  Polish: "pl",
+};
+
+const API_URL = "";
+
 function App() {
-  const [uiLanguage, setUiLanguage] = useState<UiLangCode>(
-    detectInitialUiLanguage()
-  );
-
-  const [learningLanguage, setLearningLanguage] = useState<string | null>(null);
-  const [learningLevel, setLearningLevel] = useState<string | null>(null);
-
   const { isAuthenticated, isLoading, login, register, logout } = useAuth();
+  useSession(isAuthenticated);
+
+  const [uiLanguage, setUiLanguage] = useState<UiLangCode>(
+    () =>
+      (localStorage.getItem("ui_language") as UiLangCode) ||
+      detectInitialUiLanguage()
+  );
+  const [learningLanguage, setLearningLanguage] = useState<string | null>(() =>
+    localStorage.getItem("learning_language")
+  );
+  const [learningLevel, setLearningLevel] = useState<string | null>(() =>
+    localStorage.getItem("learning_level")
+  );
 
   const [screen, setScreen] = useState<ScreenId>("auth");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [forgotEmail, setForgotEmail] = useState<string>("");
-
-  const [currentPathId, setCurrentPathId] = useState<string | null>(null);
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
-  // --- УСТАНОВКА УРОВНЯ ---
-  const handleSetLevel = (level: string) => {
-    const formattedLevel = level.toUpperCase();
-    setLearningLevel(formattedLevel);
-    localStorage.setItem("learning_level", formattedLevel);
-  };
-
-  // --- ЗАПУСК ---
+  // 🔥 ГЛАВНАЯ ЛОГИКА СИНХРОНИЗАЦИИ ПОСЛЕ ВХОДА
   useEffect(() => {
-    if (isAuthenticated && screen === "auth") {
-      const isSetupComplete = localStorage.getItem("setup_complete");
+    const syncUserData = async () => {
+      // Если не авторизованы — ничего не делаем
+      if (!isAuthenticated) return;
 
-      // Восстанавливаем уровень
-      const savedLevel = localStorage.getItem("learning_level");
-      if (savedLevel) setLearningLevel(savedLevel);
+      // 1. Сначала проверяем localStorage. Если там всё есть — супер.
+      const localLvl = localStorage.getItem("learning_level");
+      const localLang = localStorage.getItem("learning_language");
 
-      if (isSetupComplete === "true") {
-        setScreen("dashboard");
-      } else {
-        setScreen("choose-ui-language");
+      if (localLvl && localLang) {
+        setLearningLevel(localLvl);
+        setLearningLanguage(localLang);
+        // Если мы всё еще на экране входа — кидаем в дашборд
+        if (screen === "auth") setScreen("dashboard");
+        return;
       }
-    }
+
+      // 2. Если в localStorage пусто (новый вход), тянем с бэка
+      if (screen === "auth" || screen === "choose-ui-language") {
+        try {
+          setIsInitializing(true);
+          const token = localStorage.getItem("auth_token");
+
+          if (!token) throw new Error("No token");
+
+          // Шаг А: Начинаем сессию, чтобы получить ID (требование бэка для /stats)
+          const sessionRes = await fetch(`${API_URL}/session/begin-session`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (!sessionRes.ok) throw new Error("Session start failed");
+          const sessionData = await sessionRes.json();
+          const sessionId = sessionData.id;
+
+          // Шаг Б: Запрашиваем статистику (там лежат язык и уровень)
+          const statsRes = await fetch(`${API_URL}/user/stats`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "x-session-id": sessionId,
+            },
+          });
+
+          if (!statsRes.ok) throw new Error("Stats fetch failed");
+          const statsData = await statsRes.json();
+
+          // Шаг В: Парсим данные
+          // Структура: { language_data: { target_language: "German", ratings: { ... } } }
+          const langData = statsData.language_data;
+
+          if (langData) {
+            // Конвертируем "German" -> "de"
+            const backendLang = langData.target_language;
+            const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang];
+
+            // Достаем уровень из ratings. Там может быть карта, берем первое значение.
+            // ratings: { "vocabulary": { cefr: "A1" } }
+            let userLevel = "A1";
+            const ratings = langData.ratings || {};
+            const firstRatingKey = Object.keys(ratings)[0];
+            if (firstRatingKey && ratings[firstRatingKey].cefr) {
+              userLevel = ratings[firstRatingKey].cefr;
+            }
+
+            // Сохраняем и переходим
+            if (frontendLang) {
+              setLearningLanguage(frontendLang);
+              localStorage.setItem("learning_language", frontendLang);
+            }
+            setLearningLevel(userLevel);
+            localStorage.setItem("learning_level", userLevel);
+
+            localStorage.setItem("setup_complete", "true");
+            setScreen("dashboard");
+          } else {
+            // Если данных нет (новый юзер) — кидаем на настройку
+            setScreen("choose-ui-language");
+          }
+        } catch (e) {
+          console.warn("Sync failed, redirecting to setup:", e);
+          // Если ошибка (например, у юзера нет статистики) — пусть настраивает сам
+          setScreen("choose-ui-language");
+        } finally {
+          setIsInitializing(false);
+        }
+      }
+    };
+
+    syncUserData();
   }, [isAuthenticated, screen]);
 
-  const handleFinishSetup = () => {
-    localStorage.setItem("setup_complete", "true");
-    setScreen("dashboard");
-  };
-
-  /* ---------- NAV ---------- */
-  const handleBack = () => {
-    switch (screen) {
-      case "forgot-password":
-        setScreen("auth");
-        break;
-      case "choose-learning-language":
-        setScreen("choose-ui-language");
-        break;
-      case "choose-level":
-        setScreen("choose-learning-language");
-        break;
-      case "level-test":
-        setScreen("choose-level");
-        break;
-      case "path-details":
-        setScreen("dashboard");
-        break;
-      case "lesson":
-        setScreen("path-details");
-        break;
-      default:
-        break;
+  const handleRegisterFormSubmit = async (data: any) => {
+    try {
+      await register(data);
+      setAuthMode("login");
+      alert("Account created successfully! Please log in.");
+    } catch (e: any) {
+      alert(e.message || "Registration failed");
     }
   };
 
-  /* ---------- AUTH ---------- */
-  const handleLogin = async (data: { email: string; password: string }) => {
-    await login(data);
+  const handleFinalizeSetup = async () => {
+    const langCode = learningLanguage;
+    const lvlCode = learningLevel;
+    const uiCode = uiLanguage;
+
+    if (!langCode || !lvlCode) return alert("Error: Missing data");
+
+    setIsInitializing(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) throw new Error("No auth token");
+
+      const payload = {
+        source_language: LANG_MAP[uiCode] || "English",
+        target_language: LANG_MAP[langCode] || "English",
+        language_level: lvlCode,
+      };
+
+      console.log("Initializing user with:", payload);
+
+      const res = await fetch(`${API_URL}/user/initialize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Server error: ${res.status} ${errText}`);
+      }
+
+      localStorage.setItem("setup_complete", "true");
+      setScreen("dashboard");
+    } catch (e: any) {
+      console.error(e);
+      alert("Saved locally. (Server sync skipped: " + e.message + ")");
+      localStorage.setItem("setup_complete", "true");
+      setScreen("dashboard");
+    } finally {
+      setIsInitializing(false);
+    }
   };
 
-  const handleRegister = async (data: {
-    fullName: string;
-    nickname: string;
-    email: string;
-    password: string;
-  }) => {
-    const displayName = data.fullName || data.nickname;
-    await register({
-      email: data.email,
-      password: data.password,
-      name: displayName,
-    });
-    localStorage.removeItem("setup_complete");
-    setScreen("choose-ui-language");
+  const handleBack = () => {
+    if (screen === "lesson") setScreen("dashboard");
+    else if (screen === "forgot-password") setScreen("auth");
+    else if (screen === "choose-learning-language")
+      setScreen("choose-ui-language");
+    else if (screen === "choose-level") setScreen("choose-learning-language");
+    else if (screen === "level-test") setScreen("choose-level");
   };
 
-  /* ---------- HANDLERS ---------- */
-  const handleUiLanguageSelected = (lang: UiLangCode) => {
-    setUiLanguage(lang);
-    localStorage.setItem("ui_language", lang);
-  };
+  const showHeader = screen !== "lesson";
+  const showBackButton = screen !== "auth" && screen !== "dashboard";
 
-  const handleOpenPath = (pathId: string) => {
-    setCurrentPathId(pathId);
-    setScreen("path-details");
-  };
-
-  const handleStartLesson = (lessonId: string) => {
-    setCurrentLessonId(lessonId);
-    setScreen("lesson");
-  };
-
-  if (isLoading) {
-    return (
-      <div
-        className="loading-screen"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          color: "#58cc02",
-          fontSize: 24,
-          fontWeight: "bold",
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
-
-  const showBackButton =
-    screen !== "auth" &&
-    screen !== "dashboard" &&
-    screen !== "choose-ui-language";
+  if (isLoading || isInitializing)
+    return <div className="loading-screen">Loading...</div>;
 
   return (
     <div className="app-root">
-      <header className="app-header">
-        {showBackButton && (
-          <button className="app-back-button" onClick={handleBack}>
-            ←
-          </button>
-        )}
-        <div className="app-header-logo">
-          <span className="app-header-logo-badge">L</span>
-          <span>LangProject</span>
-        </div>
-      </header>
+      {showHeader && (
+        <header className="app-header">
+          {showBackButton ? (
+            <button className="app-back-button" onClick={handleBack}>
+              ←
+            </button>
+          ) : (
+            <div className="header-logo-pill">
+              <div className="header-logo-circle">L</div>
+              <div className="header-logo-text">LangProject</div>
+            </div>
+          )}
+          {showBackButton && (
+            <div className="header-logo-pill">
+              <div className="header-logo-circle">L</div>
+              <div className="header-logo-text">LangProject</div>
+            </div>
+          )}
+        </header>
+      )}
 
-      <main className="app-content">
-        <div className="app-center-block">
+      <main
+        className="app-content"
+        style={screen === "lesson" ? { padding: 0 } : {}}
+      >
+        <div
+          className="app-center-block"
+          style={screen === "lesson" ? { maxWidth: "none" } : {}}
+        >
           {screen === "auth" && (
             <>
-              <div className="page-title">
-                {t(uiLanguage, "auth.welcomeTitle")}
+              <div className="page-header-block">
+                <h1 className="page-title">
+                  {t(uiLanguage, "auth.welcomeTitle")}
+                </h1>
+                <p className="page-subtitle">
+                  {t(uiLanguage, "auth.welcomeSubtitle")}
+                </p>
               </div>
-              <p className="page-subtitle">
-                {t(uiLanguage, "auth.welcomeSubtitle")}
-              </p>
-              <div className="auth-tabs-switch">
-                <button
-                  className={
-                    authMode === "login"
-                      ? "auth-tabs-btn auth-tabs-btn-active"
-                      : "auth-tabs-btn"
-                  }
-                  onClick={() => setAuthMode("login")}
-                >
-                  Log in
-                </button>
-                <button
-                  className={
-                    authMode === "register"
-                      ? "auth-tabs-btn auth-tabs-btn-active"
-                      : "auth-tabs-btn"
-                  }
-                  onClick={() => setAuthMode("register")}
-                >
-                  Sign up
-                </button>
+              <div className="auth-pill-container">
+                <div className="auth-tabs-pill">
+                  <button
+                    className={`auth-tabs-btn ${
+                      authMode === "login" ? "active" : ""
+                    }`}
+                    onClick={() => setAuthMode("login")}
+                  >
+                    {t(uiLanguage, "auth.login")}
+                  </button>
+                  <button
+                    className={`auth-tabs-btn ${
+                      authMode === "register" ? "active" : ""
+                    }`}
+                    onClick={() => setAuthMode("register")}
+                  >
+                    {t(uiLanguage, "auth.signup")}
+                  </button>
+                </div>
               </div>
               {authMode === "login" ? (
                 <LoginForm
                   uiLanguage={uiLanguage}
                   isLoading={isLoading}
-                  onLogin={handleLogin}
+                  onLogin={login}
                   onSuccess={() => {}}
-                  onForgotPassword={(email) => {
-                    setForgotEmail(email);
-                    setScreen("forgot-password");
-                  }}
+                  onForgotPassword={() => setScreen("forgot-password")}
                 />
               ) : (
                 <RegisterForm
                   uiLanguage={uiLanguage}
                   isLoading={isLoading}
-                  onRegister={handleRegister}
+                  onRegister={handleRegisterFormSubmit}
                   onSuccess={() => {}}
                 />
               )}
@@ -244,7 +327,7 @@ function App() {
 
           {screen === "forgot-password" && (
             <ForgotPasswordScreen
-              initialEmail={forgotEmail}
+              initialEmail={""}
               onBack={() => setScreen("auth")}
             />
           )}
@@ -253,9 +336,10 @@ function App() {
             <ChooseLanguageScreen
               uiLanguage={uiLanguage}
               selectedCode={uiLanguage}
-              onChangeSelected={(code) =>
-                handleUiLanguageSelected(code as UiLangCode)
-              }
+              onChangeSelected={(code) => {
+                setUiLanguage(code);
+                localStorage.setItem("ui_language", code);
+              }}
               onContinue={() => setScreen("choose-learning-language")}
             />
           )}
@@ -264,7 +348,10 @@ function App() {
             <ChooseLearningLanguageScreen
               uiLanguage={uiLanguage}
               selectedCode={learningLanguage}
-              onChangeSelected={setLearningLanguage}
+              onChangeSelected={(code) => {
+                setLearningLanguage(code);
+                localStorage.setItem("learning_language", code);
+              }}
               onContinue={() => setScreen("choose-level")}
             />
           )}
@@ -272,10 +359,12 @@ function App() {
           {screen === "choose-level" && (
             <ChooseLevelScreen
               uiLanguage={uiLanguage}
-              learningLanguageCode={learningLanguage}
               selectedLevel={learningLevel}
-              onChangeSelected={handleSetLevel}
-              onContinue={handleFinishSetup}
+              onChangeSelected={(lvl) => {
+                setLearningLevel(lvl);
+                localStorage.setItem("learning_level", lvl);
+              }}
+              onContinue={handleFinalizeSetup}
               onStartTest={() => setScreen("level-test")}
             />
           )}
@@ -285,56 +374,59 @@ function App() {
               uiLanguage={uiLanguage}
               learningLanguageCode={learningLanguage}
               onFinish={(lvl) => {
-                handleSetLevel(lvl);
-                handleFinishSetup();
+                setLearningLevel(lvl);
+                localStorage.setItem("learning_level", lvl);
+                setTimeout(handleFinalizeSetup, 100);
               }}
             />
           )}
 
-          {/* 👇 Здесь мы передаем learningLevel в Dashboard */}
           {screen === "dashboard" && (
             <DashboardScreen
               uiLanguage={uiLanguage}
-              learningLanguageCode={learningLanguage}
               learningLevel={learningLevel}
-              onOpenPath={handleOpenPath}
+              onOpenPath={(id) => {
+                setCurrentLessonId(id);
+                setScreen("lesson");
+              }}
             />
           )}
-
-          {/* 👇 ИСПРАВЛЕНИЕ: Теперь передаем learningLevel в LearningPathDetailsScreen */}
-          {screen === "path-details" && currentPathId && (
-            <LearningPathDetailsScreen
-              pathId={currentPathId}
-              // Передаем выбранный уровень
-              learningLevel={learningLevel}
-              onBack={() => setScreen("dashboard")}
-              onStartLesson={handleStartLesson}
-            />
-          )}
-
           {screen === "lesson" && currentLessonId && (
             <LessonScreen
               lessonId={currentLessonId}
-              onBack={() => setScreen("path-details")}
+              onBack={() => setScreen("dashboard")}
             />
           )}
         </div>
       </main>
 
-      <footer className="app-footer">
-        <span>© 2025 LangProject</span>
-        {isAuthenticated && (
-          <button
-            className="logout-link"
-            onClick={() => {
-              logout();
-              setScreen("auth");
-            }}
-          >
-            Log out
-          </button>
-        )}
-      </footer>
+      {screen !== "lesson" && (
+        <footer className="app-footer">
+          <span className="footer-text">
+            © 2025 LangProject. All rights reserved.
+          </span>
+          <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+            <a
+              className="footer-link"
+              href="#"
+              onClick={(e) => e.preventDefault()}
+            >
+              LinkedIn
+            </a>
+            {isAuthenticated && (
+              <button
+                className="logout-btn"
+                onClick={() => {
+                  logout();
+                  setScreen("auth");
+                }}
+              >
+                LOG OUT
+              </button>
+            )}
+          </div>
+        </footer>
+      )}
     </div>
   );
 }

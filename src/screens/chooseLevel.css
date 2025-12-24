@@ -1,0 +1,180 @@
+/* src/screens/chooseLevel.css */
+
+/* --- ОСНОВНОЙ КОНТЕЙНЕР --- */
+.lvl-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 20px;
+  align-items: center;
+}
+
+/* --- ШАПКА --- */
+.lvl-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.lvl-title {
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  margin-top: 20px;
+  color: #3c3c3c;
+  line-height: 1.2;
+}
+
+/* Переключатель Select / Test */
+.lvl-toggle-container {
+  display: flex;
+  background: #f0f0f0;
+  padding: 4px;
+  border-radius: 16px;
+  gap: 4px;
+}
+
+.lvl-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  color: #777;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.lvl-toggle-btn.active {
+  background: white;
+  color: #3c3c3c;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* --- ЦЕНТРАЛЬНАЯ ЧАСТЬ --- */
+.lvl-content-centered {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Центрируем по вертикали */
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.lvl-selector-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 1. Ряд кнопок (A1 A2 ...) */
+.lvl-pills-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.lvl-pill {
+  width: 48px; /* Фиксированный размер */
+  height: 48px;
+  border-radius: 12px;
+  border: none; /* Рамка задается через inline-style в JS */
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+
+  /* Важно: border-bottom эмулируется через inline style, 
+     здесь только база */
+}
+
+.lvl-pill:active {
+  transform: scale(0.95);
+}
+
+.lvl-pill.selected {
+  color: #3c3c3c;
+  font-weight: 800;
+  z-index: 2;
+  /* Тень и обводка задаются в TSX */
+}
+
+/* 2. Шкала (Bar) */
+.lvl-bar-row {
+  display: flex;
+  width: 100%;
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden; /* Обрезаем края */
+  gap: 2px; /* Расстояние между сегментами */
+}
+
+.lvl-bar-segment {
+  flex: 1;
+  height: 100%;
+  transition: background-color 0.2s;
+}
+
+/* Блок теста */
+.test-promo {
+  text-align: center;
+  color: #777;
+  background: #f9f9f9;
+  padding: 30px;
+  border-radius: 20px;
+  border: 2px dashed #e5e5e5;
+}
+.test-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+/* --- ФУТЕР И КНОПКА --- */
+.lvl-footer {
+  width: 100%;
+  padding-bottom: 20px; /* Отступ от низа экрана */
+  margin-top: auto; /* Прижимаем к низу */
+}
+
+/* 🔥 ВОТ ТВОЯ КРАСИВАЯ КНОПКА */
+.lvl-continue-btn {
+  width: 100%;
+  height: 50px;
+  background-color: #58cc02; /* Зеленый Duolingo */
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800; /* Жирный текст */
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+
+  /* 3D Эффект */
+  box-shadow: 0 4px 0 #46a302;
+
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.lvl-continue-btn:active:not(:disabled) {
+  transform: translateY(4px); /* Нажатие */
+  box-shadow: none;
+}
+
+.lvl-continue-btn:disabled {
+  background-color: #e5e5e5;
+  color: #afafaf;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}

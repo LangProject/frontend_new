@@ -1,459 +1,130 @@
-/* ===== Общий layout экрана пути (внутри app-center-block) ===== */
-
-.path-layout {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.path-card {
-  width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border-radius: 32px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
-  padding: 20px 22px 24px;
-}
-
-/* ===== Хедер ===== */
-
-.path-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.path-back-btn {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: none;
-  background: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.path-header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.path-title {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.path-level-label {
-  font-size: 12px;
-  color: #6b7280;
-  background: #f3f4f6;
-  border-radius: 999px;
-  padding: 4px 10px;
-  display: inline-block;
-}
-
-/* ===== Вертикальная цепочка уроков ===== */
-
-.path-timeline {
-  margin-top: 12px;
-  padding: 8px 0 16px;
-}
-
-.path-step {
-  position: relative;
-  padding-left: 60px;
-  margin-bottom: 22px;
-}
-
-/* соединительная линия вверх от кружка */
-
-.path-line {
-  position: absolute;
-  left: 27px;
-  top: -18px;
-  width: 4px;
-  height: 40px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-}
-
-/* активная линия — с анимацией «проявления» */
-
-.path-line-active::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #22c55e;
-  transform: translateY(100%);
-  animation: path-line-draw 0.5s ease-out forwards;
-}
-
-/* кружки-узлы */
-
-.path-node {
-  position: absolute;
-  left: 17px;
-  top: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-}
-
-.path-node-completed {
-  background: #22c55e;
-  color: #ffffff;
-}
-
-.path-node-current {
-  background: #22c55e;
-  color: #ffffff;
-  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
-  animation: path-node-pulse 1.4s ease-out infinite;
-}
-
-.path-node-locked {
-  background: #e5e7eb;
-  color: #6b7280;
-}
-
-/* подписи уроков */
-
-.path-step-labels {
-  text-align: left;
-}
-
-.path-lesson-title {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.path-lesson-meta {
-  font-size: 11px;
-  color: #6b7280;
-}
-
-/* ===== Кнопка Start Lesson X.X ===== */
-
-.path-start-btn {
-  margin-top: 4px;
-  width: 100%;
-  padding: 13px 22px;
-  border-radius: 999px;
-  border: none;
-  background: #22c55e;
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* ===== Анимации ===== */
-
-@keyframes path-node-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
-    transform: scale(1);
-  }
-  70% {
-    box-shadow: 0 0 0 14px rgba(34, 197, 94, 0);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-    transform: scale(1);
-  }
-}
-
-@keyframes path-line-draw {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0%);
-  }
-}
-
-.lesson-node-title {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.lesson-node-tasks {
-  font-size: 13px;
-  opacity: 0.6;
-  margin-top: 4px;
-}
-
-.lesson-node-check {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  color: #22c55e;
-  font-weight: bold;
-}
-
-.path-subtitle {
-  font-size: 13px;
-  opacity: 0.6;
-}
-
-/* === NODE BASE === */
-.path-node {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  flex-shrink: 0;
-}
-
-/* ICON */
-.path-node-icon {
-  font-size: 20px;
-  line-height: 1;
-}
-
-/* STATES */
-.path-node-current {
-  background: #4ade80;
-  color: #064e3b;
-  animation: pulse 1.5s infinite;
-}
-
-.path-node-locked {
-  background: #e5e7eb;
-  color: #9ca3af;
-}
-
-.path-node-completed {
-  background: #22c55e;
-  color: #ffffff;
-}
-
-/* LINE */
-.path-line {
-  position: absolute;
-  top: -48px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 48px;
-  background: #e5e7eb;
-  z-index: -1;
-}
-
-.path-line-active {
-  background: #22c55e;
-}
-
-/* START BUTTON */
-.path-start-btn {
-  margin-top: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: none;
-  background: #22c55e;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* PULSE ANIMATION */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 12px rgba(74, 222, 128, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
-  }
-}
-
 /* src/screens/learningPath.css */
 
 .dashboard-container {
-  padding: 20px;
-  background-color: #f5f7fa;
-  min-height: 100vh;
-  font-family: "Nunito", sans-serif;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
 }
 
-.dashboard-section {
-  margin-bottom: 30px;
-}
-
-.dashboard-section-header {
+.dashboard-header-simple {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  padding-top: 20px;
 }
 
-.dashboard-section-title {
-  font-size: 20px;
+.dashboard-header-simple h2 {
+  font-size: 24px;
   font-weight: 800;
-  color: #1f2937;
+  color: #3c3c3c;
+  margin: 0;
 }
 
-.info-icon {
-  width: 24px;
-  height: 24px;
-  background: #e5e7eb;
-  border-radius: 50%;
+/* Кнопка (i) */
+.info-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 2px solid #e5e5e5;
+  color: #e5e5e5;
+  font-weight: 800;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  font-size: 14px;
-  font-weight: bold;
+  cursor: pointer;
+}
+.info-btn:hover {
+  border-color: #ccc;
+  color: #ccc;
 }
 
-/* === КАРТОЧКА ПУТИ (КАК НА МАКЕТЕ) === */
-.lp-list {
+.dashboard-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.lp-card {
-  background: #ffffff;
-  border-radius: 20px; /* Скругленные углы */
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Легкая тень */
-  border: 1px solid #f3f4f6;
+/* Карточка темы */
+.lp-card-new {
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 24px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 4px 0 #e5e5e5; /* Та же 3D тень */
   transition: transform 0.1s;
 }
 
-.lp-card:active {
-  transform: scale(0.98);
-}
-
-.lp-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: #000;
-  margin-bottom: 4px;
-}
-
-.lp-level {
-  font-size: 14px;
-  color: #9ca3af; /* Серый цвет текста уровня */
-  margin-bottom: 20px;
-}
-
-/* Ряд с прогрессом */
-.lp-progress-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.lp-counter {
-  font-size: 14px;
-  font-weight: 600;
-  color: #4b5563;
-  width: 24px; /* Фикс ширина, чтобы не прыгало */
-}
-
-/* ПОЛОСА ПРОГРЕССА */
-.lp-track {
-  flex: 1; /* Занимает все оставшееся место */
-  height: 8px;
-  background-color: #e5e7eb; /* Серый фон полоски */
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.lp-fill {
-  height: 100%;
-  background-color: #58cc02; /* ТОТ САМЫЙ ЗЕЛЕНЫЙ ЦВЕТ */
-  border-radius: 999px;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.lp-percent-text {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 2px;
-}
-
-/* КНОПКА START TEST */
-.start-btn-container {
-  margin-top: 24px;
-}
-.big-start-btn {
-  width: 100%;
-  background-color: #58cc02;
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  padding: 16px;
-  border-radius: 16px;
-  border: none;
-  box-shadow: 0 4px 0 #46a302;
-  cursor: pointer;
-}
-.big-start-btn:active {
+.lp-card-new:active {
   transform: translateY(4px);
   box-shadow: none;
 }
 
-/* === SUMMARY CARD (НИЖНЯЯ) === */
-.summary-card {
-  background: white;
-  border-radius: 24px;
-  padding: 24px;
+.lp-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  justify-content: center;
+  font-size: 32px;
 }
 
-.stats-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.lp-text-block {
+  flex: 1;
 }
-
-.stat-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.stat-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-.stat-val {
-  font-size: 14px;
+.lp-title {
+  font-size: 20px;
   font-weight: 800;
-  color: #1f2937;
+  color: #3c3c3c;
+}
+.lp-level {
+  font-size: 15px;
+  color: #777;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.lp-arrow-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e5e5e5;
+  color: #e5e5e5;
+  font-weight: 800;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+/* Кнопка Start Test внизу */
+.start-test-btn {
+  margin-top: 30px;
+  width: 100%;
+  height: 56px;
+  background-color: #58cc02;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #46a302;
+  transition: transform 0.1s;
+}
+
+.start-test-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
 }

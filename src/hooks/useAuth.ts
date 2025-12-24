@@ -1,50 +1,111 @@
-// src/hooks/useAuth.ts
 import { useState, useEffect } from "react";
 
-// Имитация задержки (как будто запрос на сервер)
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// Оставляем пустым, так как работает прокси
+const API_URL = "";
 
-export function useAuth() {
-  // Сразу проверяем localStorage, чтобы не было мигания
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem("auth_token");
-  });
+export const useAuth = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<{ email: string } | null>(null);
 
-  const [isLoading, setIsLoading] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    const savedEmail = localStorage.getItem("user_email");
 
-  // Функция входа
+    if (token) {
+      setIsAuthenticated(true);
+      if (savedEmail) setUser({ email: savedEmail });
+    }
+    setIsLoading(false);
+  }, []);
+
   const login = async (data: any) => {
     setIsLoading(true);
-    await delay(1000); // Имитация сети
+    try {
+      // 🔥 ИСПРАВЛЕНИЕ: Бэкенд ждет JSON на /auth/login
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-    localStorage.setItem("auth_token", "fake-jwt-token"); // Сохраняем "токен"
-    setIsAuthenticated(true);
-    setIsLoading(false);
+      if (!response.ok) {
+        const err = await response.json();
+        // Swagger говорит, что ошибка будет в detail
+        throw new Error(err.detail?.[0]?.msg || err.detail || "Login failed");
+      }
+
+      const resData = await response.json();
+
+      // Swagger: TokensIssue { access_token, refresh_token, user: {name, email} }
+      const token = resData.access_token;
+
+      if (!token) throw new Error("No token received");
+
+      localStorage.setItem("auth_token", token);
+      localStorage.setItem("user_email", data.email);
+
+      setUser({ email: data.email });
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Функция регистрации
   const register = async (data: any) => {
     setIsLoading(true);
-    await delay(1000);
+    try {
+      // 🔥 ИСПРАВЛЕНИЕ: Путь /auth/register и поля { name, email, password }
+      // Мы объединяем fullName и nickname в одно поле 'name', так как бэк ждет только 'name'
+      const finalName = data.fullName || data.nickname || "User";
 
-    localStorage.setItem("auth_token", "fake-jwt-token");
-    setIsAuthenticated(true);
-    setIsLoading(false);
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: finalName,
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        // Обработка ошибок валидации Pydantic
+        const errorMsg = Array.isArray(err.detail)
+          ? err.detail.map((e: any) => e.msg).join(", ")
+          : err.detail;
+        throw new Error(errorMsg || "Registration failed");
+      }
+
+      // Успешная регистрация
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Функция выхода
   const logout = () => {
+    // Опционально можно дернуть /auth/logout, но для JWT достаточно чистки localStorage
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("setup_complete");
+    localStorage.removeItem("learning_level");
+    localStorage.removeItem("learning_language");
+
     setIsAuthenticated(false);
-    // Можно добавить перезагрузку страницы, чтобы очистить все состояния
-    window.location.reload();
+    setUser(null);
   };
 
-  return {
-    isAuthenticated,
-    isLoading,
-    login,
-    register,
-    logout,
-  };
-}
+  return { isAuthenticated, isLoading, user, login, register, logout };
+};

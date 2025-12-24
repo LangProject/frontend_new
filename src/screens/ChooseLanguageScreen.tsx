@@ -1,62 +1,65 @@
-import type { FC } from "react";
-import { LanguageCard, type LanguageOption } from "../components/LanguageCard";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { type UiLangCode } from "../utils/detectUiLanguage";
 import { t } from "../i18n";
-import type { UiLangCode } from "../utils/detectUiLanguage";
-
-import flagDE from "../assets/flags_png/flag-de.png";
-import flagEN from "../assets/flags_png/flag-us.png";
-import flagES from "../assets/flags_png/flag-es.png";
-import flagFR from "../assets/flags_png/flag-fr.png";
-import flagPL from "../assets/flags_png/flag-pl.png";
-
-const LANGUAGE_OPTIONS: LanguageOption[] = [
-  { code: "de", label: "Deutsch", flagSrc: flagDE },
-  { code: "en", label: "English", flagSrc: flagEN },
-  { code: "es", label: "Español", flagSrc: flagES },
-  { code: "fr", label: "Français", flagSrc: flagFR },
-  { code: "pl", label: "Polski", flagSrc: flagPL },
-];
 
 interface Props {
   uiLanguage: UiLangCode;
-  selectedCode: string | null;
-  onChangeSelected: (code: string) => void;
+  selectedCode: UiLangCode;
+  onChangeSelected: (code: UiLangCode) => void;
   onContinue: () => void;
 }
 
-export const ChooseLanguageScreen: FC<Props> = ({
+const UI_LANGUAGES = [
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+];
+
+export const ChooseLanguageScreen = ({
   uiLanguage,
   selectedCode,
   onChangeSelected,
   onContinue,
-}) => {
-  const hasSelection = Boolean(selectedCode);
-
+}: Props) => {
   return (
-    <>
-      <div className="page-title">{t(uiLanguage, "uiLanguage.title")}</div>
-      <p className="page-subtitle">{t(uiLanguage, "uiLanguage.subtitle")}</p>
-
-      <div className="language-list">
-        {LANGUAGE_OPTIONS.map((option) => (
-          <LanguageCard
-            key={option.code}
-            option={option}
-            selected={option.code === selectedCode}
-            hasSelection={hasSelection}
-            onSelect={() => onChangeSelected(option.code)}
-          />
-        ))}
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+      }}
+    >
+      <div className="page-header-block">
+        <h1 className="page-title">{t(uiLanguage, "chooseUiLang.title")}</h1>
+        <p className="page-subtitle">{t(uiLanguage, "uiLanguage.subtitle")}</p>
       </div>
 
-      <PrimaryButton
-        disabled={!selectedCode}
-        onClick={onContinue}
-        aria-disabled={!selectedCode}
-      >
-        Continue
-      </PrimaryButton>
-    </>
+      <div className="selection-list">
+        {UI_LANGUAGES.map((lang) => {
+          const isSelected = selectedCode === lang.code;
+          return (
+            <div
+              key={lang.code}
+              className={`wide-card ${isSelected ? "selected" : ""}`}
+              onClick={() => onChangeSelected(lang.code as UiLangCode)}
+            >
+              <div className="card-left">
+                <span className="card-flag">{lang.flag}</span>
+                <span className="card-label">{lang.label}</span>
+              </div>
+
+              <div className="card-indicator" />
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      <button className="btn-primary" onClick={onContinue}>
+        {t(uiLanguage, "common.continue")}
+      </button>
+    </div>
   );
 };

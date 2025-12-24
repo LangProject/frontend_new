@@ -4,14 +4,14 @@ import "./learningPath.css";
 
 interface Props {
   pathId: string;
-  learningLevel: string | null; // 👇 Добавляем проп
+  learningLevel: string | null;
   onBack: () => void;
   onStartLesson: (lessonId: string) => void;
 }
 
 export const LearningPathDetailsScreen = ({
   pathId,
-  learningLevel, // Принимаем уровень
+  learningLevel,
   onBack,
   onStartLesson,
 }: Props) => {
@@ -24,54 +24,60 @@ export const LearningPathDetailsScreen = ({
 
   if (!config) return <div className="centered-content">Path not found</div>;
 
-  // Формируем строку (например: "Level A1 · 3 Lessons")
-  // Вместо того, что жестко прописано в config.levelLabel
-  const displayLevelLabel = `Level ${learningLevel || "A1"} · ${
-    config.lessons.length
-  } Lessons`;
+  const levelText = learningLevel ? `Level ${learningLevel}` : "Level A1";
 
   return (
     <div className="path-layout">
       <div className="path-card">
+        {/* HEADER */}
         <div className="path-header">
           <button className="path-back-btn" onClick={onBack}>
             ←
           </button>
           <div className="path-header-text">
             <div className="path-title">{config.title}</div>
-
-            {/* 👇 Используем динамический уровень */}
-            <div className="path-level-label">{displayLevelLabel}</div>
+            <div className="path-level-label">
+              {levelText} · {config.lessons.length} Lessons
+            </div>
           </div>
         </div>
 
+        {/* TIMELINE */}
         <div className="path-timeline">
           {config.lessons.map((lesson, index) => {
             const status = statuses[index];
             const isLast = index === config.lessons.length - 1;
 
             return (
-              <div key={lesson.id} className="path-step">
-                {!isLast && (
+              <div key={lesson.id} className={`path-step path-step-${status}`}>
+                {/* ЛЕВАЯ КОЛОНКА: Линия + Иконка */}
+                <div className="path-step-left">
+                  {/* Линия рисуется, если это не последний урок */}
+                  {!isLast && (
+                    <div
+                      className={`path-line ${
+                        status === "completed" ? "active" : ""
+                      }`}
+                    />
+                  )}
+
+                  {/* Сам кружок */}
                   <div
-                    className={`path-line ${
-                      status === "completed" ? "path-line-active" : ""
-                    }`}
-                  ></div>
-                )}
-                <div
-                  className={`path-node path-node-${status}`}
-                  onClick={() =>
-                    status !== "locked" && onStartLesson(lesson.id)
-                  }
-                >
-                  {status === "completed"
-                    ? "✓"
-                    : status === "locked"
-                    ? "🔒"
-                    : "★"}
+                    className={`path-node ${status}`}
+                    onClick={() =>
+                      status !== "locked" && onStartLesson(lesson.id)
+                    }
+                  >
+                    {status === "completed"
+                      ? "✓"
+                      : status === "locked"
+                      ? "🔒"
+                      : "★"}
+                  </div>
                 </div>
-                <div className="path-step-labels" style={{ marginLeft: 16 }}>
+
+                {/* ПРАВАЯ КОЛОНКА: Текст + Кнопка */}
+                <div className="path-step-content">
                   <div className="path-lesson-title">{lesson.title}</div>
                   <div className="path-lesson-meta">
                     {lesson.tasksCount} tasks

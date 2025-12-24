@@ -1,400 +1,247 @@
 /* src/screens/lesson.css */
 
-/* --- LAYOUT --- */
-.lesson-container {
+.ls-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  background-color: #f9f9f9;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: white;
-  max-width: 600px; /* Ограничим ширину для красоты на десктопе */
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* --- HEADER --- */
-.lesson-top-bar {
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.bar-container {
-  flex: 1;
-  height: 16px;
-  background-color: #e5e5e5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  background-color: #58cc02;
-  transition: width 0.4s ease;
-}
-
-.hearts-container {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ff4b4b;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* --- SCROLL AREA (MAIN CONTENT) --- */
-.lesson-scroll-area {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+  padding: 16px 20px 30px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
-/* Тексты и заголовки */
-.lesson-instruction {
-  font-size: 22px;
-  font-weight: 700;
-  color: #3c3c3c;
-  margin-bottom: 24px;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.sub-instruction {
-  font-size: 16px;
-  color: #777;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.lesson-title {
-  font-size: 26px;
-  font-weight: 800;
-  margin-bottom: 12px;
-  color: #58cc02;
-}
-
-.lesson-text {
-  font-size: 18px;
-  line-height: 1.6;
-  text-align: center;
-  color: #4b4b4b;
-}
-
-.centered-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.word-hero {
-  font-size: 32px;
-  font-weight: 800;
-  margin-bottom: 30px;
-  color: #4b4b4b;
-}
-
-/* --- 1. SELECT ONE / OPTIONS --- */
-.options-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.ls-inner-content {
   width: 100%;
-}
-
-.option-card {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 16px;
-  border-bottom-width: 4px;
-  padding: 16px 20px;
-  font-size: 18px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.1s;
-  color: #4b4b4b;
-  position: relative;
-}
-
-.option-card:active {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
-}
-
-.option-card.selected {
-  border-color: #84d8ff;
-  background-color: #ddf4ff;
-  color: #1899d6;
-}
-
-.key-hint {
-  float: right;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #afafaf;
-}
-
-/* --- 2. MATCH PAIRS (ВАЖНО! ЭТОГО НЕ ХВАТАЛО) --- */
-.match-container {
-  display: flex;
-  gap: 20px;
-  width: 100%;
-  justify-content: center;
-  margin-top: 10px;
-}
-
-.match-column {
+  max-width: 600px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   flex: 1;
 }
 
-.match-card {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 12px;
-  border-bottom-width: 4px;
-  padding: 14px;
-  font-size: 16px;
-  text-align: center;
-  cursor: pointer;
-  min-height: 50px;
+/* --- PRO PENCIL HEADER --- */
+.ls-header-pencil {
+  display: flex;
+  align-items: center;
+  height: 56px; /* Чуть компактнее и аккуратнее */
+  margin-top: 20px;
+  /* Тень для всего карандаша */
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.1));
+  width: 100%;
+}
+
+/* 1. ГРИФЕЛЬ (Черный кончик) */
+.ls-p-lead {
+  width: 18px;
+  height: 100%;
+  background-color: #333; /* Цвет графита */
+  /* Вырезаем треугольник: вершина слева по центру */
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+  margin-right: -1px; /* Склейка */
+}
+
+/* 2. ДЕРЕВО (Заточенная часть) */
+.ls-p-wood {
+  width: 24px;
+  height: 100%;
+  background-color: #f2c98a; /* Цвет дерева */
+  /* Вырезаем трапецию */
+  clip-path: polygon(0 0, 100% 10%, 100% 90%, 0 100%);
+  margin-right: -1px;
+}
+
+/* 3. ТЕЛО КАРАНДАША (Зеленое с текстом) */
+.ls-p-body {
+  flex: 1;
+  background-color: #4ade80; /* Зеленый */
+  height: 80%; /* Тело чуть уже заточенной части (для объема) */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.1s;
-}
-
-.match-card:active {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
-}
-
-.match-card.active {
-  border-color: #84d8ff;
-  background-color: #ddf4ff;
-  color: #1899d6;
-}
-
-.match-card.paired {
-  background-color: #e5e5e5;
-  color: #afafaf;
-  border-color: #d1d1d1;
-  pointer-events: none;
-  border-bottom-width: 2px;
-  transform: translateY(2px);
-}
-
-/* --- 3. REORDER (WORD BANK) --- */
-.assembly-area {
-  min-height: 60px;
-  border-bottom: 2px solid #e5e5e5;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  width: 100%;
-  margin-bottom: 30px;
-  align-items: flex-start;
-}
-
-.word-bank {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-}
-
-.word-chip {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 12px;
-  border-bottom-width: 4px;
-  padding: 10px 16px;
-  font-size: 16px;
-  cursor: pointer;
-  color: #4b4b4b;
-}
-
-.word-chip:active {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
-}
-
-/* --- 4. INPUT TEXT --- */
-.lesson-textarea {
-  width: 100%;
-  height: 120px;
-  padding: 16px;
-  border: 2px solid #e5e5e5;
-  border-radius: 16px;
-  font-size: 18px;
-  resize: none;
-  font-family: inherit;
-  background: #f7f7f7;
-}
-
-.lesson-textarea:focus {
-  outline: none;
-  border-color: #e5e5e5;
-  background: white;
-}
-
-/* --- 5. FILL BLANK / SENTENCE --- */
-.sentence-big {
-  font-size: 24px;
-  line-height: 1.6;
-  text-align: center;
-  margin: 20px 0;
-  color: #4b4b4b;
-}
-
-.blank-slot {
-  display: inline-block;
-  min-width: 80px;
-  border-bottom: 2px solid #4b4b4b;
-  margin: 0 8px;
-  text-align: center;
-  font-weight: bold;
-  color: #1cb0f6;
-}
-
-/* --- 6. FIND THE ERROR --- */
-.sentence-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.clickable-word {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 16px;
-  border-bottom-width: 4px;
-  padding: 12px 24px;
-  font-size: 20px;
-  font-family: inherit;
-  font-weight: 600;
-  color: #4b4b4b;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.clickable-word:active {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
-}
-
-.clickable-word.selected-error {
-  background-color: #ffdfe0;
-  border-color: #ea2b2b;
-  color: #ea2b2b;
-}
-
-/* --- FOOTER --- */
-.lesson-footer-area {
-  border-top: 2px solid #e5e5e5;
-  padding: 20px;
-  background: white;
-}
-
-.primary-button-duo {
-  width: 100%;
-  padding: 14px;
-  border-radius: 16px;
-  font-size: 16px;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  background-color: #58cc02;
   color: white;
-  border-bottom: 4px solid #46a302;
-  transition: filter 0.2s;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 1; /* Чтобы перекрыть стыки */
+  border-radius: 4px 0 0 4px; /* Легкое скругление слева */
 }
 
-.primary-button-duo:active {
-  transform: translateY(2px);
-  border-bottom: 0px solid transparent;
+/* 4. МЕТАЛЛ (Кольцо) */
+.ls-p-metal {
+  width: 16px;
+  height: 80%;
+  background: linear-gradient(
+    90deg,
+    #d1d5db,
+    #9ca3af,
+    #d1d5db
+  ); /* Металлический градиент */
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.primary-button-duo:disabled {
-  background-color: #e5e5e5;
-  color: #afafaf;
-  border-bottom-color: #afafaf;
-  cursor: default;
-  transform: none;
+/* 5. ЛАСТИК (Розовый или зеленый) */
+.ls-p-eraser {
+  width: 24px;
+  height: 80%;
+  background-color: #f87171; /* Розовый ластик (классика) */
+  /* Или оставь зеленым: background-color: #4ade80; */
+  border-radius: 0 8px 8px 0;
 }
 
-/* --- FEEDBACK --- */
-.feedback-sheet {
+/* --- ОСТАЛЬНЫЕ СТИЛИ (Без изменений, но продублирую для целостности) --- */
+.ls-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: slideUp 0.3s ease-out;
+  align-items: center;
+  padding-top: 30px;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
+.ls-prompt-text {
+  font-size: 36px;
+  font-weight: 900;
+  color: #222;
+  margin: 0 0 40px;
+  text-align: center;
+}
+
+.ls-task-type {
+  font-size: 16px;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ls-options-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 600px) {
+  .ls-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
-.sheet-success .feedback-title {
-  color: #58cc02;
-}
-.sheet-error .feedback-title {
-  color: #ea2b2b;
+.ls-option-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #e5e7eb;
+  transition: all 0.1s ease;
 }
 
-.feedback-header {
+.ls-option-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #e5e7eb;
+}
+
+.ls-option-card.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 4px 0 #bfdbfe;
+}
+
+.ls-option-card.opt-correct {
+  border-color: #22c55e;
+  background-color: #dcfce7;
+  box-shadow: 0 4px 0 #86efac;
+}
+
+.ls-option-card.opt-wrong {
+  border-color: #ef4444;
+  background-color: #fee2e2;
+  box-shadow: 0 4px 0 #fca5a5;
+}
+
+.ls-opt-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ls-opt-idx {
+  font-size: 14px;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.ls-footer {
+  margin-top: auto;
   display: flex;
   align-items: center;
   gap: 16px;
+  padding-top: 30px;
+  padding-bottom: 10px;
 }
 
-.feedback-icon {
-  font-size: 32px;
-}
-
-.feedback-title {
+.ls-main-btn {
+  flex: 1;
+  height: 56px;
+  background-color: #4ade80;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 18px;
   font-weight: 800;
-  font-size: 24px;
-  margin-bottom: 4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #15803d;
+  transition: transform 0.1s;
 }
 
-.feedback-correct-answer {
-  color: #ea2b2b;
-  font-size: 14px;
+.ls-main-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
 }
 
-.btn-success {
-  background-color: #58cc02;
-  border-bottom-color: #46a302;
+.ls-main-btn:disabled {
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  box-shadow: none;
 }
 
-.btn-error {
-  background-color: #ff4b4b;
-  border-bottom-color: #d40000;
+.ls-quit-link {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.ls-text-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  font-size: 18px;
+  min-height: 120px;
+  outline: none;
 }
