@@ -4,118 +4,175 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  padding-bottom: 20px;
+  padding-bottom: 30px;
 }
-
 .dashboard-header-simple {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  padding-top: 20px;
+  padding-top: 10px;
 }
-
 .dashboard-header-simple h2 {
   font-size: 24px;
   font-weight: 800;
-  color: #3c3c3c;
+  color: #111827;
   margin: 0;
 }
-
-/* Кнопка (i) */
 .info-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  border: 2px solid #e5e5e5;
-  color: #e5e5e5;
-  font-weight: 800;
-  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
 }
-.info-btn:hover {
-  border-color: #ccc;
-  color: #ccc;
-}
-
 .dashboard-list {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+/* КАРТКА */
+.lp-card-new {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.lp-card-new:active {
+  transform: scale(0.98);
+}
+
+/* Верхняя часть */
+.lp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.lp-header-left {
+  display: flex;
+  align-items: center;
   gap: 16px;
 }
 
-/* Карточка темы */
-.lp-card-new {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 20px;
-  padding: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 4px 0 #e5e5e5; /* Та же 3D тень */
-  transition: transform 0.1s;
-}
-
-.lp-card-new:active {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-
+/* Иконка */
 .lp-icon-box {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  box-sizing: border-box;
+}
+.lp-topic-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply; /* Убирает белый фон */
+  /* transform: scaleX(-1);  <-- УБРАЛИ ЭТУ СТРОЧКУ */
 }
 
-.lp-text-block {
-  flex: 1;
+.lp-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .lp-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
-  color: #3c3c3c;
+  color: #111827;
+  line-height: 1.2;
 }
 .lp-level {
-  font-size: 15px;
-  color: #777;
-  font-weight: 700;
-  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
 }
-
 .lp-arrow-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: white;
-  border: 2px solid #e5e5e5;
-  color: #e5e5e5;
-  font-weight: 800;
-  font-size: 20px;
+  background: #f3f4f6;
+  color: #9ca3af;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 2px;
+  font-weight: 800;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
-/* Кнопка Start Test внизу */
-.start-test-btn {
-  margin-top: 30px;
+/* Прогресс */
+.lp-progress-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.lp-stats-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 32px;
+  min-width: 40px;
+}
+.lp-count-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+.lp-percent-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+}
+.lp-slider-track {
+  flex: 1;
+  height: 8px;
+  background-color: #f3f4f6;
+  border-radius: 99px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.lp-slider-knob {
+  width: 18px;
+  height: 18px;
+  background-color: #9ca3af;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: left 0.3s ease, background-color 0.3s;
+}
+
+.start-test-btn-dash {
+  margin-top: 32px;
   width: 100%;
   height: 56px;
   background-color: #58cc02;
   color: white;
   border: none;
   border-radius: 16px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -123,8 +180,7 @@
   box-shadow: 0 4px 0 #46a302;
   transition: transform 0.1s;
 }
-
-.start-test-btn:active {
+.start-test-btn-dash:active {
   transform: translateY(4px);
   box-shadow: none;
 }

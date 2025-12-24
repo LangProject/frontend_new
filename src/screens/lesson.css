@@ -7,12 +7,22 @@
   width: 100%;
   height: 100%;
   z-index: 9999;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 30px;
+  padding: 20px 20px 30px;
   box-sizing: border-box;
   overflow-y: auto;
+}
+
+.ls-loading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #9ca3af;
+  font-size: 18px;
 }
 
 .ls-inner-content {
@@ -24,224 +34,201 @@
   flex: 1;
 }
 
-/* --- PRO PENCIL HEADER --- */
-.ls-header-pencil {
+/* === ВЕРХНЯ ПАНЕЛЬ (Top Bar) === */
+.ls-top-bar {
   display: flex;
   align-items: center;
-  height: 56px; /* Чуть компактнее и аккуратнее */
-  margin-top: 20px;
-  /* Тень для всего карандаша */
-  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.1));
+  gap: 16px;
+  margin-bottom: 40px;
   width: 100%;
 }
 
-/* 1. ГРИФЕЛЬ (Черный кончик) */
-.ls-p-lead {
-  width: 18px;
-  height: 100%;
-  background-color: #333; /* Цвет графита */
-  /* Вырезаем треугольник: вершина слева по центру */
-  clip-path: polygon(100% 0, 100% 100%, 0 50%);
-  margin-right: -1px; /* Склейка */
-}
-
-/* 2. ДЕРЕВО (Заточенная часть) */
-.ls-p-wood {
-  width: 24px;
-  height: 100%;
-  background-color: #f2c98a; /* Цвет дерева */
-  /* Вырезаем трапецию */
-  clip-path: polygon(0 0, 100% 10%, 100% 90%, 0 100%);
-  margin-right: -1px;
-}
-
-/* 3. ТЕЛО КАРАНДАША (Зеленое с текстом) */
-.ls-p-body {
+/* Обгортка для олівця, щоб він займав весь доступний простір */
+.ls-pencil-wrapper {
   flex: 1;
-  background-color: #4ade80; /* Зеленый */
-  height: 80%; /* Тело чуть уже заточенной части (для объема) */
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
+}
+
+/* === ELO ЛІЧИЛЬНИК === */
+.ls-elo-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fffbeb; /* Світло-жовтий фон */
+  border: 2px solid #fbbf24; /* Золота рамка */
+  padding: 6px 12px;
+  border-radius: 99px;
+  height: 32px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 0 #f59e0b;
+}
+
+.ls-elo-icon {
   font-size: 16px;
+}
+.ls-elo-value {
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  z-index: 1; /* Чтобы перекрыть стыки */
-  border-radius: 4px 0 0 4px; /* Легкое скругление слева */
+  color: #b45309;
+  font-size: 14px;
 }
 
-/* 4. МЕТАЛЛ (Кольцо) */
-.ls-p-metal {
-  width: 16px;
-  height: 80%;
-  background: linear-gradient(
-    90deg,
-    #d1d5db,
-    #9ca3af,
-    #d1d5db
-  ); /* Металлический градиент */
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+/* === ОЛІВЕЦЬ (Дивиться вправо) === */
+.ls-pencil-progress {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  width: 100%;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.05));
 }
 
-/* 5. ЛАСТИК (Розовый или зеленый) */
 .ls-p-eraser {
-  width: 24px;
-  height: 80%;
-  background-color: #f87171; /* Розовый ластик (классика) */
-  /* Или оставь зеленым: background-color: #4ade80; */
-  border-radius: 0 8px 8px 0;
+  width: 20px;
+  height: 100%;
+  background-color: #f87171;
+  border-radius: 6px 0 0 6px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: none;
 }
 
-/* --- ОСТАЛЬНЫЕ СТИЛИ (Без изменений, но продублирую для целостности) --- */
+.ls-p-metal {
+  width: 12px;
+  height: 100%;
+  background: linear-gradient(90deg, #d1d5db, #9ca3af, #d1d5db);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-left: none;
+  border-right: none;
+}
+
+.ls-p-body-container {
+  flex: 1;
+  height: 100%;
+  background-color: #e5e7eb;
+  position: relative;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.ls-p-fill {
+  height: 100%;
+  background-color: #58cc02;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.ls-p-wood {
+  width: 20px;
+  height: 100%;
+  background-color: #fcd34d;
+  clip-path: polygon(0 0, 100% 25%, 100% 75%, 0 100%);
+  margin-left: -1px;
+}
+
+.ls-p-lead {
+  width: 8px;
+  height: 40%;
+  background-color: #374151;
+  border-radius: 0 4px 4px 0;
+  margin-left: -4px;
+  align-self: center;
+}
+
+/* === КОНТЕНТ ЗАВДАННЯ === */
 .ls-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 30px;
+  justify-content: center;
 }
-
-.ls-prompt-text {
-  font-size: 36px;
-  font-weight: 900;
-  color: #222;
-  margin: 0 0 40px;
-  text-align: center;
-}
-
 .ls-task-type {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #666;
+  color: #6b7280;
   margin-bottom: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+}
+.ls-prompt-text {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 40px;
+  text-align: center;
 }
 
 .ls-options-grid {
   width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 14px;
 }
-
-@media (min-width: 600px) {
-  .ls-options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-}
-
 .ls-option-card {
+  width: 100%;
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  box-shadow: 0 4px 0 #e5e7eb;
-  transition: all 0.1s ease;
-}
-
-.ls-option-card:active {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #e5e7eb;
-}
-
-.ls-option-card.selected {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
-  box-shadow: 0 4px 0 #bfdbfe;
-}
-
-.ls-option-card.opt-correct {
-  border-color: #22c55e;
-  background-color: #dcfce7;
-  box-shadow: 0 4px 0 #86efac;
-}
-
-.ls-option-card.opt-wrong {
-  border-color: #ef4444;
-  background-color: #fee2e2;
-  box-shadow: 0 4px 0 #fca5a5;
-}
-
-.ls-opt-text {
   font-size: 18px;
   font-weight: 700;
   color: #374151;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: 0 4px 0 #e5e5e5;
+  transition: 0.1s;
+}
+.ls-option-card:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #e5e5e5;
+}
+.ls-option-card.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  color: #1d4ed8;
 }
 
-.ls-opt-idx {
-  font-size: 14px;
-  color: #9ca3af;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  width: 26px;
-  height: 26px;
+/* === ФУТЕР === */
+.ls-footer {
+  margin-top: auto;
+  padding-top: 30px;
+  display: flex;
+  gap: 16px;
+}
+.ls-quit-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #ef4444;
+  font-size: 24px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #e5e5e5;
 }
-
-.ls-footer {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-top: 30px;
-  padding-bottom: 10px;
-}
-
 .ls-main-btn {
   flex: 1;
   height: 56px;
-  background-color: #4ade80;
-  color: white;
-  border: none;
   border-radius: 16px;
-  font-size: 18px;
+  border: none;
+  background-color: #58cc02;
+  color: white;
+  font-size: 17px;
   font-weight: 800;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 4px 0 #15803d;
-  transition: transform 0.1s;
+  box-shadow: 0 4px 0 #46a302;
 }
-
-.ls-main-btn:active {
+.ls-main-btn:active,
+.ls-quit-btn:active {
   transform: translateY(4px);
   box-shadow: none;
 }
-
 .ls-main-btn:disabled {
   background-color: #e5e7eb;
   color: #9ca3af;
   box-shadow: none;
-}
-
-.ls-quit-link {
-  background: none;
-  border: none;
-  color: #ef4444;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0 10px;
-}
-
-.ls-text-input {
-  width: 100%;
-  padding: 16px;
-  border-radius: 16px;
-  border: 2px solid #e5e7eb;
-  font-size: 18px;
-  min-height: 120px;
-  outline: none;
+  cursor: not-allowed;
+  transform: none;
 }

@@ -1,18 +1,16 @@
-// src/i18n.ts
-import type { UiLangCode } from "./utils/detectUiLanguage";
+import { type UiLangCode } from "./utils/detectUiLanguage";
 
-// Тип для ключів (розширений, щоб уникнути помилок TS)
 type Dict = Record<string, string>;
 
 // 🇺🇸 ENGLISH
 const en: Dict = {
   "common.continue": "CONTINUE",
 
-  // Auth
+  // Auth (Вхід/Реєстрація)
   "auth.welcomeTitle": "Welcome!",
   "auth.welcomeSubtitle": "Please sign in to continue",
-  "auth.login": "Log in",
-  "auth.signup": "Sign up",
+  "auth.login": "Log in", // Текст на перемикачі
+  "auth.signup": "Sign up", // Текст на перемикачі
   "auth.name": "Name",
   "auth.fullName": "Full name",
   "auth.nickname": "Nickname",
@@ -20,14 +18,14 @@ const en: Dict = {
   "auth.password": "Password",
   "auth.repeatPassword": "Repeat password",
   "auth.forgotPassword": "Forgot password?",
-  "auth.logInCta": "Log in",
-  "auth.signUpCta": "Create account",
+  "auth.logInCta": "Log in", // Кнопка входу
+  "auth.signUpCta": "Create account", // Кнопка реєстрації
   "auth.loading": "Please wait...",
   "auth.namePlaceholder": "Your name",
   "auth.emailPlaceholder": "you@example.com",
   "auth.passwordPlaceholder": "Enter password",
 
-  // Setup
+  // Setup (Вибір мови/рівня)
   "chooseUiLang.title": "I speak...",
   "uiLanguage.subtitle": "Select the language for the app interface.",
   "chooseLearningLang.title": "I want to learn...",
@@ -40,6 +38,8 @@ const en: Dict = {
   "level.testSubtitle": "Find your level in a few quick questions.",
 
   // Dashboard
+  "dashboard.learningPathsTitle": "Learning Paths",
+  "dashboard.level": "Level",
   "dashboard.selectTopic": "Select Topic",
   "dashboard.reading": "Reading",
   "dashboard.vocabulary": "Vocabulary",
@@ -79,6 +79,8 @@ const ru: Dict = {
   "level.testTitle": "Не знаете свой уровень?",
   "level.testSubtitle": "Определите уровень тестом.",
 
+  "dashboard.learningPathsTitle": "Пути обучения",
+  "dashboard.level": "Уровень",
   "dashboard.selectTopic": "Выберите тему",
   "dashboard.reading": "Чтение",
   "dashboard.vocabulary": "Словарь",
@@ -103,9 +105,6 @@ const de: Dict = {
   "auth.logInCta": "Anmelden",
   "auth.signUpCta": "Konto erstellen",
   "auth.loading": "Bitte warten...",
-  "auth.namePlaceholder": "Dein Name",
-  "auth.emailPlaceholder": "name@example.com",
-  "auth.passwordPlaceholder": "Passwort eingeben",
 
   "chooseUiLang.title": "Ich spreche...",
   "uiLanguage.subtitle": "Wähle die Sprache für die App-Oberfläche.",
@@ -117,6 +116,8 @@ const de: Dict = {
   "level.testTitle": "Kennst du dein Niveau nicht?",
   "level.testSubtitle": "Finde dein Niveau heraus.",
 
+  "dashboard.learningPathsTitle": "Lernpfade",
+  "dashboard.level": "Niveau",
   "dashboard.selectTopic": "Thema wählen",
   "dashboard.reading": "Lesen",
   "dashboard.vocabulary": "Wortschatz",
@@ -141,9 +142,6 @@ const es: Dict = {
   "auth.logInCta": "Iniciar sesión",
   "auth.signUpCta": "Crear cuenta",
   "auth.loading": "Espera...",
-  "auth.namePlaceholder": "Tu nombre",
-  "auth.emailPlaceholder": "nombre@ejemplo.com",
-  "auth.passwordPlaceholder": "Ingresa contraseña",
 
   "chooseUiLang.title": "Yo hablo...",
   "uiLanguage.subtitle": "Selecciona el idioma de la interfaz.",
@@ -155,6 +153,8 @@ const es: Dict = {
   "level.testTitle": "¿No conoces tu nivel?",
   "level.testSubtitle": "Encuentra tu nivel rápidamente.",
 
+  "dashboard.learningPathsTitle": "Rutas",
+  "dashboard.level": "Nivel",
   "dashboard.selectTopic": "Elige un tema",
   "dashboard.reading": "Lectura",
   "dashboard.vocabulary": "Vocabulario",
@@ -162,17 +162,16 @@ const es: Dict = {
   "dashboard.startTest": "Iniciar prueba",
 };
 
-// Заглушки для інших мов
-const fr = { ...en, "chooseUiLang.title": "Je parle..." };
-const pl = { ...en, "chooseUiLang.title": "Mówię po..." };
+const fr = { ...en };
+const pl = { ...en };
 
 const DICTS: Record<string, Dict> = { en, de, es, fr, pl, ru };
 
-// Єдина функція експорту
 export const t = (lang: UiLangCode | null | undefined, key: string): string => {
   const fallbackLang = "en";
   const safeLang = lang && DICTS[lang] ? lang : fallbackLang;
   const dict = DICTS[safeLang] || DICTS[fallbackLang];
 
+  // Якщо ключа немає - повертаємо сам ключ, щоб бачити, чого не вистачає
   return dict[key] || DICTS[fallbackLang][key] || key;
 };
