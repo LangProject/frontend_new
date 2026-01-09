@@ -39,17 +39,15 @@ type ScreenId =
   | "lesson";
 type AuthMode = "login" | "register";
 
-// Маппинг для ОТПРАВКИ на бэкенд
 const LANG_MAP: Record<string, string> = {
-  ru: "Russian",
-  de: "German",
-  en: "English",
-  es: "Spanish",
-  fr: "French",
-  pl: "Polish",
+  ru: "russian",
+  de: "german",
+  en: "english",
+  es: "spanish",
+  fr: "french",
+  pl: "polish",
 };
 
-// Маппинг для ПОЛУЧЕНИЯ с бэкенда (обратный)
 const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
   Russian: "ru",
   German: "de",
@@ -59,7 +57,7 @@ const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
   Polish: "pl",
 };
 
-const API_URL = "";
+const API_URL = ""; // Vite Proxy
 
 function App() {
   const { isAuthenticated, isLoading, login, register, logout } = useAuth();
@@ -82,64 +80,50 @@ function App() {
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // 🔥 ГЛАВНАЯ ЛОГИКА СИНХРОНИЗАЦИИ ПОСЛЕ ВХОДА
+  // --- ЛОГИКА СИНХРОНИЗАЦИИ ---
   useEffect(() => {
     const syncUserData = async () => {
-      // Если не авторизованы — ничего не делаем
       if (!isAuthenticated) return;
 
-      // 1. Сначала проверяем localStorage. Если там всё есть — супер.
       const localLvl = localStorage.getItem("learning_level");
       const localLang = localStorage.getItem("learning_language");
 
       if (localLvl && localLang) {
         setLearningLevel(localLvl);
         setLearningLanguage(localLang);
-        // Если мы всё еще на экране входа — кидаем в дашборд
         if (screen === "auth") setScreen("dashboard");
         return;
       }
 
-      // 2. Если в localStorage пусто (новый вход), тянем с бэка
       if (screen === "auth" || screen === "choose-ui-language") {
         try {
           setIsInitializing(true);
           const token = localStorage.getItem("auth_token");
-
           if (!token) throw new Error("No token");
 
-          // Шаг А: Начинаем сессию, чтобы получить ID (требование бэка для /stats)
+          // Получаем ID только для проверки статов, но не сохраняем его как "текущий урок"
           const sessionRes = await fetch(`${API_URL}/session/begin-session`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
           });
-
           if (!sessionRes.ok) throw new Error("Session start failed");
           const sessionData = await sessionRes.json();
-          const sessionId = sessionData.id;
+          const tempSessionId = sessionData.id;
 
-          // Шаг Б: Запрашиваем статистику (там лежат язык и уровень)
           const statsRes = await fetch(`${API_URL}/user/stats`, {
             headers: {
               Authorization: `Bearer ${token}`,
-              "x-session-id": sessionId,
+              "x-session-id": tempSessionId, // Используем временно
             },
           });
 
           if (!statsRes.ok) throw new Error("Stats fetch failed");
           const statsData = await statsRes.json();
-
-          // Шаг В: Парсим данные
-          // Структура: { language_data: { target_language: "German", ratings: { ... } } }
           const langData = statsData.language_data;
 
           if (langData) {
-            // Конвертируем "German" -> "de"
             const backendLang = langData.target_language;
             const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang];
-
-            // Достаем уровень из ratings. Там может быть карта, берем первое значение.
-            // ratings: { "vocabulary": { cefr: "A1" } }
             let userLevel = "A1";
             const ratings = langData.ratings || {};
             const firstRatingKey = Object.keys(ratings)[0];
@@ -147,32 +131,66 @@ function App() {
               userLevel = ratings[firstRatingKey].cefr;
             }
 
-            // Сохраняем и переходим
             if (frontendLang) {
               setLearningLanguage(frontendLang);
               localStorage.setItem("learning_language", frontendLang);
             }
             setLearningLevel(userLevel);
             localStorage.setItem("learning_level", userLevel);
-
             localStorage.setItem("setup_complete", "true");
             setScreen("dashboard");
           } else {
-            // Если данных нет (новый юзер) — кидаем на настройку
             setScreen("choose-ui-language");
           }
         } catch (e) {
           console.warn("Sync failed, redirecting to setup:", e);
-          // Если ошибка (например, у юзера нет статистики) — пусть настраивает сам
           setScreen("choose-ui-language");
         } finally {
           setIsInitializing(false);
         }
       }
     };
-
     syncUserData();
   }, [isAuthenticated, screen]);
+
+  // --- ЗАПУСК УРОКА ЧЕРЕЗ СЕРВЕР ---
+  const handleStartLesson = async () => {
+    try {
+      setIsInitializing(true); // Показываем лоадер
+      const token = localStorage.getItem("auth_token");
+      if (!token) throw new Error("No auth token");
+
+      console.log("Creating REAL session on server...");
+
+      // 1. Просим сервер создать сессию
+      const res = await fetch(`${API_URL}/session/begin-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to create session");
+
+      const data = await res.json();
+      const realSessionId = data.id; // Айди от сервера
+
+      if (!realSessionId) throw new Error("Server returned empty ID");
+
+      console.log("Server assigned session ID:", realSessionId);
+
+      localStorage.setItem("session_id", realSessionId);
+      setCurrentLessonId(realSessionId);
+      setScreen("lesson");
+    } catch (e) {
+      console.error("Lesson start error:", e);
+      alert("Не удалось начать урок. Проверьте соединение.");
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+  // ----------------------------------------------------
 
   const handleRegisterFormSubmit = async (data: any) => {
     try {
@@ -202,8 +220,6 @@ function App() {
         language_level: lvlCode,
       };
 
-      console.log("Initializing user with:", payload);
-
       const res = await fetch(`${API_URL}/user/initialize`, {
         method: "POST",
         headers: {
@@ -222,7 +238,7 @@ function App() {
       setScreen("dashboard");
     } catch (e: any) {
       console.error(e);
-      alert("Saved locally. (Server sync skipped: " + e.message + ")");
+      alert("Saved locally. Error: " + e.message);
       localStorage.setItem("setup_complete", "true");
       setScreen("dashboard");
     } finally {
@@ -276,6 +292,7 @@ function App() {
           className="app-center-block"
           style={screen === "lesson" ? { maxWidth: "none" } : {}}
         >
+          {/* ... Auth, ForgotPassword, ChooseScreens  ... */}
           {screen === "auth" && (
             <>
               <div className="page-header-block">
@@ -385,12 +402,12 @@ function App() {
             <DashboardScreen
               uiLanguage={uiLanguage}
               learningLevel={learningLevel}
-              onOpenPath={(id) => {
-                setCurrentLessonId(id);
-                setScreen("lesson");
+              onOpenPath={(randomIdFromDashboard) => {
+                handleStartLesson();
               }}
             />
           )}
+
           {screen === "lesson" && currentLessonId && (
             <LessonScreen
               lessonId={currentLessonId}
@@ -400,6 +417,7 @@ function App() {
         </div>
       </main>
 
+      {/* Footer */}
       {screen !== "lesson" && (
         <footer className="app-footer">
           <span className="footer-text">

@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
+import { LessonService } from "../api/services/lessonService";
+import type {
+  LessonExercise,
+  LessonFeedback,
+  UserStats,
+  AnswerValue,
+} from "../types/lesson";
 import "./lesson.css";
-
-const API_URL = ""; // Використовує проксі
 
 interface Props {
   lessonId: string;
@@ -9,140 +14,227 @@ interface Props {
 }
 
 export const LessonScreen = ({ lessonId, onBack }: Props) => {
-  const [task, setTask] = useState<any>(null);
+  const [task, setTask] = useState<LessonExercise | null>(null);
+  const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
+  const [stats, setStats] = useState<UserStats>({ elo: 1200, level: "A1" });
+
+  // UI State
   const [loading, setLoading] = useState(true);
+  const [isChecked, setIsChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [elo, setElo] = useState<number | null>(null);
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
-  // Завантаження даних (Завдання + ELO)
+  // Inputs
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
+    null
+  );
+  const [reorderIndices, setReorderIndices] = useState<number[]>([]);
+  const [textInput, setTextInput] = useState("");
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("auth_token");
-        if (!token) return;
-
-        // 1. Отримуємо ID сесії (якщо ще немає, або створюємо нову)
-        // Для спрощення беремо вправу безпосередньо, якщо API дозволяє,
-        // або імітуємо отримання.
-        // Згідно вашого Swagger, треба передавати x-session-id.
-        // Тут ми спробуємо отримати статистику для ELO.
-
-        // Отримуємо ELO
-        // (Тут потрібен правильний запит до /user/stats, але поки імітуємо або беремо з локалсторедж)
-        const savedLevel = localStorage.getItem("learning_level");
-        setElo(1200); // Заглушка, якщо бек не віддає ELO без складної сесії
-
-        // 2. Отримуємо вправу
-        // const res = await fetch(`${API_URL}/session/exercise`, { ...headers... });
-        // const data = await res.json();
-        // setTask(data);
-
-        // --- ІМІТАЦІЯ ВІДПОВІДІ БЕКЕНДУ (Щоб ви бачили структуру) ---
-        setTimeout(() => {
-          setTask({
-            type: "single_choice",
-            prompt: "How do you say 'Cat' in German?",
-            options: [
-              { choice: "Der Hund", is_correct: false },
-              { choice: "Die Katze", is_correct: true },
-              { choice: "Das Pferd", is_correct: false },
-              { choice: "Die Maus", is_correct: false },
-            ],
-          });
-          setLoading(false);
-        }, 500);
-      } catch (e) {
-        console.error("Error loading lesson:", e);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    if (lessonId) {
+      localStorage.setItem("session_id", lessonId);
+      init();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
-  const handleCheck = () => {
-    // Тут логіка перевірки відповіді через API
-    if (selectedOption === null) return;
+  // --- ЛОГИКА ОБРАБОТКИ ОШИБОК (FIX) ---
+  const handleSessionError = (error: any) => {
+    // Если сервер ответил 400 (Bad Request) или 404 (Not Found)
+    if (
+      error.response &&
+      (error.response.status === 400 || error.response.status === 404)
+    ) {
+      console.warn("Сессия истекла или невалидна. Сброс.");
 
-    // Імітація прогресу
-    setProgress((p) => Math.min(p + 25, 100));
+      // 1. Удаляем старый ID, чтобы не отправлять его снова
+      localStorage.removeItem("session_id");
 
-    // Очистка вибору для наступного питання (в реальності тут буде запит на нове питання)
-    setTimeout(() => setSelectedOption(null), 1000);
+      // 2. Возвращаем пользователя на главный экран (Start Screen)
+      onBack();
+    } else {
+      console.error("Произошла ошибка:", error);
+    }
   };
 
-  if (loading) return <div className="ls-loading">Loading task...</div>;
+  const init = async () => {
+    try {
+      const s = await LessonService.getStats();
+      setStats(s);
+      await loadNextTask(); // Добавили await
+    } catch (error: any) {
+      handleSessionError(error);
+    }
+  };
+
+  const loadNextTask = async () => {
+    setLoading(true);
+    resetUI();
+    try {
+      const t = await LessonService.getNextTask();
+      if (t) setTask(t);
+    } catch (error: any) {
+      handleSessionError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetUI = () => {
+    setFeedback(null);
+    setIsChecked(false);
+    setSelectedOptionIndex(null);
+    setReorderIndices([]);
+    setTextInput("");
+  };
+
+  const handleCheck = async () => {
+    if (!task) return;
+
+    // Збираємо відповідь
+    let answer: AnswerValue;
+    if (task.type === "single_choice") {
+      if (selectedOptionIndex === null || !task.options) return;
+      answer = task.options[selectedOptionIndex];
+    } else if (task.type === "sentence_reorder") {
+      if (reorderIndices.length === 0) return;
+      answer = reorderIndices;
+    } else {
+      if (!textInput.trim()) return;
+      answer = textInput;
+    }
+
+    setLoading(true);
+
+    try {
+      // Відправляємо на сервер
+      const result = await LessonService.submitAnswer({
+        exercise_id: task.id,
+        type: task.type,
+        answer,
+      });
+
+      if (!result) return; // Если результат пустой (но без ошибки)
+
+      // Показуємо результат
+      setFeedback(result);
+      setIsChecked(true);
+
+      // Перевіряємо правильність (для кольору)
+      let correct = false;
+      if (task.type === "single_choice" && result.options) {
+        const userChoice = task.options![selectedOptionIndex!];
+        const correctOpt = result.options.find((o) => o.is_correct);
+        if (correctOpt?.choice === userChoice) correct = true;
+      } else if (task.type === "sentence_reorder" && result.correct_order) {
+        correct =
+          JSON.stringify(reorderIndices) ===
+          JSON.stringify(result.correct_order);
+      } else if (result.correct_answer) {
+        correct =
+          textInput.trim().toLowerCase() ===
+          result.correct_answer.toLowerCase();
+      }
+
+      setIsCorrect(correct);
+      if (correct) setProgress((p) => Math.min(p + 10, 100));
+    } catch (error: any) {
+      // Ловим ошибку и при отправке ответа (вдруг сессия умерла посередине)
+      handleSessionError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (progress >= 100) {
+      // Оборачиваем завершение уровня тоже, на всякий случай
+      try {
+        LessonService.endLevel();
+      } catch (e) {
+        console.error(e);
+      }
+      onBack();
+    } else {
+      loadNextTask();
+    }
+  };
+
+  // --- RENDER ---
+
+  const renderSingleChoice = () => {
+    const list =
+      isChecked && feedback?.options
+        ? feedback.options.map((o) => ({
+            text: o.choice,
+            isCorrect: o.is_correct,
+          }))
+        : task?.options?.map((s) => ({ text: s, isCorrect: undefined })) || [];
+
+    return (
+      <div className="ls-options-grid">
+        {list.map((opt, idx) => {
+          let cls = "ls-option-card";
+          if (isChecked) {
+            if (opt.isCorrect) cls += " correct";
+            else if (selectedOptionIndex === idx) cls += " wrong";
+          } else if (selectedOptionIndex === idx) {
+            cls += " selected";
+          }
+          return (
+            <button
+              key={idx}
+              className={cls}
+              onClick={() => !isChecked && setSelectedOptionIndex(idx)}
+            >
+              {opt.text}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  if (loading && !isChecked) return <div>Loading...</div>;
+  // Если task null, но мы не loading — значит что-то пошло не так, но handleSessionError уже должен был сработать
+  if (!task) return <div>Loading task data...</div>;
 
   return (
     <div className="ls-container">
       <div className="ls-inner-content">
-        {/* ВЕРХНЯ ПАНЕЛЬ: Олівець + ELO */}
         <div className="ls-top-bar">
-          {/* Олівець (по центру) */}
-          <div className="ls-pencil-wrapper">
-            <div className="ls-pencil-progress">
-              <div className="ls-p-eraser" />
-              <div className="ls-p-metal" />
-              <div className="ls-p-body-container">
-                <div
-                  className="ls-p-fill"
-                  style={{ width: `${progress}%` }}
-                ></div>
-              </div>
-              <div className="ls-p-wood" />
-              <div className="ls-p-lead" />
-            </div>
-          </div>
-
-          {/* Лічильник ELO (справа) */}
-          <div className="ls-elo-counter">
-            <span className="ls-elo-icon">⚡</span>
-            <span className="ls-elo-value">{elo || 0}</span>
-          </div>
+          <div>⚡ {stats.elo}</div>
+          <div>Progress: {progress}%</div>
         </div>
 
-        {/* КОНТЕНТ УРОКУ */}
         <div className="ls-content">
-          {task && (
-            <>
-              <div className="ls-task-type">
-                {task.type === "single_choice"
-                  ? "Select the correct answer"
-                  : "Translate this sentence"}
-              </div>
+          <h1>{task.prompt}</h1>
+          {task.type === "single_choice" && renderSingleChoice()}
 
-              <h1 className="ls-prompt-text">{task.prompt}</h1>
+          {/* Если у вас есть компоненты для других типов задач, добавьте их сюда */}
 
-              <div className="ls-options-grid">
-                {task.options?.map((opt: any, idx: number) => (
-                  <button
-                    key={idx}
-                    className={`ls-option-card ${
-                      selectedOption === idx ? "selected" : ""
-                    }`}
-                    onClick={() => setSelectedOption(idx)}
-                  >
-                    {opt.choice}
-                  </button>
-                ))}
-              </div>
-            </>
+          {(task.type === "fill_blank" || task.type === "translation") && (
+            <input
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              disabled={isChecked}
+            />
           )}
         </div>
 
-        {/* ФУТЕР */}
+        {isChecked && (
+          <div className={isCorrect ? "ls-banner correct" : "ls-banner wrong"}>
+            {isCorrect ? "Correct!" : "Wrong!"}
+          </div>
+        )}
+
         <div className="ls-footer">
-          <button className="ls-quit-btn" onClick={onBack}>
-            ✕
-          </button>
-          <button
-            className="ls-main-btn"
-            onClick={handleCheck}
-            disabled={selectedOption === null}
-          >
-            CHECK
-          </button>
+          {!isChecked ? (
+            <button onClick={handleCheck}>Check</button>
+          ) : (
+            <button onClick={handleNext}>Continue</button>
+          )}
         </div>
       </div>
     </div>

@@ -171,7 +171,7 @@
   font-weight: 700;
   color: #374151;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 4px 0 #e5e5e5;
   transition: 0.1s;
 }
@@ -231,4 +231,528 @@
   box-shadow: none;
   cursor: not-allowed;
   transform: none;
+}
+
+/* src/screens/lesson.css */
+
+/* ... ваши старые стили ... */
+
+/* --- АНИМАЦИИ --- */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* --- СТАТУСЫ ОТВЕТОВ --- */
+
+/* Правильный ответ (Зеленый) */
+.ls-option-card.correct {
+  background-color: #dcfce7 !important; /* Светло-зеленый фон */
+  border-color: #58cc02 !important; /* Зеленая рамка */
+  color: #15803d !important; /* Темно-зеленый текст */
+  animation: pulse 0.4s ease forwards; /* Анимация пульсации */
+  box-shadow: none !important;
+}
+
+/* Неправильный ответ (Красный) */
+.ls-option-card.wrong {
+  background-color: #fee2e2 !important; /* Светло-красный фон */
+  border-color: #ef4444 !important; /* Красная рамка */
+  color: #b91c1c !important; /* Темно-красный текст */
+  animation: shake 0.4s ease forwards; /* Анимация тряски */
+  box-shadow: none !important;
+}
+
+/* Отключаем ховер и нажатие, когда ответ уже дан */
+.ls-option-card:disabled {
+  cursor: default;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* src/screens/lesson.css */
+
+/* ... ваші попередні стилі ... */
+
+/* === ФІНАЛЬНИЙ ЕКРАН (OVERLAY) === */
+.ls-complete-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Темний напівпрозорий фон */
+  backdrop-filter: blur(5px); /* Розмиття заднього фону */
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.ls-complete-card {
+  background: white;
+  width: 90%;
+  max-width: 360px;
+  border-radius: 24px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  transform: scale(0.8);
+  opacity: 0;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 0.2s; /* Пружиниста поява */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.ls-complete-icon {
+  font-size: 64px;
+  margin-bottom: 8px;
+  display: inline-block;
+  animation: bounce 1s infinite; /* Іконка стрибає */
+}
+
+.ls-complete-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #58cc02;
+  margin: 0;
+}
+
+.ls-complete-text {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.ls-finish-btn {
+  width: 100%;
+  height: 52px;
+  background-color: #58cc02;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #46a302;
+  transition: transform 0.1s;
+}
+.ls-finish-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* === АНІМАЦІЇ === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* src/screens/lesson.css */
+
+/* ... ваші попередні стилі ... */
+
+/* === БАНЕР ЗВОРОТНОГО ЗВ'ЯЗКУ (Feedback Banner) === */
+
+/* Контейнер для банера (з'являється між опціями та футером) */
+.ls-feedback-container {
+  margin-top: 24px; /* Відступ від варіантів відповідей */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Сам банер (червоний для помилки) */
+.ls-feedback-banner.wrong {
+  background-color: #fee2e2; /* Світло-червоний фон */
+  border: 2px solid #ef4444; /* Червона рамка */
+  color: #b91c1c; /* Темно-червоний текст */
+
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 0 #fca5a5;
+
+  /* 🔥 Анімація появи знизу */
+  animation: slideUpFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+.feedback-icon {
+  font-size: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+/* Анімація вискакування знизу */
+@keyframes slideUpFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95); /* Починаємо нижче і трохи меншим */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1); /* Стаємо на місце */
+  }
+}
+
+/* src/screens/lesson.css */
+
+/* ... (стилі контейнера ls-feedback-container залишаються без змін) ... */
+
+/* Загальні стилі для банера (щоб не дублювати код) */
+/* src/screens/lesson.css */
+
+/* Загальні стилі для банера */
+.ls-feedback-banner {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 🔥 ЦЕ ВИРІВНЮЄ ТЕКСТ ПО ЦЕНТРУ */
+  gap: 12px;
+
+  /* Анімація появи */
+  animation: slideUpFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+}
+
+/* Решта стилів (.wrong, .correct, .feedback-icon) залишаються без змін */
+.ls-feedback-banner.wrong {
+  background-color: #fee2e2;
+  border: 2px solid #ef4444;
+  color: #b91c1c;
+  box-shadow: 0 4px 0 #fca5a5;
+}
+
+.ls-feedback-banner.correct {
+  background-color: #dcfce7;
+  border: 2px solid #58cc02;
+  color: #15803d;
+  box-shadow: 0 4px 0 #86efac;
+}
+.feedback-icon {
+  font-size: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+/* ... анімації залишаються ті ж самі ... */
+/* src/screens/lesson.css */
+
+/* 1. Зменшуємо шрифт завдання (було ~26px, стало 21px) */
+.ls-prompt-text {
+  font-size: 21px;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 1.4; /* Додамо інтервал між рядками для читабельності */
+}
+
+/* 2. Робимо контейнер сторінки фіксованим (без глобального скролу) */
+.ls-inner-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative; /* Це важливо для позиціонування банера */
+  height: 100%;
+  overflow: hidden; /* Забороняємо вилазити за межі */
+}
+
+/* 3. Контент скролиться ТІЛЬКИ якщо не влазить, але футер стоїть на місці */
+.ls-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 20px;
+  overflow-y: auto; /* Скрол тільки всередині цього блоку */
+}
+
+/* 4. 🔥 ВИПРАВЛЕННЯ БАНЕРА (Робимо його Absolute) */
+.ls-feedback-container {
+  position: absolute; /* Виймаємо з потоку, щоб не штовхав верстку */
+  bottom: 100px; /* Прибиваємо до низу (над кнопками футера) */
+  left: 0;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  padding: 0 20px; /* Відступи збоку */
+  box-sizing: border-box;
+
+  z-index: 50; /* Поверх кнопок варіантів, якщо налізе */
+  pointer-events: none; /* Щоб крізь прозорі частини можна було клікати */
+}
+
+.ls-feedback-banner {
+  /* ... ваші старі стилі ... */
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  /* Анімація */
+  animation: slideUpFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: bottom center;
+  pointer-events: auto; /* Сам банер клікабельний */
+
+  /* Тінь, щоб відокремити від тексту знизу, якщо налізе */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Футер завжди зверху (білий фон, щоб перекривав контент при скролі) */
+.ls-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  display: flex;
+  gap: 16px;
+  z-index: 60; /* Вище банера */
+  background: white; /* Щоб під ним не просвічувався текст */
+  position: relative;
+}
+
+/* src/screens/lesson.css */
+
+/* ... Ваші попередні стилі ... */
+
+/* === SENTENCE REORDER (Конструктор речень) === */
+
+/* Поле, куди ставляться слова (Результат) */
+.ls-sentence-slot-area {
+  min-height: 60px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px;
+  transition: 0.2s;
+}
+
+/* Банк слів (Варіанти знизу) */
+.ls-word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Картка слова (Word Chip) */
+.ls-word-chip {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #4b5563;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #e5e5e5;
+  transition: 0.1s;
+  user-select: none;
+}
+
+.ls-word-chip:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+/* Стиль для слова, яке вже використали (воно стає сірим у банку) */
+.ls-word-chip.used {
+  background-color: #f3f4f6;
+  border-color: #f3f4f6;
+  color: transparent; /* Ховаємо текст, залишаємо "дірку" */
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* Стиль для слова у відповіді (верхнє поле) */
+.ls-word-chip.in-slot {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  box-shadow: 0 4px 0 #bfdbfe;
+}
+
+/* --- ПРОГРЕС-БАР (ОЛІВЕЦЬ) --- */
+
+.ls-pencil-wrapper {
+  flex: 1; /* Займає весь доступний простір зліва від ELO */
+  height: 24px;
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  max-width: 400px; /* Максимальна ширина олівця */
+}
+
+.ls-pencil-progress {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 0 #e5e7eb); /* Тінь під всім олівцем */
+}
+
+/* 1. Гумка (Рожева) */
+.ls-p-eraser {
+  width: 20px;
+  height: 100%;
+  background-color: #f472b6; /* Рожевий */
+  border-radius: 6px 0 0 6px; /* Закруглення зліва */
+  border: 2px solid #db2777; /* Темно-рожева рамка */
+  border-right: none;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.3) 0%,
+    transparent 50%
+  );
+}
+
+/* 2. Металева частина (Сіра) */
+.ls-p-metal {
+  width: 12px;
+  height: 100%;
+  background-color: #d1d5db; /* Срібний */
+  border-top: 2px solid #9ca3af;
+  border-bottom: 2px solid #9ca3af;
+  border-left: 1px solid #9ca3af;
+  border-right: 1px solid #9ca3af;
+  /* Ефект ребристості металу */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+}
+
+/* 3. Тіло олівця (Основна смуга прогресу) */
+.ls-p-body-container {
+  flex: 1; /* Розтягується на всю ширину */
+  height: 100%;
+  background-color: #fff; /* Білий фон (поки не заповнений) */
+  border-top: 2px solid #e5e5e5;
+  border-bottom: 2px solid #e5e5e5;
+  position: relative;
+  overflow: hidden; /* Щоб заливка не вилазила */
+}
+
+/* Зелена заливка прогресу */
+.ls-p-fill {
+  height: 100%;
+  background-color: #58cc02; /* Duolingo Green */
+  width: 0%; /* Змінюється динамічно через JS */
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* Пружиниста анімація */
+
+  /* Блік зверху для об'єму */
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.05);
+
+  /* Смужки на заливці (опціонально, для краси) */
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 20px 20px;
+}
+
+/* 4. Дерев'яна частина (Конус) */
+.ls-p-wood {
+  width: 0;
+  height: 0;
+  border-left: 14px solid #fde047; /* Жовте дерево */
+  border-top: 10px solid transparent; /* Скоси */
+  border-bottom: 10px solid transparent; /* Скоси */
+  position: relative;
+}
+
+/* 5. Грифель (Чорний кінчик) */
+.ls-p-lead {
+  width: 0;
+  height: 0;
+  border-left: 8px solid #374151; /* Темно-сірий графіт */
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  margin-left: -2px; /* Трохи насунути на дерево */
+  margin-right: 5px;
 }

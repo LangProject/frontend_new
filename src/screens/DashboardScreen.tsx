@@ -2,10 +2,12 @@ import { type UiLangCode } from "../utils/detectUiLanguage";
 import { t } from "../i18n";
 import "./learningPath.css";
 
-// Імпортуємо ваші картинки
-import readingIcon from "../assets/reading.jpg";
-import vocabIcon from "../assets/vocab.jpg";
-import writingIcon from "../assets/writing.jpg";
+// 🔥 ОНОВЛЕНІ ІМПОРТИ
+// Переконайтеся, що назви файлів (256px.png) збігаються з тими, що у вас в папках
+import readingIcon from "../assets/icons/reading/reading_256px.png";
+import vocabIcon from "../assets/icons/vocabulary/vocabulary_256px.png";
+// Зберіг ваш шлях до іконки письма
+import writingIcon from "../assets/icons/writing/writing_1/writing_1_256px.png";
 
 interface Props {
   uiLanguage: UiLangCode;
@@ -59,7 +61,7 @@ export const DashboardScreen = ({
             className="lp-card-new"
             onClick={() => onOpenPath(topic.id)}
           >
-            {/* --- ВЕРХНІЙ РЯД: Іконка | Текст | Стрілка --- */}
+            {/* --- ВЕРХНІЙ РЯД --- */}
             <div className="lp-card-header">
               <div className="lp-header-left">
                 {/* Картинка */}
@@ -84,20 +86,22 @@ export const DashboardScreen = ({
               <div className="lp-arrow-btn">›</div>
             </div>
 
-            {/* --- НИЖНІЙ РЯД: Прогрес --- */}
+            {/* --- НИЖНІЙ РЯД (Прогрес) --- */}
             <div className="lp-progress-section">
               <div className="lp-stats-block">
                 <span className="lp-count-text">0/5</span>
                 <span className="lp-percent-text">{topic.progress}%</span>
               </div>
 
-              <div className="lp-slider-track">
-                {/* Кружечок. Якщо прогрес > 0, робимо його кольоровим (наприклад, сірим або кольором теми) */}
+              {/* 🔥 ОНОВЛЕНИЙ ПРОГРЕС-БАР */}
+              {/* Замість слайдера тепер кольорова смуга */}
+              <div className="lp-progress-track">
                 <div
-                  className="lp-slider-knob"
+                  className="lp-progress-fill"
                   style={{
-                    left: `${topic.progress}%`,
-                    backgroundColor: topic.progress > 0 ? "#6b7280" : "#d1d5db",
+                    width: `${topic.progress}%`, // Ширина залежить від прогресу
+                    backgroundColor: topic.color, // Колір береться з об'єкта TOPICS
+                    boxShadow: `0 2px 0 rgba(0,0,0,0.15)`, // Легка тінь для об'єму
                   }}
                 />
               </div>
