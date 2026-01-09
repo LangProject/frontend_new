@@ -1,16 +1,13 @@
 import axios from "axios";
 
-// Убедитесь, что baseURL настроен правильно в основном файле настройки (main.tsx или axios.ts)
-// axios.defaults.baseURL = "http://localhost:8000";
-
 export const LessonService = {
-  // 1. Получение статистики
   getStats: async () => {
     const sessionId = localStorage.getItem("session_id");
-    const token = localStorage.getItem("token"); // <--- БЕРЕМ ТОКЕН
+    // ищем правильный ключ 'auth_token'
+    const token = localStorage.getItem("auth_token");
 
     if (!token) {
-      console.warn("Нет токена, возвращаем статы по умолчанию");
+      console.warn("Нет токена (auth_token не найден)");
       return { elo: 1200, level: "A1" };
     }
 
@@ -21,35 +18,17 @@ export const LessonService = {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      // ВАЖНО: Сервер возвращает сложный JSON (language_data...), а UI ждет { elo, level }.
-      // Чтобы не было ошибок "undefined", пока возвращаем фиктивные данные.
-      // Когда разберетесь с JSON сервера, раскомментируйте код ниже:
-
-      /* const serverData = response.data;
-        return {
-           elo: serverData.language_data?.ratings?.english?.elo || 1200,
-           level: serverData.language_data?.ratings?.english?.cefr || "A1"
-        };
-        */
-
-      return { elo: 1200, level: "A1" }; // Временная заглушка, чтобы всё заработало
+      return { elo: 1200, level: "A1" };
     } catch (error) {
-      console.error("Ошибка получения статистики", error);
-      // Возвращаем дефолт при ошибке, чтобы экран урока не падал
       return { elo: 1200, level: "A1" };
     }
   },
 
-  // 2. Получение следующего задания
   getNextTask: async () => {
     const sessionId = localStorage.getItem("session_id");
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("auth_token");
 
-    if (!sessionId) {
-      console.error("Попытка запроса без ID");
-      throw new Error("No session ID found");
-    }
+    if (!sessionId) throw new Error("No session ID found");
 
     const response = await axios.get("/session/exercise", {
       headers: {
@@ -61,10 +40,9 @@ export const LessonService = {
     return response.data;
   },
 
-  // 3. Отправка ответа
   submitAnswer: async (data: any) => {
     const sessionId = localStorage.getItem("session_id");
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("auth_token");
 
     const response = await axios.post("/session/exercise/solve", data, {
       headers: {
@@ -76,8 +54,5 @@ export const LessonService = {
     return response.data;
   },
 
-  // 4. Завершение уровня
-  endLevel: async () => {
-    // Логика завершения
-  },
+  endLevel: async () => {},
 };
