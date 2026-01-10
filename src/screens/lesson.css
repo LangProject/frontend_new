@@ -396,3 +396,76 @@
     transform: scale(1);
   }
 }
+
+/* ... ваші попередні стилі ... */
+
+/* === АНІМАЦІЯ ЗМІНИ ELO === */
+.ls-elo-change {
+  font-weight: 800;
+  font-size: 14px;
+  margin-left: 8px;
+  animation: floatUp 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+.ls-elo-change.positive {
+  color: #22c55e; /* Зелений */
+}
+
+.ls-elo-change.negative {
+  color: #ef4444; /* Червоний */
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+}
+/* Добавьте в конец src/screens/lesson.css */
+
+.ls-elo-change {
+  font-weight: 800;
+  font-size: 14px;
+  margin-left: 8px;
+  animation: floatUp 1.5s ease-out forwards;
+  opacity: 0;
+}
+
+.ls-elo-change.positive {
+  color: #22c55e;
+}
+.ls-elo-change.negative {
+  color: #ef4444;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+}

@@ -8,19 +8,13 @@ import type {
 } from "../types/lesson";
 import "./lesson.css";
 
-/* --- РОЗШИРЕНІ ТИПИ --- */
 interface ExtendedTask extends LessonExercise {
-  // Verb Conjugation
   verb_infinitive?: string;
   context_sentence?: string;
   tense?: string;
   person?: string;
-
-  // Error Correction / Identification
   incorrect_sentence?: string;
   sentence?: string;
-
-  // Definition Match
   word?: string;
   definitions?: string[];
 }
@@ -35,13 +29,12 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
   const [stats, setStats] = useState<UserStats>({ elo: 1200, level: "A1" });
 
-  // UI State
   const [loading, setLoading] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [eloChange, setEloChange] = useState<number | null>(null);
 
-  // --- INPUTS STATE ---
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
     null
   );
@@ -54,7 +47,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       localStorage.setItem("session_id", lessonId);
       init();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   const handleSessionError = (error: any) => {
@@ -86,7 +78,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     try {
       const t = await LessonService.getNextTask();
       if (t) {
-        // Нормалізація Definition Match
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
         }
@@ -102,6 +93,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const resetUI = () => {
     setFeedback(null);
     setIsChecked(false);
+    setEloChange(null);
     setSelectedOptionIndex(null);
     setSelectedIndices([]);
     setReorderIndices([]);
@@ -111,9 +103,11 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const handleCheck = async () => {
     if (!task) return;
 
+    const oldElo = stats.elo;
+    console.log("🔍 Old ELO:", oldElo);
+
     let answer: AnswerValue;
 
-    // 1. ЗБІР ВІДПОВІДІ
     switch (task.type) {
       case "single_choice":
       case "definition_match":
@@ -159,7 +153,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       setFeedback(result);
       setIsChecked(true);
 
-      // 2. ПЕРЕВІРКА (Візуалізація)
       let correct = false;
 
       if (task.type === "single_choice" || task.type === "definition_match") {
@@ -183,11 +176,26 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
           textInput.trim().toLowerCase() ===
           result.correct_answer.toLowerCase();
       } else {
-        correct = true; // Fallback
+        correct = true;
       }
 
       setIsCorrect(correct);
       if (correct) setProgress((p) => Math.min(p + 10, 100));
+
+      // Ждем, пока сервер обновит БД
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const newStats = await LessonService.getStats();
+      console.log("🚀 New ELO:", newStats.elo);
+
+      setStats(newStats);
+
+      const diff = newStats.elo - oldElo;
+      console.log("📈 Diff:", diff);
+
+      if (diff !== 0) {
+        setEloChange(diff);
+      }
     } catch (error: any) {
       handleSessionError(error);
     } finally {
@@ -203,8 +211,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       loadNextTask();
     }
   };
-
-  /* --- RENDERERS --- */
 
   const renderSingleChoice = () => {
     const list =
@@ -431,7 +437,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       </div>
     );
 
-  /* --- ВИБІР РЕНДЕРА --- */
   let content;
   switch (task.type) {
     case "single_choice":
@@ -488,15 +493,21 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   return (
     <div className="ls-container">
       <div className="ls-inner-content">
-        {/* 🔥 ВІДНОВЛЕНА ВЕРХНЯ ПАНЕЛЬ З ОЛІВЦЕМ І ELO */}
         <div className="ls-top-bar">
-          {/* ELO */}
           <div className="ls-elo-counter">
             <span className="ls-elo-icon">⚡</span>
             <span className="ls-elo-value">{stats.elo}</span>
+            {eloChange !== null && (
+              <span
+                className={`ls-elo-change ${
+                  eloChange >= 0 ? "positive" : "negative"
+                }`}
+              >
+                {eloChange > 0 ? `+${eloChange}` : eloChange}
+              </span>
+            )}
           </div>
 
-          {/* ОЛІВЕЦЬ (PROGRESS BAR) */}
           <div className="ls-pencil-wrapper">
             <div className="ls-pencil-progress">
               <div className="ls-p-eraser"></div>
@@ -512,7 +523,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
             </div>
           </div>
         </div>
-        {/* ------------------------------------------- */}
 
         <div className="ls-content">
           <h1 className="ls-prompt-text">{task.prompt}</h1>
