@@ -80,89 +80,109 @@ function App() {
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // --- ЛОГИКА СИНХРОНИЗАЦИИ ---
+  // --- ЛОГИКА СИНХРОНИЗАЦИИ  ---
   useEffect(() => {
     const syncUserData = async () => {
       if (!isAuthenticated) return;
+      if (screen === "lesson") return;
 
-      const localLvl = localStorage.getItem("learning_level");
-      const localLang = localStorage.getItem("learning_language");
+      // 1. ОПТИМІСТИЧНИЙ ВХІД
+      // Якщо у нас вже є дані в пам'яті — одразу показуємо Дашборд, не чекаючи сервера.
+      const localSetup = localStorage.getItem("setup_complete");
+      const hasLocalData = localSetup === "true";
 
-      if (localLvl && localLang) {
-        setLearningLevel(localLvl);
-        setLearningLanguage(localLang);
-        if (screen === "auth") setScreen("dashboard");
-        return;
+      if (hasLocalData && screen === "auth") {
+        setScreen("dashboard");
       }
 
-      if (screen === "auth" || screen === "choose-ui-language") {
-        try {
-          setIsInitializing(true);
-          const token = localStorage.getItem("auth_token");
-          if (!token) throw new Error("No token");
+      try {
+        setIsInitializing(true);
+        const token = localStorage.getItem("auth_token");
+        if (!token) throw new Error("No token");
 
-          // Получаем ID только для проверки статов, но не сохраняем его как "текущий урок"
-          const sessionRes = await fetch(`${API_URL}/session/begin-session`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (!sessionRes.ok) throw new Error("Session start failed");
-          const sessionData = await sessionRes.json();
-          const tempSessionId = sessionData.id;
+        const statsRes = await fetch(`${API_URL}/user/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-          const statsRes = await fetch(`${API_URL}/user/stats`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "x-session-id": tempSessionId, // Используем временно
-            },
-          });
-
-          if (!statsRes.ok) throw new Error("Stats fetch failed");
-          const statsData = await statsRes.json();
-          const langData = statsData.language_data;
-
-          if (langData) {
-            const backendLang = langData.target_language;
-            const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang];
-            let userLevel = "A1";
-            const ratings = langData.ratings || {};
-            const firstRatingKey = Object.keys(ratings)[0];
-            if (firstRatingKey && ratings[firstRatingKey].cefr) {
-              userLevel = ratings[firstRatingKey].cefr;
-            }
-
-            if (frontendLang) {
-              setLearningLanguage(frontendLang);
-              localStorage.setItem("learning_language", frontendLang);
-            }
-            setLearningLevel(userLevel);
-            localStorage.setItem("learning_level", userLevel);
-            localStorage.setItem("setup_complete", "true");
-            setScreen("dashboard");
-          } else {
-            setScreen("choose-ui-language");
-          }
-        } catch (e) {
-          console.warn("Sync failed, redirecting to setup:", e);
-          setScreen("choose-ui-language");
-        } finally {
-          setIsInitializing(false);
+        // 2. СЕРВЕР КАЖЕ "НЕМАЄ ДАНИХ" (404)
+        // Це єдиний випадок, коли ми примусово кидаємо на налаштування
+        if (statsRes.status === 404) {
+          throw new Error("User setup missing on server");
         }
+
+        // 3. ІНШІ ПОМИЛКИ СЕРВЕРА (500, Мережа і т.д.)
+        if (!statsRes.ok) {
+          // Якщо у нас є локальні дані — ігноруємо помилку сервера і залишаємось у Дашборді
+          if (hasLocalData) {
+            console.warn("Server unavailable, using local data");
+            return;
+          }
+          // А ЯКЩО ДАНИХ НЕМАЄ (новий юзер + помилка сервера) — мусимо йти на налаштування
+          throw new Error("No local data and server failed");
+        }
+
+        // 4. УСПІХ (200) -> Оновлюємо дані
+        const statsData = await statsRes.json();
+        const langData = statsData.language_data;
+
+        if (langData) {
+          const backendLang = langData.target_language;
+          const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang];
+          let userLevel = "A1";
+          const ratings = langData.ratings || {};
+          const firstRatingKey = Object.keys(ratings)[0];
+          if (firstRatingKey && ratings[firstRatingKey].cefr) {
+            userLevel = ratings[firstRatingKey].cefr;
+          }
+
+          if (frontendLang) {
+            setLearningLanguage(frontendLang);
+            localStorage.setItem("learning_language", frontendLang);
+          }
+          setLearningLevel(userLevel);
+          localStorage.setItem("learning_level", userLevel);
+          localStorage.setItem("setup_complete", "true");
+
+          // Переходимо в Дашборд (якщо ще не там)
+          if (screen === "auth" || screen === "choose-ui-language") {
+            setScreen("dashboard");
+          }
+        } else {
+          throw new Error("No language data found");
+        }
+      } catch (e: any) {
+        console.warn("Sync failed:", e);
+
+        // Логіка Fallback:
+        // Якщо це була просто помилка мережі і у нас є дані — нічого не робимо (залишаємось в Дашборді)
+        if (hasLocalData && !e.message.includes("User setup missing")) {
+          return;
+        }
+
+        // В усіх інших випадках (404 або "чистий" юзер) — на вибір мови
+        localStorage.removeItem("setup_complete");
+        if (screen === "auth" || screen === "dashboard") {
+          setScreen("choose-ui-language");
+        }
+      } finally {
+        setIsInitializing(false);
       }
     };
+
     syncUserData();
-  }, [isAuthenticated, screen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // --- ЗАПУСК УРОКА ЧЕРЕЗ СЕРВЕР ---
-  const handleStartLesson = async () => {
+  const handleStartLesson = async (sectionType: string) => {
     try {
-      setIsInitializing(true); // Показываем лоадер
+      setIsInitializing(true);
       const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("No auth token");
 
-      console.log("Creating REAL session on server...");
+      console.log(`Starting lesson for section: ${sectionType}`);
 
-      // 1. Просим сервер создать сессию
+      // 1. Создаем сессию
       const res = await fetch(`${API_URL}/session/begin-session`, {
         method: "POST",
         headers: {
@@ -172,20 +192,38 @@ function App() {
       });
 
       if (!res.ok) throw new Error("Failed to create session");
-
       const data = await res.json();
-      const realSessionId = data.id; // Айди от сервера
+      const realSessionId = data.id;
 
-      if (!realSessionId) throw new Error("Server returned empty ID");
+      // 2. Создаем уровень с выбранным типом!
+      // Бэкенд ждет: 'reading', 'vocabulary' или 'writing'
+      const levelRes = await fetch(`${API_URL}/session/begin-level`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "x-session-id": realSessionId,
+        },
+        body: JSON.stringify({
+          session_id: realSessionId,
+          section_name: sectionType,
+        }),
+      });
 
-      console.log("Server assigned session ID:", realSessionId);
+      if (!levelRes.ok) {
+        // Если ошибка 422, значит передали что-то не то
+        const errText = await levelRes.text();
+        console.error("Level creation failed:", errText);
+        throw new Error("Invalid section type: " + sectionType);
+      }
 
+      // 3. Переходим к уроку
       localStorage.setItem("session_id", realSessionId);
       setCurrentLessonId(realSessionId);
       setScreen("lesson");
-    } catch (e) {
+    } catch (e: any) {
       console.error("Lesson start error:", e);
-      alert("Не удалось начать урок. Проверьте соединение.");
+      alert(`Не удалось начать урок (${sectionType}). Проверьте консоль.`);
     } finally {
       setIsInitializing(false);
     }
@@ -238,9 +276,7 @@ function App() {
       setScreen("dashboard");
     } catch (e: any) {
       console.error(e);
-      alert("Saved locally. Error: " + e.message);
-      localStorage.setItem("setup_complete", "true");
-      setScreen("dashboard");
+      alert("Ошибка сохранения настроек: " + e.message);
     } finally {
       setIsInitializing(false);
     }
@@ -402,8 +438,17 @@ function App() {
             <DashboardScreen
               uiLanguage={uiLanguage}
               learningLevel={learningLevel}
-              onOpenPath={(randomIdFromDashboard) => {
-                handleStartLesson();
+              onOpenPath={(selectedId) => {
+                // Если нажали "Start Test", выбираем случайную тему
+                if (selectedId === "random") {
+                  const topics = ["vocabulary", "reading", "writing"];
+                  const randomTopic =
+                    topics[Math.floor(Math.random() * topics.length)];
+                  handleStartLesson(randomTopic);
+                } else {
+                  // Иначе запускаем то, что выбрали (reading, vocabulary, writing)
+                  handleStartLesson(selectedId);
+                }
               }}
             />
           )}
