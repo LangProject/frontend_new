@@ -33,7 +33,7 @@ export const DashboardScreen = ({
       title: t(uiLanguage, "dashboard.vocabulary"),
       icon: vocabIcon,
       color: "#8b5cf6", // Фіолетовий
-      progress: 20,
+      progress: 0,
     },
     {
       id: "writing",

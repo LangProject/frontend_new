@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LessonService } from "../api/services/lessonService";
 import type {
   LessonExercise,
@@ -42,12 +42,30 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [reorderIndices, setReorderIndices] = useState<number[]>([]);
   const [textInput, setTextInput] = useState("");
 
+  // 🔥 2. СОЗДАЕМ РЕФ ДЛЯ ЗАЩИТЫ ОТ ДВОЙНОГО ВЫЗОВА
+  const initialized = useRef(false);
+
   useEffect(() => {
+    // Проверяем: если уже инициализировали, выходим
+    if (initialized.current) return;
+
     if (lessonId) {
+      // Ставим флаг, что инициализация запущена
+      initialized.current = true;
+
+      console.log("🚀 Initializing Lesson..."); // Для проверки в консоли
       localStorage.setItem("session_id", lessonId);
       init();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
+
+  // useEffect(() => {
+  //   if (lessonId) {
+  //     localStorage.setItem("session_id", lessonId);
+  //     init();
+  //   }
+  // }, [lessonId]);
 
   const handleSessionError = (error: any) => {
     if (
@@ -74,7 +92,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
   const loadNextTask = async () => {
     setLoading(true);
-    resetUI();
+    // resetUI();
     try {
       const t = await LessonService.getNextTask();
       if (t) {

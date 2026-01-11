@@ -19,8 +19,8 @@ export const LessonService = {
       const data = response.data;
 
       // 2. Витягуємо ELO та Рівень з складної структури
-      let elo = 1200;
-      let level = "A1";
+      let elo = -1;
+      let level = "unknown";
 
       // Логіка пошуку: беремо перший знайдений рейтинг (або уточніть ID секції, якщо є)
       if (data?.language_data?.ratings) {
@@ -36,7 +36,7 @@ export const LessonService = {
       return { elo, level };
     } catch (error) {
       console.warn("Stats fetch failed", error);
-      return { elo: 1200, level: "A1" };
+      return { elo: -1, level: "unknown" };
     }
   },
 
