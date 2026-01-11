@@ -8,6 +8,7 @@ import type {
 } from "../types/lesson";
 import "./lesson.css";
 
+/* --- ТИПИ --- */
 interface ExtendedTask extends LessonExercise {
   verb_infinitive?: string;
   context_sentence?: string;
@@ -15,6 +16,7 @@ interface ExtendedTask extends LessonExercise {
   person?: string;
   incorrect_sentence?: string;
   sentence?: string;
+  translation?: string;
   word?: string;
   definitions?: string[];
 }
@@ -24,17 +26,27 @@ interface Props {
   onBack: () => void;
 }
 
+// Пороги ELO
+const ELO_THRESHOLDS: Record<string, number> = {
+  A1: 100,
+  A2: 300,
+  B1: 600,
+  B2: 1000,
+  C1: 1400,
+  C2: 1900,
+};
+
 export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
-  const [stats, setStats] = useState<UserStats>({ elo: 1200, level: "A1" });
+  const [stats, setStats] = useState<UserStats>({ elo: 0, level: "A1" });
 
   const [loading, setLoading] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [eloChange, setEloChange] = useState<number | null>(null);
 
+  // Inputs
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
     null
   );
@@ -42,43 +54,18 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [reorderIndices, setReorderIndices] = useState<number[]>([]);
   const [textInput, setTextInput] = useState("");
 
-  // 🔥 2. СОЗДАЕМ РЕФ ДЛЯ ЗАЩИТЫ ОТ ДВОЙНОГО ВЫЗОВА
   const initialized = useRef(false);
 
+  // --- INIT ---
   useEffect(() => {
-    // Проверяем: если уже инициализировали, выходим
     if (initialized.current) return;
-
     if (lessonId) {
-      // Ставим флаг, что инициализация запущена
       initialized.current = true;
-
-      console.log("🚀 Initializing Lesson..."); // Для проверки в консоли
       localStorage.setItem("session_id", lessonId);
       init();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
-
-  // useEffect(() => {
-  //   if (lessonId) {
-  //     localStorage.setItem("session_id", lessonId);
-  //     init();
-  //   }
-  // }, [lessonId]);
-
-  const handleSessionError = (error: any) => {
-    if (
-      error.response &&
-      (error.response.status === 404 || error.response.status === 401)
-    ) {
-      console.warn("Session lost or invalid token.");
-      localStorage.removeItem("session_id");
-      onBack();
-    } else {
-      console.error("API Error:", error);
-    }
-  };
 
   const init = async () => {
     try {
@@ -90,16 +77,32 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     }
   };
 
+  const handleSessionError = (error: any) => {
+    console.error("API Error:", error);
+    if (error.response?.status === 401 || error.response?.status === 404) {
+      localStorage.removeItem("session_id");
+      onBack();
+    }
+  };
+
   const loadNextTask = async () => {
+    // 1. Скидаємо поточне завдання, щоб уникнути "залипання" старого екрану
+    setTask(null);
     setLoading(true);
-    // resetUI();
+    resetUI();
+
     try {
       const t = await LessonService.getNextTask();
+      console.log("📥 Loaded New Task:", t); // ДЕБАГ: Дивіться сюди, чи є поле translation!
+
       if (t) {
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
         }
         setTask(t as ExtendedTask);
+      } else {
+        alert("No more tasks available!");
+        onBack();
       }
     } catch (error: any) {
       handleSessionError(error);
@@ -111,6 +114,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const resetUI = () => {
     setFeedback(null);
     setIsChecked(false);
+    setIsCorrect(false);
     setEloChange(null);
     setSelectedOptionIndex(null);
     setSelectedIndices([]);
@@ -118,43 +122,29 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     setTextInput("");
   };
 
+  // --- CHECK ---
   const handleCheck = async () => {
     if (!task) return;
-
     const oldElo = stats.elo;
-    console.log("🔍 Old ELO:", oldElo);
 
     let answer: AnswerValue;
-
     switch (task.type) {
       case "single_choice":
       case "definition_match":
         if (selectedOptionIndex === null || !task.options) return;
         answer = task.options[selectedOptionIndex];
         break;
-
       case "multiple_choice":
         if (selectedIndices.length === 0 || !task.options) return;
         answer = selectedIndices.map((i) => task.options![i]);
         break;
-
       case "sentence_reorder":
         if (reorderIndices.length === 0) return;
         answer = reorderIndices;
         break;
-
-      case "fill_blank":
-      case "translation":
-      case "verb_conjugation":
-      case "error_correction":
-      case "error_identification":
+      default:
         if (!textInput.trim()) return;
         answer = textInput.trim();
-        break;
-
-      default:
-        console.warn("Unknown task type:", task.type);
-        return;
     }
 
     setLoading(true);
@@ -168,52 +158,25 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
       if (!result) return;
 
+      console.log("📤 Feedback received:", result); // ДЕБАГ: Дивіться, де лежить правильна відповідь
+
       setFeedback(result);
       setIsChecked(true);
 
-      let correct = false;
+      const scoreVal = Number(result.score);
+      const success =
+        (!isNaN(scoreVal) && scoreVal >= 0.9) ||
+        result.correct === true ||
+        result.is_correct === true;
 
-      if (task.type === "single_choice" || task.type === "definition_match") {
-        const userChoice = task.options![selectedOptionIndex!];
-        const correctOpt = result.options?.find((o) => o.is_correct);
-        if (correctOpt?.choice === userChoice) correct = true;
-      } else if (task.type === "multiple_choice") {
-        const userChoices = selectedIndices.map((i) => task.options![i]).sort();
-        const correctChoices = result.options
-          ?.filter((o) => o.is_correct)
-          .map((o) => o.choice)
-          .sort();
-        correct =
-          JSON.stringify(userChoices) === JSON.stringify(correctChoices);
-      } else if (task.type === "sentence_reorder" && result.correct_order) {
-        correct =
-          JSON.stringify(reorderIndices) ===
-          JSON.stringify(result.correct_order);
-      } else if (result.correct_answer) {
-        correct =
-          textInput.trim().toLowerCase() ===
-          result.correct_answer.toLowerCase();
-      } else {
-        correct = true;
-      }
+      setIsCorrect(success);
 
-      setIsCorrect(correct);
-      if (correct) setProgress((p) => Math.min(p + 10, 100));
-
-      // Ждем, пока сервер обновит БД
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       const newStats = await LessonService.getStats();
-      console.log("🚀 New ELO:", newStats.elo);
-
       setStats(newStats);
 
       const diff = newStats.elo - oldElo;
-      console.log("📈 Diff:", diff);
-
-      if (diff !== 0) {
-        setEloChange(diff);
-      }
+      if (diff !== 0) setEloChange(diff);
     } catch (error: any) {
       handleSessionError(error);
     } finally {
@@ -222,82 +185,133 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   };
 
   const handleNext = () => {
-    if (progress >= 100) {
-      LessonService.endLevel().catch(console.error);
-      onBack();
-    } else {
-      loadNextTask();
+    loadNextTask();
+  };
+
+  // --- 🔥 ПОКРАЩЕНИЙ ПОШУК ВІДПОВІДІ 🔥 ---
+  const getFeedbackText = () => {
+    if (isCorrect) return "Great job!";
+    if (!feedback) return "Incorrect";
+
+    // 1. Стандартні поля
+    if (feedback.correct_answer) return `Correct: ${feedback.correct_answer}`;
+    if (feedback.solution) return `Correct: ${feedback.solution}`;
+
+    // 2. Специфічні поля (перебір варіантів)
+    const fb = feedback as any;
+    if (fb.correct_conjugation) return `Correct: ${fb.correct_conjugation}`;
+    if (fb.correct_sentence) return `Correct: ${fb.correct_sentence}`;
+    if (fb.correct_form) return `Correct: ${fb.correct_form}`;
+    if (fb.target_word) return `Correct: ${fb.target_word}`;
+
+    // 3. Sentence Reorder
+    if (
+      task?.type === "sentence_reorder" &&
+      feedback.correct_order &&
+      task.options
+    ) {
+      return `Correct: ${feedback.correct_order
+        .map((idx: number) => task.options![idx])
+        .join(" ")}`;
     }
+
+    // 4. Options
+    if (feedback.options) {
+      const correctOpt = feedback.options.find((o) => o.is_correct);
+      if (correctOpt) return `Correct: ${correctOpt.choice}`;
+    }
+
+    // 5. Fallback для Fill Blank, якщо нічого не прийшло, але є переклад у самому завданні
+    if (task?.type === "fill_blank" && (task as ExtendedTask).translation) {
+      // Це краще, ніж нічого
+      return `Hint: Check the translation "${
+        (task as ExtendedTask).translation
+      }"`;
+    }
+
+    return "Incorrect (Answer hidden)";
   };
 
-  const renderSingleChoice = () => {
-    const list =
-      isChecked && feedback?.options
-        ? feedback.options.map((o) => ({
-            text: o.choice,
-            isCorrect: o.is_correct,
-          }))
-        : task?.options?.map((s) => ({ text: s, isCorrect: undefined })) || [];
-
-    return (
-      <div className="ls-options-grid">
-        {list.map((opt, idx) => {
-          let cls = "ls-option-card";
-          if (isChecked) {
-            if (opt.isCorrect) cls += " correct";
-            else if (selectedOptionIndex === idx) cls += " wrong";
-          } else if (selectedOptionIndex === idx) {
-            cls += " selected";
-          }
-          return (
-            <button
-              key={idx}
-              className={cls}
-              onClick={() => !isChecked && setSelectedOptionIndex(idx)}
-            >
-              {opt.text}
-            </button>
-          );
-        })}
-      </div>
+  // --- PROGRESS ---
+  const getProgressInfo = () => {
+    const sortedLevels = Object.entries(ELO_THRESHOLDS).sort(
+      (a, b) => a[1] - b[1]
     );
+    const currentElo = stats.elo;
+
+    let start = 0;
+    let end = sortedLevels[0][1];
+
+    for (let i = 0; i < sortedLevels.length; i++) {
+      if (currentElo >= sortedLevels[i][1]) {
+        start = sortedLevels[i][1];
+        end = sortedLevels[i + 1] ? sortedLevels[i + 1][1] : start + 500;
+      } else {
+        break;
+      }
+    }
+
+    if (currentElo === 0) return { percent: 5, label: "Loading..." };
+
+    const range = end - start;
+    const gained = currentElo - start;
+    const percent = Math.max((gained / range) * 100, 5);
+
+    return {
+      percent: Math.min(percent, 100),
+      label: `${currentElo} / ${end}`,
+    };
   };
+
+  const progressInfo = getProgressInfo();
+
+  // --- RENDERERS ---
+  const renderSingleChoice = () => (
+    <div className="ls-options-grid">
+      {(task?.options || []).map((opt, idx) => {
+        let cls = "ls-option-card";
+        if (isChecked && feedback?.options) {
+          const isOptCorrect = feedback.options.find(
+            (o) => o.choice === opt
+          )?.is_correct;
+          if (isOptCorrect) cls += " correct";
+          else if (selectedOptionIndex === idx) cls += " wrong";
+        } else if (selectedOptionIndex === idx) cls += " selected";
+        return (
+          <button
+            key={idx}
+            className={cls}
+            onClick={() => !isChecked && setSelectedOptionIndex(idx)}
+          >
+            {opt}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   const renderMultipleChoice = () => {
-    const list =
-      isChecked && feedback?.options
-        ? feedback.options.map((o) => ({
-            text: o.choice,
-            isCorrect: o.is_correct,
-          }))
-        : task?.options?.map((s) => ({ text: s, isCorrect: undefined })) || [];
-
-    const toggleIndex = (idx: number) => {
+    const toggle = (i: number) => {
       if (isChecked) return;
-      if (selectedIndices.includes(idx))
-        setSelectedIndices((prev) => prev.filter((i) => i !== idx));
-      else setSelectedIndices((prev) => [...prev, idx]);
+      setSelectedIndices((prev) =>
+        prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
+      );
     };
-
     return (
       <div className="ls-options-grid">
-        {list.map((opt, idx) => {
-          const isSelected = selectedIndices.includes(idx);
+        {(task?.options || []).map((opt, idx) => {
+          const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
-
-          if (isChecked) {
-            if (opt.isCorrect) cls += " correct";
-            else if (isSelected && !opt.isCorrect) cls += " wrong";
-          } else if (isSelected) {
-            cls += " selected";
-          }
-
+          if (isChecked && feedback?.options) {
+            const isOptCorrect = feedback.options.find(
+              (o) => o.choice === opt
+            )?.is_correct;
+            if (isOptCorrect) cls += " correct";
+            else if (isSel) cls += " wrong";
+          } else if (isSel) cls += " selected";
           return (
-            <button key={idx} className={cls} onClick={() => toggleIndex(idx)}>
-              <span style={{ marginRight: 10 }}>
-                {isSelected || (isChecked && opt.isCorrect) ? "☑" : "☐"}
-              </span>
-              {opt.text}
+            <button key={idx} className={cls} onClick={() => toggle(idx)}>
+              <span style={{ marginRight: 8 }}>{isSel ? "☑" : "☐"}</span> {opt}
             </button>
           );
         })}
@@ -306,141 +320,173 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   };
 
   const renderSentenceReorder = () => {
-    if (!task?.options && !(task as any).words)
-      return <div>Error: No words provided</div>;
-    const wordsSource = task.options || (task as any).words || [];
-    const currentSentence = reorderIndices.map((idx) => wordsSource[idx]);
-
+    const words = task?.options || (task as any)?.words || [];
+    const currentSentence = reorderIndices.map((i) => words[i]);
     return (
       <div style={{ width: "100%" }}>
         <div className="ls-sentence-slot-area">
-          {currentSentence.length === 0 && !isChecked && (
-            <span style={{ color: "#9ca3af" }}>
-              Tap words to build sentence...
-            </span>
-          )}
-          {currentSentence.map((word, i) => (
+          {currentSentence.map((w, i) => (
             <button
-              key={`slot-${i}`}
+              key={i}
               className="ls-word-chip in-slot"
               onClick={() =>
                 !isChecked &&
                 setReorderIndices((prev) => prev.filter((_, idx) => idx !== i))
               }
             >
-              {word}
+              {w}
             </button>
           ))}
+          {currentSentence.length === 0 && (
+            <span style={{ color: "#999" }}>Tap words...</span>
+          )}
         </div>
         <div className="ls-word-bank">
-          {wordsSource.map((word, idx) => {
-            const isUsed = reorderIndices.includes(idx);
-            return (
-              <button
-                key={`bank-${idx}`}
-                className={`ls-word-chip ${isUsed ? "used" : ""}`}
-                onClick={() =>
-                  !isUsed &&
-                  !isChecked &&
-                  setReorderIndices([...reorderIndices, idx])
-                }
-              >
-                {word}
-              </button>
-            );
-          })}
+          {words.map((w, i) => (
+            <button
+              key={i}
+              className={`ls-word-chip ${
+                reorderIndices.includes(i) ? "used" : ""
+              }`}
+              onClick={() =>
+                !isChecked &&
+                !reorderIndices.includes(i) &&
+                setReorderIndices([...reorderIndices, i])
+              }
+            >
+              {w}
+            </button>
+          ))}
         </div>
       </div>
     );
   };
 
-  const renderVerbConjugation = () => (
-    <div style={{ width: "100%", marginBottom: 20 }}>
-      <div
-        style={{
-          background: "#eff6ff",
-          padding: "16px",
-          borderRadius: "12px",
-          border: "2px solid #bfdbfe",
-          marginBottom: "20px",
-          textAlign: "left",
-        }}
-      >
-        <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 4 }}>
-          VERB
-        </div>
-        <div
-          style={{
-            fontSize: 20,
-            fontWeight: "bold",
-            color: "#1e40af",
-            marginBottom: 10,
-          }}
-        >
-          {task?.verb_infinitive}
-        </div>
-        <div style={{ display: "flex", gap: 20 }}>
-          <div>
-            <span style={{ fontSize: 12, color: "#6b7280" }}>TENSE</span>
-            <br />
-            <strong>{task?.tense}</strong>
-          </div>
-          <div>
-            <span style={{ fontSize: 12, color: "#6b7280" }}>PERSON</span>
-            <br />
-            <strong>{task?.person}</strong>
-          </div>
-        </div>
-      </div>
-      {task?.context_sentence && (
-        <div style={{ fontSize: 18, marginBottom: 15, fontStyle: "italic" }}>
-          "{task.context_sentence}"
-        </div>
-      )}
-      {renderTextInput("Type conjugated verb...")}
-    </div>
-  );
-
-  const renderErrorCorrection = () => (
-    <div style={{ width: "100%" }}>
-      <div
-        style={{
-          background: "#fee2e2",
-          padding: "16px",
-          borderRadius: "12px",
-          border: "2px solid #fecaca",
-          marginBottom: "20px",
-          color: "#b91c1c",
-          fontWeight: "bold",
-        }}
-      >
-        ❌ {task?.incorrect_sentence}
-      </div>
-      {renderTextInput("Type correct sentence...")}
-    </div>
-  );
-
-  const renderTextInput = (placeholder: string = "Type answer...") => (
+  const renderTextInput = (ph: string) => (
     <input
       className="ls-text-input"
       style={{
         width: "100%",
-        padding: "16px",
-        fontSize: "18px",
-        borderRadius: "16px",
-        border: "2px solid #e5e7eb",
-        outline: "none",
-        background: isChecked ? "#f9fafb" : "white",
+        padding: 16,
+        fontSize: 18,
+        borderRadius: 12,
+        border: "2px solid #ddd",
       }}
-      placeholder={placeholder}
+      placeholder={ph}
       value={textInput}
       onChange={(e) => setTextInput(e.target.value)}
       disabled={isChecked}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" && !isChecked) handleCheck();
-      }}
     />
   );
+
+  const renderContent = () => {
+    switch (task?.type) {
+      case "single_choice":
+      case "definition_match":
+        return renderSingleChoice();
+      case "multiple_choice":
+        return renderMultipleChoice();
+      case "sentence_reorder":
+        return renderSentenceReorder();
+      case "verb_conjugation":
+        return (
+          <div style={{ width: "100%" }}>
+            <div
+              style={{
+                background: "#eff6ff",
+                padding: 15,
+                borderRadius: 10,
+                marginBottom: 20,
+                border: "1px solid #dbeafe",
+              }}
+            >
+              <div style={{ color: "#666", fontSize: 12 }}>VERB</div>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  color: "#2563eb",
+                  marginBottom: 5,
+                }}
+              >
+                {task.verb_infinitive}
+              </div>
+              <div style={{ fontSize: 14 }}>
+                {task.person} | {task.tense}
+              </div>
+            </div>
+            {task.context_sentence && (
+              <div style={{ fontStyle: "italic", marginBottom: 15 }}>
+                "{task.context_sentence}"
+              </div>
+            )}
+            {renderTextInput("Type conjugation...")}
+          </div>
+        );
+      case "error_correction":
+        return (
+          <div style={{ width: "100%" }}>
+            <div
+              style={{
+                background: "#fef2f2",
+                padding: 15,
+                borderRadius: 10,
+                marginBottom: 20,
+                color: "#dc2626",
+                fontWeight: "bold",
+              }}
+            >
+              ❌ {task.incorrect_sentence}
+            </div>
+            {renderTextInput("Type correct sentence...")}
+          </div>
+        );
+      case "fill_blank":
+        return (
+          <div style={{ width: "100%" }}>
+            <div style={{ marginBottom: 10, fontSize: 22, fontWeight: "500" }}>
+              {task.sentence?.replace("___", "_______")}
+            </div>
+
+            {/* 🔥 ПЕРЕВІРКА НАЯВНОСТІ ПІДКАЗКИ 🔥 */}
+            {task.translation ? (
+              <div
+                style={{
+                  marginBottom: 20,
+                  color: "#6b7280",
+                  fontSize: 16,
+                  fontStyle: "italic",
+                  background: "#f3f4f6",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  display: "inline-block",
+                }}
+              >
+                Hint: <strong>{task.translation}</strong>
+              </div>
+            ) : (
+              // Якщо підказки немає (старий кеш), показуємо заглушку або нічого
+              <div style={{ marginBottom: 20, fontSize: 12, color: "#ccc" }}>
+                No hint available
+              </div>
+            )}
+
+            {renderTextInput("Type missing word...")}
+          </div>
+        );
+      case "translation":
+        return (
+          <div style={{ width: "100%" }}>
+            <div style={{ marginBottom: 15, fontSize: 18, fontWeight: "bold" }}>
+              {(task as any).source_text}
+            </div>
+            {renderTextInput("Translate...")}
+          </div>
+        );
+      default:
+        return <div>{renderTextInput("Type answer...")}</div>;
+    }
+  };
 
   if (loading && !isChecked)
     return (
@@ -451,74 +497,20 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   if (!task)
     return (
       <div className="ls-container">
-        <div className="ls-loading">Loading task data...</div>
+        <div className="ls-loading">No task loaded</div>
       </div>
     );
-
-  let content;
-  switch (task.type) {
-    case "single_choice":
-    case "definition_match":
-      content = renderSingleChoice();
-      break;
-    case "multiple_choice":
-      content = renderMultipleChoice();
-      break;
-    case "sentence_reorder":
-      content = renderSentenceReorder();
-      break;
-    case "verb_conjugation":
-      content = renderVerbConjugation();
-      break;
-    case "error_correction":
-      content = renderErrorCorrection();
-      break;
-    case "fill_blank":
-      content = (
-        <div style={{ width: "100%" }}>
-          {task.sentence && (
-            <div style={{ fontSize: 18, marginBottom: 15 }}>
-              {task.sentence.replace("___", "_____")}
-            </div>
-          )}
-          {renderTextInput("Type missing word...")}
-        </div>
-      );
-      break;
-    case "translation":
-      content = (
-        <div style={{ width: "100%" }}>
-          {(task as any).source_text && (
-            <div style={{ fontSize: 20, fontWeight: "bold", marginBottom: 20 }}>
-              {(task as any).source_text}
-            </div>
-          )}
-          {renderTextInput("Type translation...")}
-        </div>
-      );
-      break;
-    default:
-      content = (
-        <div>
-          <div style={{ color: "orange", marginBottom: 10 }}>
-            Unknown type: {task.type}
-          </div>
-          {renderTextInput()}
-        </div>
-      );
-  }
 
   return (
     <div className="ls-container">
       <div className="ls-inner-content">
         <div className="ls-top-bar">
           <div className="ls-elo-counter">
-            <span className="ls-elo-icon">⚡</span>
-            <span className="ls-elo-value">{stats.elo}</span>
-            {eloChange !== null && (
+            <span>⚡ {stats.elo}</span>
+            {eloChange && (
               <span
                 className={`ls-elo-change ${
-                  eloChange >= 0 ? "positive" : "negative"
+                  eloChange > 0 ? "positive" : "negative"
                 }`}
               >
                 {eloChange > 0 ? `+${eloChange}` : eloChange}
@@ -533,8 +525,26 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
               <div className="ls-p-body-container">
                 <div
                   className="ls-p-fill"
-                  style={{ width: `${progress}%` }}
+                  style={{ width: `${progressInfo.percent}%` }}
                 ></div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    color: "#333",
+                    zIndex: 10,
+                  }}
+                >
+                  {progressInfo.label}
+                </div>
               </div>
               <div className="ls-p-wood"></div>
               <div className="ls-p-lead"></div>
@@ -544,21 +554,17 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
         <div className="ls-content">
           <h1 className="ls-prompt-text">{task.prompt}</h1>
-          {content}
+          {renderContent()}
         </div>
 
         {isChecked && (
           <div className="ls-feedback-container">
             <div
-              className={
-                isCorrect
-                  ? "ls-feedback-banner correct"
-                  : "ls-feedback-banner wrong"
-              }
+              className={`ls-feedback-banner ${
+                isCorrect ? "correct" : "wrong"
+              }`}
             >
-              {isCorrect
-                ? "Great job!"
-                : `Correct: ${feedback?.correct_answer || "See details"}`}
+              {getFeedbackText()}
             </div>
           </div>
         )}
