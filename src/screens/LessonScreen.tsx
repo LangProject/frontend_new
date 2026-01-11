@@ -4,11 +4,9 @@ import type {
   LessonExercise,
   LessonFeedback,
   UserStats,
-  AnswerValue,
 } from "../types/lesson";
 import "./lesson.css";
 
-/* --- ТИПИ --- */
 interface ExtendedTask extends LessonExercise {
   verb_infinitive?: string;
   context_sentence?: string;
@@ -19,6 +17,7 @@ interface ExtendedTask extends LessonExercise {
   translation?: string;
   word?: string;
   definitions?: string[];
+  pairs?: { left: string; right: string }[];
 }
 
 interface Props {
@@ -26,7 +25,6 @@ interface Props {
   onBack: () => void;
 }
 
-// Пороги ELO
 const ELO_THRESHOLDS: Record<string, number> = {
   A1: 100,
   A2: 300,
@@ -46,7 +44,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [eloChange, setEloChange] = useState<number | null>(null);
 
-  // Inputs
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
     null
   );
@@ -54,9 +51,11 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const [reorderIndices, setReorderIndices] = useState<number[]>([]);
   const [textInput, setTextInput] = useState("");
 
+  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const [matches, setMatches] = useState<Record<string, string>>({});
+
   const initialized = useRef(false);
 
-  // --- INIT ---
   useEffect(() => {
     if (initialized.current) return;
     if (lessonId) {
@@ -86,15 +85,12 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   };
 
   const loadNextTask = async () => {
-    // 1. Скидаємо поточне завдання, щоб уникнути "залипання" старого екрану
     setTask(null);
     setLoading(true);
     resetUI();
 
     try {
       const t = await LessonService.getNextTask();
-      console.log("📥 Loaded New Task:", t); // ДЕБАГ: Дивіться сюди, чи є поле translation!
-
       if (t) {
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
@@ -120,28 +116,46 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     setSelectedIndices([]);
     setReorderIndices([]);
     setTextInput("");
+    setMatches({});
+    setSelectedLeft(null);
   };
 
-  // --- CHECK ---
   const handleCheck = async () => {
     if (!task) return;
     const oldElo = stats.elo;
 
-    let answer: AnswerValue;
+    let answer: any;
+
     switch (task.type) {
+      case "match_pairs":
+        if (task.pairs && Object.keys(matches).length !== task.pairs.length)
+          return;
+        answer = Object.entries(matches).map(([left, right]) => ({
+          left,
+          right,
+        }));
+        break;
+
       case "single_choice":
-      case "definition_match":
         if (selectedOptionIndex === null || !task.options) return;
         answer = task.options[selectedOptionIndex];
         break;
+
+      case "definition_match":
+        if (selectedOptionIndex === null || !task.options) return;
+        answer = [task.options[selectedOptionIndex]];
+        break;
+
       case "multiple_choice":
         if (selectedIndices.length === 0 || !task.options) return;
         answer = selectedIndices.map((i) => task.options![i]);
         break;
+
       case "sentence_reorder":
         if (reorderIndices.length === 0) return;
         answer = reorderIndices;
         break;
+
       default:
         if (!textInput.trim()) return;
         answer = textInput.trim();
@@ -158,16 +172,16 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
       if (!result) return;
 
-      console.log("📤 Feedback received:", result); // ДЕБАГ: Дивіться, де лежить правильна відповідь
-
       setFeedback(result);
       setIsChecked(true);
 
       const scoreVal = Number(result.score);
+      // ИСПРАВЛЕНО: Добавлена проверка result.status === "correct"
       const success =
-        (!isNaN(scoreVal) && scoreVal >= 0.9) ||
+        result.status === "correct" ||
         result.correct === true ||
-        result.is_correct === true;
+        result.is_correct === true ||
+        (!isNaN(scoreVal) && scoreVal >= 0.9);
 
       setIsCorrect(success);
 
@@ -188,23 +202,20 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     loadNextTask();
   };
 
-  // --- 🔥 ПОКРАЩЕНИЙ ПОШУК ВІДПОВІДІ 🔥 ---
   const getFeedbackText = () => {
     if (isCorrect) return "Great job!";
+
     if (!feedback) return "Incorrect";
 
-    // 1. Стандартні поля
     if (feedback.correct_answer) return `Correct: ${feedback.correct_answer}`;
     if (feedback.solution) return `Correct: ${feedback.solution}`;
 
-    // 2. Специфічні поля (перебір варіантів)
     const fb = feedback as any;
     if (fb.correct_conjugation) return `Correct: ${fb.correct_conjugation}`;
     if (fb.correct_sentence) return `Correct: ${fb.correct_sentence}`;
-    if (fb.correct_form) return `Correct: ${fb.correct_form}`;
-    if (fb.target_word) return `Correct: ${fb.target_word}`;
 
-    // 3. Sentence Reorder
+    if (task?.type === "match_pairs") return "Incorrect pairs";
+
     if (
       task?.type === "sentence_reorder" &&
       feedback.correct_order &&
@@ -215,30 +226,25 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
         .join(" ")}`;
     }
 
-    // 4. Options
     if (feedback.options) {
       const correctOpt = feedback.options.find((o) => o.is_correct);
       if (correctOpt) return `Correct: ${correctOpt.choice}`;
     }
 
-    // 5. Fallback для Fill Blank, якщо нічого не прийшло, але є переклад у самому завданні
     if (task?.type === "fill_blank" && (task as ExtendedTask).translation) {
-      // Це краще, ніж нічого
       return `Hint: Check the translation "${
         (task as ExtendedTask).translation
       }"`;
     }
 
-    return "Incorrect (Answer hidden)";
+    return "Incorrect";
   };
 
-  // --- PROGRESS ---
   const getProgressInfo = () => {
     const sortedLevels = Object.entries(ELO_THRESHOLDS).sort(
       (a, b) => a[1] - b[1]
     );
     const currentElo = stats.elo;
-
     let start = 0;
     let end = sortedLevels[0][1];
 
@@ -250,33 +256,99 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
         break;
       }
     }
-
     if (currentElo === 0) return { percent: 5, label: "Loading..." };
-
     const range = end - start;
     const gained = currentElo - start;
     const percent = Math.max((gained / range) * 100, 5);
-
-    return {
-      percent: Math.min(percent, 100),
-      label: `${currentElo} / ${end}`,
-    };
+    return { percent: Math.min(percent, 100), label: `${currentElo} / ${end}` };
   };
 
   const progressInfo = getProgressInfo();
 
   // --- RENDERERS ---
+
+  const renderMatchPairs = () => {
+    if (!task?.pairs) return null;
+    const rightItems = task.pairs.map((p) => p.right);
+    return (
+      <div className="ls-match-grid">
+        <div className="ls-match-col">
+          {task.pairs.map((pair) => {
+            const isMatched = !!matches[pair.left];
+            const isSelected = selectedLeft === pair.left;
+            return (
+              <button
+                key={pair.left}
+                className={`ls-match-card ${isSelected ? "selected" : ""} ${
+                  isMatched ? "matched" : ""
+                }`}
+                onClick={() =>
+                  !isMatched && !isChecked && setSelectedLeft(pair.left)
+                }
+                disabled={isMatched || isChecked}
+              >
+                {pair.left}
+              </button>
+            );
+          })}
+        </div>
+        <div className="ls-match-col">
+          {rightItems.map((rightText, idx) => {
+            const isMatched = Object.values(matches).includes(rightText);
+            return (
+              <button
+                key={idx}
+                className={`ls-match-card ${isMatched ? "matched" : ""}`}
+                onClick={() => {
+                  if (selectedLeft && !isMatched && !isChecked) {
+                    setMatches((prev) => ({
+                      ...prev,
+                      [selectedLeft]: rightText,
+                    }));
+                    setSelectedLeft(null);
+                  }
+                }}
+                disabled={isMatched || isChecked}
+              >
+                {rightText}
+              </button>
+            );
+          })}
+        </div>
+        {!isChecked && Object.keys(matches).length > 0 && (
+          <button
+            className="ls-reset-match-btn"
+            onClick={() => {
+              setMatches({});
+              setSelectedLeft(null);
+            }}
+          >
+            Reset Pairs
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const renderSingleChoice = () => (
     <div className="ls-options-grid">
       {(task?.options || []).map((opt, idx) => {
         let cls = "ls-option-card";
-        if (isChecked && feedback?.options) {
-          const isOptCorrect = feedback.options.find(
-            (o) => o.choice === opt
-          )?.is_correct;
-          if (isOptCorrect) cls += " correct";
-          else if (selectedOptionIndex === idx) cls += " wrong";
-        } else if (selectedOptionIndex === idx) cls += " selected";
+        if (isChecked) {
+          if (feedback?.options) {
+            const isOptCorrect = feedback.options.find(
+              (o) => o.choice === opt
+            )?.is_correct;
+            if (isOptCorrect) cls += " correct";
+            else if (selectedOptionIndex === idx) cls += " wrong";
+          } else {
+            if (selectedOptionIndex === idx) {
+              cls += isCorrect ? " correct" : " wrong";
+            }
+          }
+        } else if (selectedOptionIndex === idx) {
+          cls += " selected";
+        }
         return (
           <button
             key={idx}
@@ -381,13 +453,41 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
   const renderContent = () => {
     switch (task?.type) {
-      case "single_choice":
+      case "match_pairs":
+        return renderMatchPairs();
+
       case "definition_match":
+        return (
+          <div
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "32px",
+                fontWeight: "800",
+                color: "#2563eb",
+                marginBottom: "24px",
+                textAlign: "center",
+              }}
+            >
+              {task.word}
+            </div>
+            {renderSingleChoice()}
+          </div>
+        );
+
+      case "single_choice":
         return renderSingleChoice();
       case "multiple_choice":
         return renderMultipleChoice();
       case "sentence_reorder":
         return renderSentenceReorder();
+
       case "verb_conjugation":
         return (
           <div style={{ width: "100%" }}>
@@ -423,6 +523,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
             {renderTextInput("Type conjugation...")}
           </div>
         );
+
       case "error_correction":
         return (
           <div style={{ width: "100%" }}>
@@ -436,19 +537,18 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
                 fontWeight: "bold",
               }}
             >
-              ❌ {task.incorrect_sentence}
+              {task.incorrect_sentence}
             </div>
             {renderTextInput("Type correct sentence...")}
           </div>
         );
+
       case "fill_blank":
         return (
           <div style={{ width: "100%" }}>
             <div style={{ marginBottom: 10, fontSize: 22, fontWeight: "500" }}>
               {task.sentence?.replace("___", "_______")}
             </div>
-
-            {/* 🔥 ПЕРЕВІРКА НАЯВНОСТІ ПІДКАЗКИ 🔥 */}
             {task.translation ? (
               <div
                 style={{
@@ -465,15 +565,14 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
                 Hint: <strong>{task.translation}</strong>
               </div>
             ) : (
-              // Якщо підказки немає (старий кеш), показуємо заглушку або нічого
               <div style={{ marginBottom: 20, fontSize: 12, color: "#ccc" }}>
                 No hint available
               </div>
             )}
-
             {renderTextInput("Type missing word...")}
           </div>
         );
+
       case "translation":
         return (
           <div style={{ width: "100%" }}>
@@ -483,6 +582,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
             {renderTextInput("Translate...")}
           </div>
         );
+
       default:
         return <div>{renderTextInput("Type answer...")}</div>;
     }
@@ -517,7 +617,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
               </span>
             )}
           </div>
-
           <div className="ls-pencil-wrapper">
             <div className="ls-pencil-progress">
               <div className="ls-p-eraser"></div>

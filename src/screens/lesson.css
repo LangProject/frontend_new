@@ -469,3 +469,74 @@
     transform: translateY(-15px);
   }
 }
+
+/* --- MATCH PAIRS (Соедини пары) --- */
+.ls-match-grid {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  justify-content: center;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.ls-match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.ls-match-card {
+  width: 100%;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #4b5563;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 3px 0 #e5e5e5;
+  transition: all 0.2s;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ls-match-card:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.ls-match-card.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 3px 0 #93c5fd;
+}
+
+.ls-match-card.matched {
+  background-color: #dcfce7;
+  border-color: #58cc02;
+  color: #15803d;
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+  pointer-events: none;
+  transform: none;
+}
+
+.ls-reset-match-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
