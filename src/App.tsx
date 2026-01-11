@@ -101,7 +101,11 @@ function App() {
         if (!token) throw new Error("No token");
 
         const statsRes = await fetch(`${API_URL}/user/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-session-id":
+              localStorage.getItem("session_id") || "dashboard-init",
+          },
         });
 
         // 2. СЕРВЕР КАЖЕ "НЕМАЄ ДАНИХ" (404)
@@ -234,7 +238,7 @@ function App() {
     try {
       await register(data);
       setAuthMode("login");
-      alert("Account created successfully! Please log in.");
+      console.log("Account created successfully! Please log in.");
     } catch (e: any) {
       alert(e.message || "Registration failed");
     }
