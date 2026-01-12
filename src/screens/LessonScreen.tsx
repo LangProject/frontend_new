@@ -156,6 +156,12 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
         answer = reorderIndices;
         break;
 
+      // НОВОЕ: Обработка поиска ошибки (отправляем индекс слова)
+      case "error_identification":
+        if (selectedOptionIndex === null) return;
+        answer = selectedOptionIndex;
+        break;
+
       default:
         if (!textInput.trim()) return;
         answer = textInput.trim();
@@ -176,21 +182,42 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       setIsChecked(true);
 
       const scoreVal = Number(result.score);
-      // ИСПРАВЛЕНО: Добавлена проверка result.status === "correct"
-      const success =
+
+      let success =
         result.status === "correct" ||
         result.correct === true ||
         result.is_correct === true ||
         (!isNaN(scoreVal) && scoreVal >= 0.9);
 
+      // Fallback
+      if (!success && typeof answer === "string") {
+        const userText = answer.trim().toLowerCase();
+        const fb = result as any;
+
+        if (
+          fb.correct_conjugation &&
+          fb.correct_conjugation.toLowerCase() === userText
+        ) {
+          success = true;
+        } else if (
+          fb.correct_answer &&
+          fb.correct_answer.toLowerCase() === userText
+        ) {
+          success = true;
+        } else if (fb.solution && fb.solution.toLowerCase() === userText) {
+          success = true;
+        }
+      }
+
       setIsCorrect(success);
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const newStats = await LessonService.getStats();
-      setStats(newStats);
-
-      const diff = newStats.elo - oldElo;
-      if (diff !== 0) setEloChange(diff);
+      if (success) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const newStats = await LessonService.getStats();
+        setStats(newStats);
+        const diff = newStats.elo - oldElo;
+        if (diff !== 0) setEloChange(diff);
+      }
     } catch (error: any) {
       handleSessionError(error);
     } finally {
@@ -204,15 +231,27 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
   const getFeedbackText = () => {
     if (isCorrect) return "Great job!";
-
     if (!feedback) return "Incorrect";
 
-    if (feedback.correct_answer) return `Correct: ${feedback.correct_answer}`;
-    if (feedback.solution) return `Correct: ${feedback.solution}`;
+    if (feedback.options) {
+      const correctOpts = feedback.options.filter((o) => o.is_correct);
+      if (correctOpts.length > 1) {
+        return `Correct answers: ${correctOpts
+          .map((o) => o.choice)
+          .join(", ")}`;
+      } else if (correctOpts.length === 1) {
+        return `Correct answer: ${correctOpts[0].choice}`;
+      }
+    }
+
+    if (feedback.correct_answer)
+      return `Correct answer: ${feedback.correct_answer}`;
+    if (feedback.solution) return `Solution: ${feedback.solution}`;
 
     const fb = feedback as any;
-    if (fb.correct_conjugation) return `Correct: ${fb.correct_conjugation}`;
-    if (fb.correct_sentence) return `Correct: ${fb.correct_sentence}`;
+    if (fb.correct_conjugation)
+      return `Correct form: ${fb.correct_conjugation}`;
+    if (fb.correct_sentence) return `Correct sentence: ${fb.correct_sentence}`;
 
     if (task?.type === "match_pairs") return "Incorrect pairs";
 
@@ -221,14 +260,9 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       feedback.correct_order &&
       task.options
     ) {
-      return `Correct: ${feedback.correct_order
+      return `Correct order: ${feedback.correct_order
         .map((idx: number) => task.options![idx])
         .join(" ")}`;
-    }
-
-    if (feedback.options) {
-      const correctOpt = feedback.options.find((o) => o.is_correct);
-      if (correctOpt) return `Correct: ${correctOpt.choice}`;
     }
 
     if (task?.type === "fill_blank" && (task as ExtendedTask).translation) {
@@ -237,7 +271,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
       }"`;
     }
 
-    return "Incorrect";
+    return "Incorrect answer";
   };
 
   const getProgressInfo = () => {
@@ -266,6 +300,66 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
   const progressInfo = getProgressInfo();
 
   // --- RENDERERS ---
+
+  // НОВОЕ: Отрисовка задания на поиск ошибки (кликабельные слова)
+  const renderErrorIdentification = () => {
+    // Берем предложение (оно может быть в разных полях)
+    const text = task?.sentence || task?.incorrect_sentence || "";
+    if (!text) return <div>No sentence data</div>;
+
+    const words = text.split(" ");
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 10,
+          justifyContent: "center",
+        }}
+      >
+        {words.map((w, i) => {
+          const isSel = selectedOptionIndex === i;
+          let bg = "white";
+          let border = "#e5e7eb";
+          let color = "#4b5563";
+
+          if (isChecked && isSel) {
+            // Если выбрали и проверили - красим в зависимости от правильности
+            bg = isCorrect ? "#dcfce7" : "#fee2e2";
+            border = isCorrect ? "#58cc02" : "#ef4444";
+            color = isCorrect ? "#15803d" : "#b91c1c";
+          } else if (isSel) {
+            // Просто выделено
+            bg = "#eff6ff";
+            border = "#3b82f6";
+            color = "#1d4ed8";
+          }
+
+          return (
+            <button
+              key={i}
+              style={{
+                background: bg,
+                border: `2px solid ${border}`,
+                color: color,
+                borderRadius: 12,
+                padding: "10px 14px",
+                fontSize: 18,
+                fontWeight: 700,
+                cursor: isChecked ? "default" : "pointer",
+                boxShadow: isChecked || isSel ? "none" : "0 3px 0 #e5e5e5",
+                transition: "all 0.1s",
+              }}
+              onClick={() => !isChecked && setSelectedOptionIndex(i)}
+            >
+              {w}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderMatchPairs = () => {
     if (!task?.pairs) return null;
@@ -478,6 +572,19 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
               {task.word}
             </div>
             {renderSingleChoice()}
+          </div>
+        );
+
+      // НОВОЕ: Кейс для поиска ошибки
+      case "error_identification":
+        return (
+          <div style={{ width: "100%" }}>
+            <div
+              style={{ textAlign: "center", marginBottom: 20, color: "#666" }}
+            >
+              Tap the word that is incorrect:
+            </div>
+            {renderErrorIdentification()}
           </div>
         );
 
