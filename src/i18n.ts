@@ -6,11 +6,11 @@ type Dict = Record<string, string>;
 const en: Dict = {
   "common.continue": "CONTINUE",
 
-  // Auth (Вхід/Реєстрація)
+  // Auth
   "auth.welcomeTitle": "Welcome!",
   "auth.welcomeSubtitle": "Please sign in to continue",
-  "auth.login": "Log in", // Текст на перемикачі
-  "auth.signup": "Sign up", // Текст на перемикачі
+  "auth.login": "Log in",
+  "auth.signup": "Sign up",
   "auth.name": "Name",
   "auth.fullName": "Full name",
   "auth.nickname": "Nickname",
@@ -18,119 +18,40 @@ const en: Dict = {
   "auth.password": "Password",
   "auth.repeatPassword": "Repeat password",
   "auth.forgotPassword": "Forgot password?",
-  "auth.logInCta": "Log in", // Кнопка входу
-  "auth.signUpCta": "Create account", // Кнопка реєстрації
+  "auth.logInCta": "Log in",
+  "auth.signUpCta": "Create account",
   "auth.loading": "Please wait...",
   "auth.namePlaceholder": "Your name",
   "auth.emailPlaceholder": "you@example.com",
   "auth.passwordPlaceholder": "Enter password",
 
-  // Setup (Вибір мови/рівня)
+  // Setup
   "chooseUiLang.title": "I speak...",
   "uiLanguage.subtitle": "Select the language for the app interface.",
   "chooseLearningLang.title": "I want to learn...",
   "learningLanguage.subtitle": "Select the language you want to study.",
 
   "level.selectTitle": "How well do you know this language?",
-  "level.selectSubtitle":
-    "Choose your current level to get the right exercises.",
+  "level.selectSubtitle": "Select your current level.",
   "level.testTitle": "Don't know your level?",
-  "level.testSubtitle": "Find your level in a few quick questions.",
+  "level.testSubtitle": "Find your level quickly.",
 
-  // Dashboard
-  "dashboard.learningPathsTitle": "Learning Paths",
+  // 🔥 DASHBOARD (Новые переводы)
+  "dashboard.title": "Learning Path",
+  "dashboard.subtitle": "Your personal plan",
   "dashboard.level": "Level",
-  "dashboard.selectTopic": "Select Topic",
   "dashboard.reading": "Reading",
   "dashboard.vocabulary": "Vocabulary",
   "dashboard.writing": "Writing",
-  "dashboard.startTest": "Start Test",
-};
-
-// 🇷🇺 RUSSIAN
-const ru: Dict = {
-  "common.continue": "ПРОДОЛЖИТЬ",
-
-  "auth.welcomeTitle": "Добро пожаловать!",
-  "auth.welcomeSubtitle": "Войдите, чтобы продолжить",
-  "auth.login": "Вход",
-  "auth.signup": "Регистрация",
-  "auth.name": "Имя",
-  "auth.fullName": "Полное имя",
-  "auth.nickname": "Никнейм",
-  "auth.email": "Email",
-  "auth.password": "Пароль",
-  "auth.repeatPassword": "Повторите пароль",
-  "auth.forgotPassword": "Забыли пароль?",
-  "auth.logInCta": "Войти",
-  "auth.signUpCta": "Создать аккаунт",
-  "auth.loading": "Загрузка...",
-  "auth.namePlaceholder": "Ваше имя",
-  "auth.emailPlaceholder": "you@example.com",
-  "auth.passwordPlaceholder": "Введите пароль",
-
-  "chooseUiLang.title": "Я говорю на...",
-  "uiLanguage.subtitle": "Выберите язык интерфейса приложения.",
-  "chooseLearningLang.title": "Я хочу изучать...",
-  "learningLanguage.subtitle": "Выберите язык, который хотите учить.",
-
-  "level.selectTitle": "Ваш уровень знаний?",
-  "level.selectSubtitle": "Выберите текущий уровень.",
-  "level.testTitle": "Не знаете свой уровень?",
-  "level.testSubtitle": "Определите уровень тестом.",
-
-  "dashboard.learningPathsTitle": "Пути обучения",
-  "dashboard.level": "Уровень",
-  "dashboard.selectTopic": "Выберите тему",
-  "dashboard.reading": "Чтение",
-  "dashboard.vocabulary": "Словарь",
-  "dashboard.writing": "Письмо",
-  "dashboard.startTest": "Начать тест",
-};
-
-// 🇩🇪 GERMAN
-const de: Dict = {
-  "common.continue": "WEITER",
-  "auth.welcomeTitle": "Willkommen!",
-  "auth.welcomeSubtitle": "Bitte melden Sie sich an",
-  "auth.login": "Anmelden",
-  "auth.signup": "Registrieren",
-  "auth.name": "Name",
-  "auth.fullName": "Vollständiger Name",
-  "auth.nickname": "Benutzername",
-  "auth.email": "E-Mail",
-  "auth.password": "Passwort",
-  "auth.repeatPassword": "Passwort wiederholen",
-  "auth.forgotPassword": "Passwort vergessen?",
-  "auth.logInCta": "Anmelden",
-  "auth.signUpCta": "Konto erstellen",
-  "auth.loading": "Bitte warten...",
-
-  "chooseUiLang.title": "Ich spreche...",
-  "uiLanguage.subtitle": "Wähle die Sprache für die App-Oberfläche.",
-  "chooseLearningLang.title": "Ich möchte lernen...",
-  "learningLanguage.subtitle": "Wähle die Sprache, die du lernen möchtest.",
-
-  "level.selectTitle": "Wie gut kannst du diese Sprache?",
-  "level.selectSubtitle": "Wähle dein aktuelles Niveau.",
-  "level.testTitle": "Kennst du dein Niveau nicht?",
-  "level.testSubtitle": "Finde dein Niveau heraus.",
-
-  "dashboard.learningPathsTitle": "Lernpfade",
-  "dashboard.level": "Niveau",
-  "dashboard.selectTopic": "Thema wählen",
-  "dashboard.reading": "Lesen",
-  "dashboard.vocabulary": "Wortschatz",
-  "dashboard.writing": "Schreiben",
-  "dashboard.startTest": "Test starten",
+  "dashboard.totalElo": "Total ELO",
 };
 
 // 🇪🇸 SPANISH
 const es: Dict = {
-  "common.continue": "CONTINUAR",
+  ...en,
   "auth.welcomeTitle": "¡Bienvenido!",
   "auth.welcomeSubtitle": "Inicia sesión para continuar",
-  "auth.login": "Acceso",
+  "auth.login": "Entrar",
   "auth.signup": "Registro",
   "auth.name": "Nombre",
   "auth.fullName": "Nombre completo",
@@ -153,25 +74,84 @@ const es: Dict = {
   "level.testTitle": "¿No conoces tu nivel?",
   "level.testSubtitle": "Encuentra tu nivel rápidamente.",
 
-  "dashboard.learningPathsTitle": "Rutas",
+  // Dashboard ES
+  "dashboard.title": "Ruta de aprendizaje",
+  "dashboard.subtitle": "Tu plan personal",
   "dashboard.level": "Nivel",
-  "dashboard.selectTopic": "Elige un tema",
   "dashboard.reading": "Lectura",
   "dashboard.vocabulary": "Vocabulario",
   "dashboard.writing": "Escritura",
-  "dashboard.startTest": "Iniciar prueba",
+  "dashboard.totalElo": "ELO Total",
 };
 
+// 🇩🇪 GERMAN
+const de: Dict = {
+  ...en,
+  "auth.welcomeTitle": "Willkommen!",
+  "auth.logInCta": "Anmelden",
+  "auth.signUpCta": "Registrieren",
+  
+  // Dashboard DE
+  "dashboard.title": "Lernpfad",
+  "dashboard.subtitle": "Ihr persönlicher Plan",
+  "dashboard.level": "Niveau",
+  "dashboard.reading": "Lesen",
+  "dashboard.vocabulary": "Wortschatz",
+  "dashboard.writing": "Schreiben",
+  "dashboard.totalElo": "Gesamt-ELO",
+};
+
+// 🇷🇺 RUSSIAN
+const ru: Dict = {
+  ...en,
+  "common.continue": "ПРОДОЛЖИТЬ",
+
+  // Auth
+  "auth.welcomeTitle": "Добро пожаловать!",
+  "auth.welcomeSubtitle": "Войдите, чтобы продолжить",
+  "auth.login": "Вход",
+  "auth.signup": "Регистрация",
+  "auth.name": "Имя",
+  "auth.fullName": "Полное имя",
+  "auth.nickname": "Никнейм",
+  "auth.email": "Email",
+  "auth.password": "Пароль",
+  "auth.repeatPassword": "Повторите пароль",
+  "auth.forgotPassword": "Забыли пароль?",
+  "auth.logInCta": "Войти",
+  "auth.signUpCta": "Создать аккаунт",
+  "auth.loading": "Подождите...",
+
+  // Setup
+  "chooseUiLang.title": "Я говорю на...",
+  "uiLanguage.subtitle": "Выберите язык интерфейса.",
+  "chooseLearningLang.title": "Я хочу учить...",
+  "learningLanguage.subtitle": "Выберите язык для изучения.",
+
+  "level.selectTitle": "Ваш уровень?",
+  "level.selectSubtitle": "Укажите текущий уровень знаний.",
+  "level.testTitle": "Не знаете свой уровень?",
+  "level.testSubtitle": "Проудите быстрый тест.",
+
+  // Dashboard RU
+  "dashboard.title": "Путь обучения",
+  "dashboard.subtitle": "Ваш персональный план",
+  "dashboard.level": "Уровень",
+  "dashboard.reading": "Чтение",
+  "dashboard.vocabulary": "Словарь",
+  "dashboard.writing": "Письмо",
+  "dashboard.totalElo": "Общий ELO",
+};
+
+// Другие языки (пока копии EN)
 const fr = { ...en };
 const pl = { ...en };
 
 const DICTS: Record<string, Dict> = { en, de, es, fr, pl, ru };
 
 export const t = (lang: UiLangCode | null | undefined, key: string): string => {
-  const fallbackLang = "en";
-  const safeLang = lang && DICTS[lang] ? lang : fallbackLang;
-  const dict = DICTS[safeLang] || DICTS[fallbackLang];
-
-  // Якщо ключа немає - повертаємо сам ключ, щоб бачити, чого не вистачає
-  return dict[key] || DICTS[fallbackLang][key] || key;
+  const fallback = DICTS.en[key] || key;
+  if (!lang) return fallback;
+  const dict = DICTS[lang];
+  return dict?.[key] || fallback;
 };

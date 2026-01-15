@@ -1,186 +1,275 @@
-/* src/screens/learningPath.css */
+/* === ОСНОВНОЙ КОНТЕЙНЕР === */
+.lp-container {
+  padding: 24px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: "Nunito", sans-serif;
+  color: #374151;
+}
 
-.dashboard-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 30px;
-}
-.dashboard-header-simple {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* === ШАПКА === */
+.lp-header {
   margin-bottom: 24px;
-  padding-top: 10px;
 }
-.dashboard-header-simple h2 {
-  font-size: 24px;
+
+.lp-main-title {
+  font-size: 28px;
   font-weight: 800;
   color: #111827;
-  margin: 0;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
 }
-.info-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #e5e7eb;
+
+.lp-subtitle {
+  font-size: 16px;
   color: #6b7280;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-}
-.dashboard-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
-/* КАРТКА */
-.lp-card-new {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.lp-card-new:active {
-  transform: scale(0.98);
-}
-
-/* Верхняя часть */
-.lp-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* === СЕТКА === */
+.lp-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
   width: 100%;
 }
-.lp-header-left {
+
+/* === КАРТОЧКА === */
+.lp-card {
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+  box-shadow: 0 4px 0 #e5e5e5;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-card:active {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #e5e5e5;
+}
+
+.lp-card-top {
   display: flex;
   align-items: center;
   gap: 16px;
+  margin-bottom: 8px;
 }
 
-/* Иконка */
-.lp-icon-box {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background-color: transparent;
+.lp-icon-wrapper {
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 8px;
-  box-sizing: border-box;
 }
-.lp-topic-img {
+
+.lp-icon {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  mix-blend-mode: multiply; /* Убирает белый фон */
-  /* transform: scaleX(-1);  <-- УБРАЛИ ЭТУ СТРОЧКУ */
 }
 
-.lp-text-container {
+.lp-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
 }
+
 .lp-title {
   font-size: 18px;
   font-weight: 800;
-  color: #111827;
+  color: #1f2937;
   line-height: 1.2;
 }
-.lp-level {
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7280;
-}
-.lp-arrow-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  color: #9ca3af;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 18px;
-  flex-shrink: 0;
-}
 
-/* Прогресс */
-.lp-progress-section {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-.lp-stats-block {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 32px;
-  min-width: 40px;
-}
-.lp-count-text {
+.lp-level {
   font-size: 13px;
   font-weight: 700;
-  color: #374151;
-}
-.lp-percent-text {
-  font-size: 12px;
-  font-weight: 600;
   color: #9ca3af;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
-.lp-slider-track {
-  flex: 1;
-  height: 8px;
-  background-color: #f3f4f6;
-  border-radius: 99px;
+
+.lp-arrow-btn {
+  font-size: 24px;
+  color: #d1d5db;
+  font-weight: 800;
+}
+
+.lp-progress-section {
+  width: 100%;
+  padding-top: 4px;
+}
+
+/* === НИЖНИЙ БЛОК === */
+.lp-footer-action {
+  margin-top: 30px; 
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-bottom: 20px;
+}
+
+/* ========================================= */
+/* === СТИЛИ КАРАНДАШЕЙ (PENCIL WIDGET) === */
+/* ========================================= */
+
+.lp-pencil-widget {
   position: relative;
   display: flex;
   align-items: center;
-}
-.lp-slider-knob {
-  width: 18px;
-  height: 18px;
-  background-color: #9ca3af;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transition: left 0.3s ease, background-color 0.3s;
+  /* Убрали cursor: pointer, так как это не кнопка */
+  cursor: default; 
+  user-select: none;
 }
 
-.start-test-btn-dash {
-  margin-top: 32px;
+/* УБРАЛИ эффекты наведения и клика для карандаша, чтобы он был статичным */
+
+.lp-pw-eraser {
+  height: 100%;
+  background: #fca5a5;
+  border: 2px solid #333;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  z-index: 2;
+}
+
+.lp-pw-metal {
+  height: 100%;
+  background: #94a3b8;
+  border: 2px solid #333;
+  z-index: 3;
+}
+
+.lp-pw-body {
+  flex: 1;
+  height: 100%;
+  background: #fff;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.lp-pw-fill {
+  height: 100%;
+  border-right: 2px solid rgba(0,0,0,0.2);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-pw-text {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 56px;
-  background-color: #58cc02;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-size: 17px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  color: #333;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: pointer;
-  box-shadow: 0 4px 0 #46a302;
-  transition: transform 0.1s;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 2px rgba(255,255,255,0.8);
 }
-.start-test-btn-dash:active {
-  transform: translateY(4px);
-  box-shadow: none;
+
+.lp-pw-wood {
+  width: 0;
+  height: 0;
+  border-left-style: solid;
+  border-left-color: #fde047;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-top-style: solid;
+  border-bottom-style: solid;
+  position: relative;
+  z-index: 2;
+  margin-left: -1px;
 }
+
+.lp-pw-lead {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left-style: solid;
+  border-left-color: #333;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-top-style: solid;
+  border-bottom-style: solid;
+  z-index: 1;
+}
+
+/* --- РАЗМЕРЫ --- */
+
+/* 1. Маленький карандаш */
+/* 1. Маленький карандаш (внутри карточек) - КОМПАКТНАЯ ВЕРСИЯ */
+.lp-pencil-small {
+  height: 16px; /* Уменьшили с 24px до 16px */
+  width: 100%;
+  margin-top: 12px; /* Чуть больше отступ сверху, чтобы дышалось */
+}
+
+/* Ластик */
+.lp-pencil-small .lp-pw-eraser { 
+  width: 10px; 
+  border-radius: 3px 0 0 3px; 
+  border-width: 1px; 
+  border-right: none;
+}
+
+/* Металл */
+.lp-pencil-small .lp-pw-metal { 
+  width: 6px; 
+  border-width: 1px; 
+}
+
+/* Тело */
+.lp-pencil-small .lp-pw-body { 
+  border-width: 1px 0; 
+}
+
+/* Текст (делаем совсем крошечным или можно скрыть, если мешает) */
+.lp-pencil-small .lp-pw-text { 
+  font-size: 9px; 
+  letter-spacing: 0;
+}
+
+/* Дерево (носик) */
+.lp-pencil-small .lp-pw-wood { 
+  border-left-width: 8px; /* Длина носа */
+  border-top-width: 7px;  /* (16px высота - 2px бордюры) / 2 = 7px */
+  border-bottom-width: 7px; 
+}
+
+/* Грифель */
+.lp-pencil-small .lp-pw-lead { 
+  right: -10px; /* Позиция кончика */
+  border-left-width: 3px; 
+  border-top-width: 2px; 
+  border-bottom-width: 2px; 
+}
+/* 2. Большой карандаш (Общий ELO) */
+.lp-pencil-large {
+  height: 52px;
+  width: 100%;
+}
+.lp-pencil-large .lp-pw-eraser { width: 28px; border-width: 2px; border-right: none; }
+.lp-pencil-large .lp-pw-metal { width: 16px; border-width: 2px; }
+.lp-pencil-large .lp-pw-body { border-width: 2px 0; }
+.lp-pencil-large .lp-pw-text { font-size: 16px; font-weight: 900; }
+.lp-pencil-large .lp-pw-wood { border-left-width: 20px; border-top-width: 23px; border-bottom-width: 23px; }
+.lp-pencil-large .lp-pw-lead { right: -22px; border-left-width: 6px; border-top-width: 5px; border-bottom-width: 5px; }
