@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { LessonService } from "../api/services/lessonService";
+import { LessonService } from "../api/services/lessonService"; // Проверьте путь импорта
 import type {
   LessonExercise,
   LessonFeedback,
@@ -20,8 +20,10 @@ interface ExtendedTask extends LessonExercise {
   pairs?: { left: string; right: string }[];
 }
 
+// 👇 ИСПРАВЛЕНИЕ: Добавили section в пропсы
 interface Props {
   lessonId: string;
+  section: string;
   onBack: () => void;
 }
 
@@ -34,7 +36,8 @@ const ELO_THRESHOLDS: Record<string, number> = {
   C2: 1900,
 };
 
-export const LessonScreen = ({ lessonId, onBack }: Props) => {
+// 👇 ИСПРАВЛЕНИЕ: Принимаем section
+export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
   const [stats, setStats] = useState<UserStats>({ elo: 0, level: "A1" });
@@ -90,7 +93,8 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
     resetUI();
 
     try {
-      const t = await LessonService.getNextTask();
+      // 👇 ИСПРАВЛЕНИЕ: Передаем section в сервис
+      const t = await LessonService.getNextTask(section);
       if (t) {
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
@@ -156,7 +160,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
         answer = reorderIndices;
         break;
 
-      // НОВОЕ: Обработка поиска ошибки (отправляем индекс слова)
       case "error_identification":
         if (selectedOptionIndex === null) return;
         answer = selectedOptionIndex;
@@ -301,9 +304,7 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
 
   // --- RENDERERS ---
 
-  // НОВОЕ: Отрисовка задания на поиск ошибки (кликабельные слова)
   const renderErrorIdentification = () => {
-    // Берем предложение (оно может быть в разных полях)
     const text = task?.sentence || task?.incorrect_sentence || "";
     if (!text) return <div>No sentence data</div>;
 
@@ -325,12 +326,10 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
           let color = "#4b5563";
 
           if (isChecked && isSel) {
-            // Если выбрали и проверили - красим в зависимости от правильности
             bg = isCorrect ? "#dcfce7" : "#fee2e2";
             border = isCorrect ? "#58cc02" : "#ef4444";
             color = isCorrect ? "#15803d" : "#b91c1c";
           } else if (isSel) {
-            // Просто выделено
             bg = "#eff6ff";
             border = "#3b82f6";
             color = "#1d4ed8";
@@ -575,7 +574,6 @@ export const LessonScreen = ({ lessonId, onBack }: Props) => {
           </div>
         );
 
-      // НОВОЕ: Кейс для поиска ошибки
       case "error_identification":
         return (
           <div style={{ width: "100%" }}>

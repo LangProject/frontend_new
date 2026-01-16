@@ -21,28 +21,58 @@ export const LessonService = {
         headers: getHeaders(),
       });
       const data = response.data;
-      let elo = 0;
-      let level = "A1";
+
+      // Создаем объект со всеми статами
+      let result = {
+        elo: 0, level: "A1",
+        reading_elo: 0, reading_level: "A1",
+        vocabulary_elo: 0, vocabulary_level: "A1",
+        writing_elo: 0, writing_level: "A1"
+      };
 
       if (data?.language_data?.ratings) {
         const ratings = data.language_data.ratings;
-        const keys = Object.keys(ratings);
-        if (keys.length > 0) {
-          const r = ratings[keys[0]];
-          if (r.elo !== undefined) elo = Math.round(r.elo);
-          if (r.cefr) level = r.cefr;
+
+        if (ratings.reading) {
+            result.reading_elo = Math.round(ratings.reading.elo || 0);
+            result.reading_level = ratings.reading.cefr || "A1";
+        }
+        if (ratings.vocabulary) {
+            result.vocabulary_elo = Math.round(ratings.vocabulary.elo || 0);
+            result.vocabulary_level = ratings.vocabulary.cefr || "A1";
+        }
+        if (ratings.writing) {
+            result.writing_elo = Math.round(ratings.writing.elo || 0);
+            result.writing_level = ratings.writing.cefr || "A1";
+        }
+        
+        // Общий уровень (Total)
+        if (ratings.language_level) {
+             result.elo = Math.round(ratings.language_level.elo || 0);
+             result.level = ratings.language_level.cefr || "A1";
+        } else {
+             // Фолбэк на вокабуляр, если общего нет
+             result.elo = result.vocabulary_elo;
+             result.level = result.vocabulary_level;
         }
       }
-      return { elo, level };
+      return result;
     } catch (error) {
       console.warn("Stats fetch failed", error);
-      return { elo: 0, level: "A1" };
+      return { 
+        elo: 0, level: "A1",
+        reading_elo: 0, reading_level: "A1",
+        vocabulary_elo: 0, vocabulary_level: "A1",
+        writing_elo: 0, writing_level: "A1"
+      };
     }
   },
 
-  getNextTask: async () => {
+  // Добавили аргумент section, чтобы сервер знал, какие задания давать
+  getNextTask: async (section: string) => {
     const response = await axios.get("/session/exercise", {
       headers: getHeaders(),
+      params: { section: section } // Передает ?section=vocabulary в URL
     });
     return response.data;
   },
@@ -52,14 +82,11 @@ export const LessonService = {
     type: string;
     answer: any;
   }) => {
-    // ИСПРАВЛЕНИЕ НА ОСНОВЕ ЛОГА ОШИБКИ:
     const body = {
-      exercise_id: payload.exercise_id, // Сервер требует exercise_id!
-      type: payload.type, // Сервер требует type!
+      exercise_id: payload.exercise_id,
+      type: payload.type,
       answer: payload.answer,
     };
-
-    // Примечание: task_id отправлять НЕЛЬЗЯ (сервер ругается "Extra inputs forbidden")
 
     try {
       const response = await axios.post("/session/answer", body, {
