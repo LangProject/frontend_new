@@ -1,3 +1,5 @@
+/* learningPath.css */
+
 /* === ОСНОВНОЙ КОНТЕЙНЕР === */
 .lp-container {
   padding: 24px 20px;
@@ -5,35 +7,34 @@
   margin: 0 auto;
   font-family: "Nunito", sans-serif;
   color: #374151;
+  /* Убрали огромный padding-bottom, так как футер больше не перекрывает контент */
+  padding-bottom: 40px; 
 }
 
 /* === ШАПКА === */
 .lp-header {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .lp-main-title {
   font-size: 28px;
   font-weight: 800;
   color: #111827;
-  margin: 0 0 4px 0;
-  line-height: 1.2;
+  margin: 0 0 8px 0;
 }
 
 .lp-subtitle {
   font-size: 16px;
   color: #6b7280;
-  margin: 0;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
-/* === СЕТКА === */
+/* === СЕТКА КАРТОЧЕК === */
 .lp-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; 
 }
 
 /* === КАРТОЧКА === */
@@ -41,39 +42,41 @@
   background-color: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
-  padding: 16px;
+  padding: 20px; 
   cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: transform 0.1s, box-shadow 0.1s;
   box-shadow: 0 4px 0 #e5e5e5;
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 16px; 
 }
 
 .lp-card:active {
-  background-color: #f9fafb;
+  transform: translateY(4px);
+  box-shadow: none;
   border-color: #d1d5db;
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #e5e5e5;
 }
 
 .lp-card-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: 16px; 
 }
 
 .lp-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 14px;
+  flex-shrink: 0;
 }
 
 .lp-icon {
-  width: 100%;
-  height: 100%;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
 
@@ -81,195 +84,247 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  gap: 4px; 
 }
 
 .lp-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: #1f2937;
   line-height: 1.2;
 }
 
 .lp-level {
-  font-size: 13px;
+  font-size: 14px;
+  color: #6b7280;
   font-weight: 700;
-  color: #9ca3af;
   text-transform: uppercase;
-  margin-top: 2px;
+  letter-spacing: 0.5px;
 }
 
 .lp-arrow-btn {
   font-size: 24px;
   color: #d1d5db;
-  font-weight: 800;
+  font-weight: 900;
 }
 
-.lp-progress-section {
-  width: 100%;
-  padding-top: 4px;
-}
-
-/* === НИЖНИЙ БЛОК === */
-.lp-footer-action {
-  margin-top: 30px; 
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding-bottom: 20px;
-}
-
-/* ========================================= */
-/* === СТИЛИ КАРАНДАШЕЙ (PENCIL WIDGET) === */
-/* ========================================= */
-
-.lp-pencil-widget {
-  position: relative;
+/* === СТИЛИ КАРАНДАША === */
+.lp-pencil-wrapper {
   display: flex;
   align-items: center;
-  /* Убрали cursor: pointer, так как это не кнопка */
-  cursor: default; 
-  user-select: none;
+  position: relative;
+  width: 100%; 
 }
 
-/* УБРАЛИ эффекты наведения и клика для карандаша, чтобы он был статичным */
+.lp-pencil-progress {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  filter: drop-shadow(0 2px 0px rgba(0,0,0,0.15)); 
+}
 
-.lp-pw-eraser {
-  height: 100%;
-  background: #fca5a5;
-  border: 2px solid #333;
-  border-right: none;
+.lp-p-eraser {
+  background: #f472b6; 
+  border: 2px solid #374151; 
+  border-right: none; 
   border-radius: 6px 0 0 6px;
+  position: relative;
   z-index: 2;
 }
 
-.lp-pw-metal {
-  height: 100%;
-  background: #94a3b8;
-  border: 2px solid #333;
+.lp-p-metal {
+  background: linear-gradient(90deg, #d1d5db 0%, #9ca3af 50%, #d1d5db 100%);
+  border: 2px solid #374151;
+  border-right: none; 
   z-index: 3;
 }
 
-.lp-pw-body {
-  flex: 1;
-  height: 100%;
+.lp-p-body-container {
+  flex-grow: 1; 
   background: #fff;
-  border-top: 2px solid #333;
-  border-bottom: 2px solid #333;
+  border: 2px solid #374151;
+  border-right: none; 
   position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
-
-.lp-pw-fill {
-  height: 100%;
-  border-right: 2px solid rgba(0,0,0,0.2);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.lp-pw-text {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  overflow: hidden; 
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
-  color: #333;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 2px rgba(255,255,255,0.8);
 }
 
-.lp-pw-wood {
-  width: 0;
-  height: 0;
-  border-left-style: solid;
-  border-left-color: #fde047;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  border-top-style: solid;
-  border-bottom-style: solid;
-  position: relative;
-  z-index: 2;
-  margin-left: -1px;
-}
-
-.lp-pw-lead {
+.lp-p-fill {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left-style: solid;
-  border-left-color: #333;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  border-top-style: solid;
-  border-bottom-style: solid;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background-color: #fbbf24; 
+  transition: width 0.5s ease;
   z-index: 1;
 }
 
+.lp-p-label {
+  position: relative; 
+  z-index: 2;
+  font-weight: 800;
+  color: #374151;
+  text-align: center;
+  width: 100%;
+}
+
+.lp-p-wood {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-color: transparent transparent transparent #fcd34d; 
+  z-index: 1;
+  position: relative;
+}
+
+.lp-p-lead {
+  background: #374151;
+  border-radius: 0 3px 3px 0;
+  z-index: 0;
+  position: relative;
+  margin-left: -1px; 
+}
+
 /* --- РАЗМЕРЫ --- */
+.lp-pencil-wrapper.large .lp-p-eraser { width: 18px; height: 28px; }
+.lp-pencil-wrapper.large .lp-p-metal { width: 12px; height: 28px; }
+.lp-pencil-wrapper.large .lp-p-body-container { height: 28px; }
+.lp-pencil-wrapper.large .lp-p-wood { border-width: 14px 0 14px 18px; }
+.lp-pencil-wrapper.large .lp-p-lead { width: 8px; height: 8px; }
+.lp-pencil-wrapper.large .lp-p-label { font-size: 13px; }
 
-/* 1. Маленький карандаш */
-/* 1. Маленький карандаш (внутри карточек) - КОМПАКТНАЯ ВЕРСИЯ */
-.lp-pencil-small {
-  height: 16px; /* Уменьшили с 24px до 16px */
-  width: 100%;
-  margin-top: 12px; /* Чуть больше отступ сверху, чтобы дышалось */
-}
+.lp-pencil-wrapper.small .lp-p-eraser { width: 14px; height: 20px; }
+.lp-pencil-wrapper.small .lp-p-metal { width: 8px; height: 20px; }
+.lp-pencil-wrapper.small .lp-p-body-container { height: 20px; }
+.lp-pencil-wrapper.small .lp-p-wood { border-width: 10px 0 10px 12px; }
+.lp-pencil-wrapper.small .lp-p-lead { width: 5px; height: 6px; }
+.lp-pencil-wrapper.small .lp-p-label { font-size: 10px; }
 
-/* Ластик */
-.lp-pencil-small .lp-pw-eraser { 
-  width: 10px; 
-  border-radius: 3px 0 0 3px; 
-  border-width: 1px; 
-  border-right: none;
-}
-
-/* Металл */
-.lp-pencil-small .lp-pw-metal { 
-  width: 6px; 
-  border-width: 1px; 
-}
-
-/* Тело */
-.lp-pencil-small .lp-pw-body { 
-  border-width: 1px 0; 
-}
-
-/* Текст (делаем совсем крошечным или можно скрыть, если мешает) */
-.lp-pencil-small .lp-pw-text { 
-  font-size: 9px; 
-  letter-spacing: 0;
+/* === НОВАЯ СЕКЦИЯ TOTAL PROGRESS (ВМЕСТО ФИКСИРОВАННОГО ФУТЕРА) === */
+.lp-total-section {
+  margin-top: 40px; /* Отступ от последней карточки */
+  padding: 20px;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 0 #e5e5e5;
 }
 
-/* Дерево (носик) */
-.lp-pencil-small .lp-pw-wood { 
-  border-left-width: 8px; /* Длина носа */
-  border-top-width: 7px;  /* (16px высота - 2px бордюры) / 2 = 7px */
-  border-bottom-width: 7px; 
+.lp-total-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #9ca3af;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.5px;
 }
 
-/* Грифель */
-.lp-pencil-small .lp-pw-lead { 
-  right: -10px; /* Позиция кончика */
-  border-left-width: 3px; 
-  border-top-width: 2px; 
-  border-bottom-width: 2px; 
+/* learningPath.css */
+
+.lp-container {
+  padding: 24px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: "Nunito", sans-serif;
+  padding-bottom: 60px;
 }
-/* 2. Большой карандаш (Общий ELO) */
-.lp-pencil-large {
-  height: 52px;
-  width: 100%;
+
+.lp-header {
+  margin-bottom: 32px;
 }
-.lp-pencil-large .lp-pw-eraser { width: 28px; border-width: 2px; border-right: none; }
-.lp-pencil-large .lp-pw-metal { width: 16px; border-width: 2px; }
-.lp-pencil-large .lp-pw-body { border-width: 2px 0; }
-.lp-pencil-large .lp-pw-text { font-size: 16px; font-weight: 900; }
-.lp-pencil-large .lp-pw-wood { border-left-width: 20px; border-top-width: 23px; border-bottom-width: 23px; }
-.lp-pencil-large .lp-pw-lead { right: -22px; border-left-width: 6px; border-top-width: 5px; border-bottom-width: 5px; }
+
+/* Чистый текст заголовка */
+.lp-main-title {
+  font-size: 32px;
+  font-weight: 850;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-decoration: none; /* Гарантируем отсутствие подчеркиваний */
+}
+
+.lp-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.lp-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Карточки уроков остаются с белым фоном */
+.lp-card {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 4px 0 #e5e5e5;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Секция общего прогресса — ТЕПЕРЬ БЕЗ КОНТЕЙНЕРА */
+.lp-total-only-pencil {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: transparent; /* Никакого фона */
+  border: none;            /* Никаких рамок */
+  box-shadow: none;        /* Никаких теней */
+  padding: 0;              /* Никаких отступов */
+}
+
+.lp-total-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #9ca3af;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* Стили карандаша (базовые) */
+.lp-pencil-wrapper { width: 100%; }
+.lp-pencil-progress { display: flex; align-items: center; width: 100%; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.1)); }
+
+.lp-p-eraser { background: #f472b6; border: 2px solid #374151; border-radius: 6px 0 0 6px; }
+.lp-p-metal { background: #9ca3af; border: 2px solid #374151; border-left: none; border-right: none; }
+.lp-p-body-container { flex-grow: 1; background: #fff; border: 2px solid #374151; position: relative; display: flex; align-items: center; overflow: hidden; }
+.lp-p-fill { position: absolute; left: 0; top: 0; height: 100%; transition: width 0.4s ease; z-index: 1; }
+.lp-p-label { position: relative; z-index: 2; font-weight: 800; color: #374151; text-align: center; width: 100%; }
+.lp-p-wood { width: 0; height: 0; border-style: solid; border-color: transparent transparent transparent #fcd34d; }
+.lp-p-lead { background: #374151; border-radius: 0 3px 3px 0; }
+
+/* Размеры карандаша */
+.lp-pencil-wrapper.large .lp-p-eraser { width: 20px; height: 32px; }
+.lp-pencil-wrapper.large .lp-p-metal { width: 12px; height: 32px; }
+.lp-pencil-wrapper.large .lp-p-body-container { height: 32px; }
+.lp-pencil-wrapper.large .lp-p-wood { border-width: 16px 0 16px 20px; }
+.lp-pencil-wrapper.large .lp-p-lead { width: 10px; height: 10px; }
+.lp-pencil-wrapper.large .lp-p-label { font-size: 14px; }
+
+.lp-pencil-wrapper.small .lp-p-eraser { width: 14px; height: 20px; }
+.lp-pencil-wrapper.small .lp-p-metal { width: 8px; height: 20px; }
+.lp-pencil-wrapper.small .lp-p-body-container { height: 20px; }
+.lp-pencil-wrapper.small .lp-p-wood { border-width: 10px 0 10px 14px; }
+.lp-pencil-wrapper.small .lp-p-lead { width: 6px; height: 6px; }
+.lp-pencil-wrapper.small .lp-p-label { font-size: 11px; }
+
+.lp-icon-wrapper { width: 48px; height: 48px; background: #f3f4f6; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.lp-icon { width: 30px; height: 30px; }
+.lp-info { flex: 1; }
+.lp-title { font-size: 18px; font-weight: 800; }
+.lp-level { font-size: 13px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+.lp-arrow-btn { font-size: 24px; color: #d1d5db; }

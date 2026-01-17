@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { LessonService } from "../api/services/lessonService"; // Проверьте путь импорта
+import { LessonService } from "../api/services/lessonService";
 import type {
   LessonExercise,
   LessonFeedback,
@@ -20,7 +20,6 @@ interface ExtendedTask extends LessonExercise {
   pairs?: { left: string; right: string }[];
 }
 
-// 👇 ИСПРАВЛЕНИЕ: Добавили section в пропсы
 interface Props {
   lessonId: string;
   section: string;
@@ -36,7 +35,16 @@ const ELO_THRESHOLDS: Record<string, number> = {
   C2: 1900,
 };
 
-// 👇 ИСПРАВЛЕНИЕ: Принимаем section
+// Функция для мягкого сравнения строк
+const normalizeText = (text: string | undefined | null) => {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
@@ -47,11 +55,9 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [eloChange, setEloChange] = useState<number | null>(null);
 
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(
-    null
-  );
+  // Состояния для ответов
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  const [reorderIndices, setReorderIndices] = useState<number[]>([]);
   const [textInput, setTextInput] = useState("");
 
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
@@ -88,14 +94,19 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   };
 
   const loadNextTask = async () => {
-    setTask(null);
     setLoading(true);
     resetUI();
+    setTask(null);
 
     try {
-      // 👇 ИСПРАВЛЕНИЕ: Передаем section в сервис
       const t = await LessonService.getNextTask(section);
       if (t) {
+        // Пропускаем удаленные типы заданий
+        if (t.type === "fill_blank" || t.type === "sentence_reorder") {
+           await loadNextTask();
+           return;
+        }
+
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
         }
@@ -118,7 +129,6 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     setEloChange(null);
     setSelectedOptionIndex(null);
     setSelectedIndices([]);
-    setReorderIndices([]);
     setTextInput("");
     setMatches({});
     setSelectedLeft(null);
@@ -132,37 +142,23 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
 
     switch (task.type) {
       case "match_pairs":
-        if (task.pairs && Object.keys(matches).length !== task.pairs.length)
-          return;
-        answer = Object.entries(matches).map(([left, right]) => ({
-          left,
-          right,
-        }));
+        if (task.pairs && Object.keys(matches).length !== task.pairs.length) return;
+        answer = Object.entries(matches).map(([left, right]) => ({ left, right }));
         break;
 
       case "single_choice":
-        if (selectedOptionIndex === null || !task.options) return;
-        answer = task.options[selectedOptionIndex];
-        break;
-
       case "definition_match":
+      case "error_identification":
         if (selectedOptionIndex === null || !task.options) return;
-        answer = [task.options[selectedOptionIndex]];
+        answer = task.type === "error_identification" 
+          ? selectedOptionIndex 
+          : task.options[selectedOptionIndex];
+        if (task.type === "definition_match") answer = [answer]; 
         break;
 
       case "multiple_choice":
         if (selectedIndices.length === 0 || !task.options) return;
         answer = selectedIndices.map((i) => task.options![i]);
-        break;
-
-      case "sentence_reorder":
-        if (reorderIndices.length === 0) return;
-        answer = reorderIndices;
-        break;
-
-      case "error_identification":
-        if (selectedOptionIndex === null) return;
-        answer = selectedOptionIndex;
         break;
 
       default:
@@ -192,23 +188,18 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
         result.is_correct === true ||
         (!isNaN(scoreVal) && scoreVal >= 0.9);
 
-      // Fallback
-      if (!success && typeof answer === "string") {
-        const userText = answer.trim().toLowerCase();
-        const fb = result as any;
-
-        if (
-          fb.correct_conjugation &&
-          fb.correct_conjugation.toLowerCase() === userText
-        ) {
-          success = true;
-        } else if (
-          fb.correct_answer &&
-          fb.correct_answer.toLowerCase() === userText
-        ) {
-          success = true;
-        } else if (fb.solution && fb.solution.toLowerCase() === userText) {
-          success = true;
+      // FALLBACK логика
+      if (!success) {
+        if (typeof answer === "string") {
+          const userText = normalizeText(answer);
+          const fb = result as any;
+          if (
+            (fb.correct_conjugation && normalizeText(fb.correct_conjugation) === userText) ||
+            (fb.correct_answer && normalizeText(fb.correct_answer) === userText) ||
+            (fb.solution && normalizeText(fb.solution) === userText)
+          ) {
+            success = true;
+          }
         }
       }
 
@@ -247,40 +238,26 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
       }
     }
 
-    if (feedback.correct_answer)
-      return `Correct answer: ${feedback.correct_answer}`;
+    if (task?.type === "match_pairs" && task.pairs) {
+      const wrongPairs = task.pairs.filter((p) => matches[p.left] !== p.right);
+      if (wrongPairs.length > 0) {
+        return `Corrections: ${wrongPairs.map((p) => `${p.left} → ${p.right}`).join(", ")}`;
+      }
+      return "Incorrect pairs";
+    }
+
+    if (feedback.correct_answer) return `Correct answer: ${feedback.correct_answer}`;
     if (feedback.solution) return `Solution: ${feedback.solution}`;
-
+    
     const fb = feedback as any;
-    if (fb.correct_conjugation)
-      return `Correct form: ${fb.correct_conjugation}`;
+    if (fb.correct_conjugation) return `Correct form: ${fb.correct_conjugation}`;
     if (fb.correct_sentence) return `Correct sentence: ${fb.correct_sentence}`;
-
-    if (task?.type === "match_pairs") return "Incorrect pairs";
-
-    if (
-      task?.type === "sentence_reorder" &&
-      feedback.correct_order &&
-      task.options
-    ) {
-      return `Correct order: ${feedback.correct_order
-        .map((idx: number) => task.options![idx])
-        .join(" ")}`;
-    }
-
-    if (task?.type === "fill_blank" && (task as ExtendedTask).translation) {
-      return `Hint: Check the translation "${
-        (task as ExtendedTask).translation
-      }"`;
-    }
 
     return "Incorrect answer";
   };
 
   const getProgressInfo = () => {
-    const sortedLevels = Object.entries(ELO_THRESHOLDS).sort(
-      (a, b) => a[1] - b[1]
-    );
+    const sortedLevels = Object.entries(ELO_THRESHOLDS).sort((a, b) => a[1] - b[1]);
     const currentElo = stats.elo;
     let start = 0;
     let end = sortedLevels[0][1];
@@ -293,7 +270,6 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
         break;
       }
     }
-    if (currentElo === 0) return { percent: 5, label: "Loading..." };
     const range = end - start;
     const gained = currentElo - start;
     const percent = Math.max((gained / range) * 100, 5);
@@ -301,30 +277,21 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   };
 
   const progressInfo = getProgressInfo();
+  const bannerClass = isCorrect ? "correct" : "wrong";
 
   // --- RENDERERS ---
 
   const renderErrorIdentification = () => {
     const text = task?.sentence || task?.incorrect_sentence || "";
     if (!text) return <div>No sentence data</div>;
-
     const words = text.split(" ");
-
     return (
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 10,
-          justifyContent: "center",
-        }}
-      >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
         {words.map((w, i) => {
           const isSel = selectedOptionIndex === i;
           let bg = "white";
           let border = "#e5e7eb";
           let color = "#4b5563";
-
           if (isChecked && isSel) {
             bg = isCorrect ? "#dcfce7" : "#fee2e2";
             border = isCorrect ? "#58cc02" : "#ef4444";
@@ -334,7 +301,6 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
             border = "#3b82f6";
             color = "#1d4ed8";
           }
-
           return (
             <button
               key={i}
@@ -369,15 +335,17 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
           {task.pairs.map((pair) => {
             const isMatched = !!matches[pair.left];
             const isSelected = selectedLeft === pair.left;
+            let extraClass = "";
+            if (isChecked) {
+              const userChoice = matches[pair.left];
+              if (userChoice === pair.right) extraClass = " correct";
+              else extraClass = " wrong";
+            }
             return (
               <button
                 key={pair.left}
-                className={`ls-match-card ${isSelected ? "selected" : ""} ${
-                  isMatched ? "matched" : ""
-                }`}
-                onClick={() =>
-                  !isMatched && !isChecked && setSelectedLeft(pair.left)
-                }
+                className={`ls-match-card ${isSelected ? "selected" : ""} ${isMatched ? "matched" : ""}${extraClass}`}
+                onClick={() => !isMatched && !isChecked && setSelectedLeft(pair.left)}
                 disabled={isMatched || isChecked}
               >
                 {pair.left}
@@ -388,16 +356,21 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
         <div className="ls-match-col">
           {rightItems.map((rightText, idx) => {
             const isMatched = Object.values(matches).includes(rightText);
+            let extraClass = "";
+            if (isChecked && isMatched) {
+              const leftKey = Object.keys(matches).find((key) => matches[key] === rightText);
+              if (leftKey) {
+                const isCorrectLink = task.pairs?.some((p) => p.left === leftKey && p.right === rightText);
+                extraClass = isCorrectLink ? " correct" : " wrong";
+              }
+            }
             return (
               <button
                 key={idx}
-                className={`ls-match-card ${isMatched ? "matched" : ""}`}
+                className={`ls-match-card ${isMatched ? "matched" : ""}${extraClass}`}
                 onClick={() => {
                   if (selectedLeft && !isMatched && !isChecked) {
-                    setMatches((prev) => ({
-                      ...prev,
-                      [selectedLeft]: rightText,
-                    }));
+                    setMatches((prev) => ({ ...prev, [selectedLeft]: rightText }));
                     setSelectedLeft(null);
                   }
                 }}
@@ -427,27 +400,37 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     <div className="ls-options-grid">
       {(task?.options || []).map((opt, idx) => {
         let cls = "ls-option-card";
+        
         if (isChecked) {
+          // 1. Пытаемся понять, является ли эта опция правильной
+          let isThisOptionCorrect = false;
+
+          // Вариант А: Если сервер вернул детальный массив options (где есть флаг is_correct)
           if (feedback?.options) {
-            const isOptCorrect = feedback.options.find(
-              (o) => o.choice === opt
-            )?.is_correct;
-            if (isOptCorrect) cls += " correct";
-            else if (selectedOptionIndex === idx) cls += " wrong";
-          } else {
-            if (selectedOptionIndex === idx) {
-              cls += isCorrect ? " correct" : " wrong";
+            isThisOptionCorrect = feedback.options.find((o) => o.choice === opt)?.is_correct ?? false;
+          } 
+          // Вариант Б: Если сервер вернул просто строку правильного ответа (correct_answer или solution)
+          else {
+            const correctText = (feedback as any)?.correct_answer || (feedback as any)?.solution;
+            // Используем normalizeText для надежного сравнения
+            if (correctText && normalizeText(correctText) === normalizeText(opt)) {
+              isThisOptionCorrect = true;
             }
           }
-        } else if (selectedOptionIndex === idx) {
+
+          // 2. Применяем стили
+          if (isThisOptionCorrect) {
+            cls += " correct"; // Всегда красим правильный ответ в зеленый
+          } else if (selectedOptionIndex === idx) {
+            cls += " wrong"; // Если выбрано, но не верно -> красный
+          }
+        } 
+        else if (selectedOptionIndex === idx) {
           cls += " selected";
         }
+
         return (
-          <button
-            key={idx}
-            className={cls}
-            onClick={() => !isChecked && setSelectedOptionIndex(idx)}
-          >
+          <button key={idx} className={cls} onClick={() => !isChecked && setSelectedOptionIndex(idx)}>
             {opt}
           </button>
         );
@@ -458,71 +441,45 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const renderMultipleChoice = () => {
     const toggle = (i: number) => {
       if (isChecked) return;
-      setSelectedIndices((prev) =>
-        prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]
-      );
+      setSelectedIndices((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
     };
+
     return (
       <div className="ls-options-grid">
         {(task?.options || []).map((opt, idx) => {
           const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
-          if (isChecked && feedback?.options) {
-            const isOptCorrect = feedback.options.find(
-              (o) => o.choice === opt
-            )?.is_correct;
-            if (isOptCorrect) cls += " correct";
-            else if (isSel) cls += " wrong";
-          } else if (isSel) cls += " selected";
+          
+          if (isChecked) {
+             let isThisOptionCorrect = false;
+             
+             if (feedback?.options) {
+               isThisOptionCorrect = feedback.options.find((o) => o.choice === opt)?.is_correct ?? false;
+             } else {
+               // Для multiple_choice тут сложнее с simple string, обычно там массив.
+               // Но на случай если придет строка solution
+               const correctText = (feedback as any)?.correct_answer || (feedback as any)?.solution;
+               if (correctText && normalizeText(correctText) === normalizeText(opt)) {
+                 isThisOptionCorrect = true;
+               }
+             }
+
+             if (isThisOptionCorrect) {
+               cls += " correct";
+             } else if (isSel) {
+               cls += " wrong";
+             }
+          } 
+          else if (isSel) {
+             cls += " selected";
+          }
+
           return (
             <button key={idx} className={cls} onClick={() => toggle(idx)}>
               <span style={{ marginRight: 8 }}>{isSel ? "☑" : "☐"}</span> {opt}
             </button>
           );
         })}
-      </div>
-    );
-  };
-
-  const renderSentenceReorder = () => {
-    const words = task?.options || (task as any)?.words || [];
-    const currentSentence = reorderIndices.map((i) => words[i]);
-    return (
-      <div style={{ width: "100%" }}>
-        <div className="ls-sentence-slot-area">
-          {currentSentence.map((w, i) => (
-            <button
-              key={i}
-              className="ls-word-chip in-slot"
-              onClick={() =>
-                !isChecked &&
-                setReorderIndices((prev) => prev.filter((_, idx) => idx !== i))
-              }
-            >
-              {w}
-            </button>
-          ))}
-          {currentSentence.length === 0 && (
-            <span style={{ color: "#999" }}>Tap words...</span>
-          )}
-        </div>
-        <div className="ls-word-bank">
-          {words.map((w, i) => (
-            <button
-              key={i}
-              className={`ls-word-chip ${
-                reorderIndices.includes(i) ? "used" : ""
-              }`}
-              onClick={() =>
-                !isChecked &&
-                !reorderIndices.includes(i) &&
-                setReorderIndices([...reorderIndices, i])
-              }
-            >
-              {w}
-            </button>
-          ))}
-        </div>
       </div>
     );
   };
@@ -546,165 +503,60 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
 
   const renderContent = () => {
     switch (task?.type) {
-      case "match_pairs":
-        return renderMatchPairs();
-
+      case "match_pairs": return renderMatchPairs();
       case "definition_match":
         return (
-          <div
-            style={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "32px",
-                fontWeight: "800",
-                color: "#2563eb",
-                marginBottom: "24px",
-                textAlign: "center",
-              }}
-            >
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ fontSize: "32px", fontWeight: "800", color: "#2563eb", marginBottom: "24px", textAlign: "center" }}>
               {task.word}
             </div>
             {renderSingleChoice()}
           </div>
         );
-
       case "error_identification":
         return (
           <div style={{ width: "100%" }}>
-            <div
-              style={{ textAlign: "center", marginBottom: 20, color: "#666" }}
-            >
-              Tap the word that is incorrect:
-            </div>
+            <div style={{ textAlign: "center", marginBottom: 20, color: "#666" }}>Tap the word that is incorrect:</div>
             {renderErrorIdentification()}
           </div>
         );
-
-      case "single_choice":
-        return renderSingleChoice();
-      case "multiple_choice":
-        return renderMultipleChoice();
-      case "sentence_reorder":
-        return renderSentenceReorder();
+      case "single_choice": return renderSingleChoice();
+      case "multiple_choice": return renderMultipleChoice();
 
       case "verb_conjugation":
         return (
           <div style={{ width: "100%" }}>
-            <div
-              style={{
-                background: "#eff6ff",
-                padding: 15,
-                borderRadius: 10,
-                marginBottom: 20,
-                border: "1px solid #dbeafe",
-              }}
-            >
+            <div style={{ background: "#eff6ff", padding: 15, borderRadius: 10, marginBottom: 20, border: "1px solid #dbeafe" }}>
               <div style={{ color: "#666", fontSize: 12 }}>VERB</div>
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  color: "#2563eb",
-                  marginBottom: 5,
-                }}
-              >
-                {task.verb_infinitive}
-              </div>
-              <div style={{ fontSize: 14 }}>
-                {task.person} | {task.tense}
-              </div>
+              <div style={{ fontSize: 20, fontWeight: "bold", color: "#2563eb", marginBottom: 5 }}>{task.verb_infinitive}</div>
+              <div style={{ fontSize: 14 }}>{task.person} | {task.tense}</div>
             </div>
-            {task.context_sentence && (
-              <div style={{ fontStyle: "italic", marginBottom: 15 }}>
-                "{task.context_sentence}"
-              </div>
-            )}
+            {task.context_sentence && <div style={{ fontStyle: "italic", marginBottom: 15 }}>"{task.context_sentence}"</div>}
             {renderTextInput("Type conjugation...")}
           </div>
         );
-
       case "error_correction":
         return (
           <div style={{ width: "100%" }}>
-            <div
-              style={{
-                background: "#fef2f2",
-                padding: 15,
-                borderRadius: 10,
-                marginBottom: 20,
-                color: "#dc2626",
-                fontWeight: "bold",
-              }}
-            >
+            <div style={{ background: "#fef2f2", padding: 15, borderRadius: 10, marginBottom: 20, color: "#dc2626", fontWeight: "bold" }}>
               {task.incorrect_sentence}
             </div>
             {renderTextInput("Type correct sentence...")}
           </div>
         );
-
-      case "fill_blank":
-        return (
-          <div style={{ width: "100%" }}>
-            <div style={{ marginBottom: 10, fontSize: 22, fontWeight: "500" }}>
-              {task.sentence?.replace("___", "_______")}
-            </div>
-            {task.translation ? (
-              <div
-                style={{
-                  marginBottom: 20,
-                  color: "#6b7280",
-                  fontSize: 16,
-                  fontStyle: "italic",
-                  background: "#f3f4f6",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  display: "inline-block",
-                }}
-              >
-                Hint: <strong>{task.translation}</strong>
-              </div>
-            ) : (
-              <div style={{ marginBottom: 20, fontSize: 12, color: "#ccc" }}>
-                No hint available
-              </div>
-            )}
-            {renderTextInput("Type missing word...")}
-          </div>
-        );
-
       case "translation":
         return (
           <div style={{ width: "100%" }}>
-            <div style={{ marginBottom: 15, fontSize: 18, fontWeight: "bold" }}>
-              {(task as any).source_text}
-            </div>
+            <div style={{ marginBottom: 15, fontSize: 18, fontWeight: "bold" }}>{(task as any).source_text}</div>
             {renderTextInput("Translate...")}
           </div>
         );
-
-      default:
-        return <div>{renderTextInput("Type answer...")}</div>;
+      default: return <div>{renderTextInput("Type answer...")}</div>;
     }
   };
 
-  if (loading && !isChecked)
-    return (
-      <div className="ls-container">
-        <div className="ls-loading">Loading...</div>
-      </div>
-    );
-  if (!task)
-    return (
-      <div className="ls-container">
-        <div className="ls-loading">No task loaded</div>
-      </div>
-    );
+  if (loading && !isChecked) return <div className="ls-container"><div className="ls-loading">Loading...</div></div>;
+  if (!task) return <div className="ls-container"><div className="ls-loading">No task loaded</div></div>;
 
   return (
     <div className="ls-container">
@@ -712,41 +564,15 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
         <div className="ls-top-bar">
           <div className="ls-elo-counter">
             <span>⚡ {stats.elo}</span>
-            {eloChange && (
-              <span
-                className={`ls-elo-change ${
-                  eloChange > 0 ? "positive" : "negative"
-                }`}
-              >
-                {eloChange > 0 ? `+${eloChange}` : eloChange}
-              </span>
-            )}
+            {eloChange && <span className={`ls-elo-change ${eloChange > 0 ? "positive" : "negative"}`}>{eloChange > 0 ? `+${eloChange}` : eloChange}</span>}
           </div>
           <div className="ls-pencil-wrapper">
             <div className="ls-pencil-progress">
               <div className="ls-p-eraser"></div>
               <div className="ls-p-metal"></div>
               <div className="ls-p-body-container">
-                <div
-                  className="ls-p-fill"
-                  style={{ width: `${progressInfo.percent}%` }}
-                ></div>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "#333",
-                    zIndex: 10,
-                  }}
-                >
+                <div className="ls-p-fill" style={{ width: `${progressInfo.percent}%` }}></div>
+                <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold", color: "#333", zIndex: 10 }}>
                   {progressInfo.label}
                 </div>
               </div>
@@ -756,27 +582,21 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
           </div>
         </div>
 
-        <div className="ls-content">
+        <div className="ls-content" key={task.id}>
           <h1 className="ls-prompt-text">{task.prompt}</h1>
           {renderContent()}
         </div>
 
         {isChecked && (
           <div className="ls-feedback-container">
-            <div
-              className={`ls-feedback-banner ${
-                isCorrect ? "correct" : "wrong"
-              }`}
-            >
+            <div className={`ls-feedback-banner ${bannerClass}`}>
               {getFeedbackText()}
             </div>
           </div>
         )}
 
         <div className="ls-footer">
-          <button className="ls-quit-btn" onClick={onBack}>
-            ✕
-          </button>
+          <button className="ls-quit-btn" onClick={onBack}>✕</button>
           {!isChecked ? (
             <button className="ls-main-btn" onClick={handleCheck}>
               CHECK
