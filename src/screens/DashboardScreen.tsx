@@ -80,9 +80,9 @@ export const DashboardScreen = ({ uiLanguage, onOpenPath }: Props) => {
   return (
     <div className="lp-container">
       <div className="lp-header">
-        {/* Чистый заголовок без лишних символов */}
+        {/* ИСПОЛЬЗУЕМ КЛЮЧ dashboard.title ЧТОБЫ НЕ БЫЛО ПОДЧЕРКИВАНИЙ */}
         <h1 className="lp-main-title">
-          {t(uiLanguage, "learning_path")} {stats.level}
+          {t(uiLanguage, "dashboard.title")} {stats.level}
         </h1>
         <p className="lp-subtitle">{t(uiLanguage, "dashboard.subtitle")}</p>
       </div>
@@ -110,9 +110,8 @@ export const DashboardScreen = ({ uiLanguage, onOpenPath }: Props) => {
         })}
       </div>
 
-      {/* Карандаш без контейнера (чистый блок) */}
-      <div className="lp-total-only-pencil">
-        <div className="lp-total-label">{t(uiLanguage, "dashboard.total_progress")}</div>
+      {/* ТЕКСТ УДАЛЕН, ОСТАЛСЯ ТОЛЬКО КАРАНДАШ */}
+      <div className="lp-total-only-pencil" style={{ marginTop: '40px' }}>
         {renderPencil(totalInfo.percent, `ELO: ${totalInfo.label}`, "#fbbf24", "large")}
       </div>
     </div>
