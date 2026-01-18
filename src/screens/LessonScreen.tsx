@@ -15,7 +15,8 @@ interface ExtendedTask extends LessonExercise {
   incorrect_sentence?: string;
   sentence?: string;
   translation?: string;
-  word?: string;
+  words?: string[];
+  correct_order?: number[];
   definitions?: string[];
   pairs?: { left: string; right: string }[];
 }
@@ -62,6 +63,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
 
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [matches, setMatches] = useState<Record<string, string>>({});
+  const [sentenceIndices, setSentenceIndices] = useState<number[]>([]);
 
   const initialized = useRef(false);
 
@@ -101,12 +103,11 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     try {
       const t = await LessonService.getNextTask(section);
       if (t) {
-        // Пропускаем удаленные типы заданий
-        if (t.type === "fill_blank" || t.type === "sentence_reorder") {
-           await loadNextTask();
-           return;
-        }
-
+       // Пропускаем fill_blank только в секции reading
+if (section === "reading" && t.type === "fill_blank") {
+   await loadNextTask();
+   return;
+}
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
         }
@@ -132,6 +133,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     setTextInput("");
     setMatches({});
     setSelectedLeft(null);
+    setSentenceIndices([]);
   };
 
   const handleCheck = async () => {
@@ -145,7 +147,10 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
         if (task.pairs && Object.keys(matches).length !== task.pairs.length) return;
         answer = Object.entries(matches).map(([left, right]) => ({ left, right }));
         break;
-
+        case "sentence_reorder":
+        if (sentenceIndices.length === 0) return; 
+        answer = sentenceIndices; // Отправляем массив чисел [0, 2, 1...]
+        break;
       case "single_choice":
       case "definition_match":
       case "error_identification":
@@ -168,7 +173,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
 
     setLoading(true);
 
-    try {
+  try {
       const result = await LessonService.submitAnswer({
         exercise_id: task.id,
         type: task.type,
@@ -181,30 +186,39 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
       setIsChecked(true);
 
       const scoreVal = Number(result.score);
-
+      // Базовая проверка от сервера
       let success =
         result.status === "correct" ||
         result.correct === true ||
         result.is_correct === true ||
         (!isNaN(scoreVal) && scoreVal >= 0.9);
 
-      // FALLBACK логика
-      if (!success) {
-        if (typeof answer === "string") {
-          const userText = normalizeText(answer);
-          const fb = result as any;
-          if (
-            (fb.correct_conjugation && normalizeText(fb.correct_conjugation) === userText) ||
-            (fb.correct_answer && normalizeText(fb.correct_answer) === userText) ||
-            (fb.solution && normalizeText(fb.solution) === userText)
-          ) {
-            success = true;
-          }
+    // --- ФИНАЛЬНЫЙ FALLBACK ДЛЯ REORDER ---
+      if (!success && task.type === "sentence_reorder") {
+        // Проверяем наличие правильного порядка и в задании, и в ответе сервера
+        const correctOrder = (task as any).correct_order || (result as any).correct_order;
+        
+        if (Array.isArray(answer) && Array.isArray(correctOrder)) {
+          // Сравниваем длину и каждый элемент (приводя к числу для надежности)
+          success = answer.length === correctOrder.length && 
+                    answer.every((val, index) => Number(val) === Number(correctOrder[index]));
+        }
+      }
+      // Fallback для текстовых ответов (оставляем твой)
+      if (!success && typeof answer === "string") {
+        const userText = normalizeText(answer);
+        const fb = result as any;
+        if (
+          (fb.correct_conjugation && normalizeText(fb.correct_conjugation) === userText) ||
+          (fb.correct_answer && normalizeText(fb.correct_answer) === userText) ||
+          (fb.solution && normalizeText(fb.solution) === userText)
+        ) {
+          success = true;
         }
       }
 
-      setIsCorrect(success);
 
+      setIsCorrect(success);
       if (success) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         const newStats = await LessonService.getStats();
@@ -223,35 +237,43 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     loadNextTask();
   };
 
-  const getFeedbackText = () => {
-    if (isCorrect) return "Great job!";
-    if (!feedback) return "Incorrect";
+ const getFeedbackText = () => {
+    if (isCorrect) return "Correct! Great job!";
+    if (!feedback) return "Incorrect answer";
 
-    if (feedback.options) {
-      const correctOpts = feedback.options.filter((o) => o.is_correct);
-      if (correctOpts.length > 1) {
-        return `Correct answers: ${correctOpts
-          .map((o) => o.choice)
-          .join(", ")}`;
-      } else if (correctOpts.length === 1) {
-        return `Correct answer: ${correctOpts[0].choice}`;
+   // 1. Приоритет для REORDER (собираем предложение из индексов)
+    if (task?.type === "sentence_reorder" && task.words) {
+      // Ищем порядок в задании или в пришедшем фидбеке
+      const order = (task as any).correct_order || (feedback as any).correct_order;
+      
+      if (order && Array.isArray(order)) {
+        const correctSentence = order.map((idx: number) => task.words![idx]).join(" ");
+        return `Wrong answer! Correct: ${correctSentence}`;
       }
     }
 
+    // 2. Ищем готовый текст от бэкенда (для Writing/Conjugation)
+    const sol = feedback.solution || 
+                feedback.correct_answer || 
+                (feedback as any).correct_sentence || 
+                (feedback as any).correct_conjugation;
+    if (sol) return `Wrong answe! Correct: ${sol}`;
+
+    // 3. Для тестов (выбор вариантов)
+    if (feedback.options) {
+      const correctOpts = feedback.options.filter((o) => o.is_correct);
+      if (correctOpts.length > 0) {
+        return `Wrong answer! Correct: ${correctOpts.map((o) => o.choice).join(", ")}`;
+      }
+    }
+
+    // 4. Для сопоставления пар
     if (task?.type === "match_pairs" && task.pairs) {
       const wrongPairs = task.pairs.filter((p) => matches[p.left] !== p.right);
       if (wrongPairs.length > 0) {
-        return `Corrections: ${wrongPairs.map((p) => `${p.left} → ${p.right}`).join(", ")}`;
+        return ` Incorrect. Corrections: ${wrongPairs.map((p) => `${p.left} → ${p.right}`).join(", ")}`;
       }
-      return "Incorrect pairs";
     }
-
-    if (feedback.correct_answer) return `Correct answer: ${feedback.correct_answer}`;
-    if (feedback.solution) return `Solution: ${feedback.solution}`;
-    
-    const fb = feedback as any;
-    if (fb.correct_conjugation) return `Correct form: ${fb.correct_conjugation}`;
-    if (fb.correct_sentence) return `Correct sentence: ${fb.correct_sentence}`;
 
     return "Incorrect answer";
   };
@@ -484,6 +506,45 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     );
   };
 
+const renderSentenceReorder = () => {
+  const words = task?.words || [];
+  const used = new Set(sentenceIndices);
+
+  return (
+    <div className="ls-reorder-container">
+      {/* Зона, где собирается предложение */}
+      <div className="ls-sentence-build-area">
+        {sentenceIndices.map((idx, i) => (
+          <button 
+            key={`s-${i}`} 
+            className={`ls-word-tile in-sentence ${isChecked ? (isCorrect ? "correct" : "wrong") : ""}`}
+            onClick={() => !isChecked && setSentenceIndices(prev => prev.filter((_, index) => index !== i))}
+          >
+            {words[idx]}
+          </button>
+        ))}
+      </div>
+
+      {/* Банк доступных слов */}
+      {!isChecked && (
+        <div className="ls-word-bank">
+          {words.map((word, i) => (
+            used.has(i) 
+              ? <div key={`b-e-${i}`} className="ls-word-tile-placeholder" />
+              : <button 
+                  key={`b-${i}`} 
+                  className="ls-word-tile in-bank" 
+                  onClick={() => setSentenceIndices([...sentenceIndices, i])}
+                >
+                  {word}
+                </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
   const renderTextInput = (ph: string) => (
     <input
       className="ls-text-input"
@@ -504,6 +565,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const renderContent = () => {
     switch (task?.type) {
       case "match_pairs": return renderMatchPairs();
+      case "sentence_reorder": return renderSentenceReorder();
       case "definition_match":
         return (
           <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>

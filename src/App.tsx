@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 
-/* Screens */
+/* Screens (Экраны приложения) */
 import { ChooseLanguageScreen } from "./screens/ChooseLanguageScreen";
 import { ChooseLearningLanguageScreen } from "./screens/ChooseLearningLanguageScreen";
 import { ChooseLevelScreen } from "./screens/ChooseLevelScreen";
 import { LevelTestScreen } from "./screens/LevelTestScreen";
 import { DashboardScreen } from "./screens/DashboardScreen";
 import { ForgotPasswordScreen } from "./screens/ForgotPasswordScreen";
+import { ResetPasswordScreen } from "./screens/ResetPasswordScreen"; // Добавлено
 import { LessonScreen } from "./screens/LessonScreen";
 
-/* Hooks & utils */
+/* Hooks & utils (Хуки и утилиты) */
 import { useAuth } from "./hooks/useAuth";
 import { useSession } from "./hooks/useSession";
 import {
@@ -18,27 +19,32 @@ import {
 } from "./utils/detectUiLanguage";
 import { t } from "./i18n";
 
-/* Styles */
+/* Styles (Стили) */
 import "./screens/learningPath.css";
 import "./screens/lesson.css";
 import "./index.css";
 import "./App.css";
 
-/* Components */
+/* Components (Компоненты) */
 import { RegisterForm } from "./components/RegisterForm";
 import { LoginForm } from "./components/LoginForm";
 
+/** Список возможных идентификаторов экранов приложения */
 type ScreenId =
   | "auth"
   | "forgot-password"
+  | "reset-password" // Добавлено
   | "choose-ui-language"
   | "choose-learning-language"
   | "choose-level"
   | "level-test"
   | "dashboard"
   | "lesson";
+
+/** Режим авторизации: вход или регистрация */
 type AuthMode = "login" | "register";
 
+/** Мапа для преобразования кодов языков во внутренние названия */
 const LANG_MAP: Record<string, string> = {
   ru: "russian",
   de: "german",
@@ -48,6 +54,7 @@ const LANG_MAP: Record<string, string> = {
   pl: "polish",
 };
 
+/** Мапа для обратного преобразования языков с бэкенда на фронтенд */
 const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
   Russian: "ru",
   German: "de",
@@ -57,37 +64,55 @@ const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
   Polish: "pl",
 };
 
-const API_URL = ""; // Vite Proxy
+const API_URL = ""; // Пусто, так как используется Vite Proxy
 
 function App() {
+  /** Логика авторизации из кастомного хука */
   const { isAuthenticated, isLoading, login, register, logout } = useAuth();
+  /** Управление сессией пользователя */
   useSession(isAuthenticated);
 
+  /** Состояние выбранного языка интерфейса */
   const [uiLanguage, setUiLanguage] = useState<UiLangCode>(
     () =>
       (localStorage.getItem("ui_language") as UiLangCode) ||
       detectInitialUiLanguage()
   );
+
+  /** Изучаемый язык */
   const [learningLanguage, setLearningLanguage] = useState<string | null>(() =>
     localStorage.getItem("learning_language")
   );
+
+  /** Уровень владения языком */
   const [learningLevel, setLearningLevel] = useState<string | null>(() =>
     localStorage.getItem("learning_level")
   );
 
+  /** Текущий активный экран */
   const [screen, setScreen] = useState<ScreenId>("auth");
+  /** Текущий режим входа (login/register) */
   const [authMode, setAuthMode] = useState<AuthMode>("login");
+  /** ID текущего активного урока */
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  /** Состояние глобальной инициализации (загрузки данных) */
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // --- ЛОГИКА СИНХРОНИЗАЦИИ  ---
+  // --- ЭФФЕКТ ОТСЛЕЖИВАНИЯ ССЫЛКИ СБРОСА ПАРОЛЯ ---
+  useEffect(() => {
+    /** Если в URL есть токен, принудительно открываем экран сброса */
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("token")) {
+      setScreen("reset-password");
+    }
+  }, []);
+
+  // --- ЛОГИКА СИНХРОНИЗАЦИИ ДАННЫХ С СЕРВЕРОМ ---
   useEffect(() => {
     const syncUserData = async () => {
       if (!isAuthenticated) return;
       if (screen === "lesson") return;
 
-      // 1. ОПТИМІСТИЧНИЙ ВХІД
-      // Якщо у нас вже є дані в пам'яті — одразу показуємо Дашборд, не чекаючи сервера.
       const localSetup = localStorage.getItem("setup_complete");
       const hasLocalData = localSetup === "true";
 
@@ -108,24 +133,15 @@ function App() {
           },
         });
 
-        // 2. СЕРВЕР КАЖЕ "НЕМАЄ ДАНИХ" (404)
-        // Це єдиний випадок, коли ми примусово кидаємо на налаштування
         if (statsRes.status === 404) {
           throw new Error("User setup missing on server");
         }
 
-        // 3. ІНШІ ПОМИЛКИ СЕРВЕРА (500, Мережа і т.д.)
         if (!statsRes.ok) {
-          // Якщо у нас є локальні дані — ігноруємо помилку сервера і залишаємось у Дашборді
-          if (hasLocalData) {
-            console.warn("Server unavailable, using local data");
-            return;
-          }
-          // А ЯКЩО ДАНИХ НЕМАЄ (новий юзер + помилка сервера) — мусимо йти на налаштування
+          if (hasLocalData) return;
           throw new Error("No local data and server failed");
         }
 
-        // 4. УСПІХ (200) -> Оновлюємо дані
         const statsData = await statsRes.json();
         const langData = statsData.language_data;
 
@@ -147,7 +163,6 @@ function App() {
           localStorage.setItem("learning_level", userLevel);
           localStorage.setItem("setup_complete", "true");
 
-          // Переходимо в Дашборд (якщо ще не там)
           if (screen === "auth" || screen === "choose-ui-language") {
             setScreen("dashboard");
           }
@@ -156,14 +171,8 @@ function App() {
         }
       } catch (e: any) {
         console.warn("Sync failed:", e);
+        if (hasLocalData && !e.message.includes("User setup missing")) return;
 
-        // Логіка Fallback:
-        // Якщо це була просто помилка мережі і у нас є дані — нічого не робимо (залишаємось в Дашборді)
-        if (hasLocalData && !e.message.includes("User setup missing")) {
-          return;
-        }
-
-        // В усіх інших випадках (404 або "чистий" юзер) — на вибір мови
         localStorage.removeItem("setup_complete");
         if (screen === "auth" || screen === "dashboard") {
           setScreen("choose-ui-language");
@@ -174,19 +183,17 @@ function App() {
     };
 
     syncUserData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // --- ЗАПУСК УРОКА ЧЕРЕЗ СЕРВЕР ---
+  // --- ОБРАБОТЧИКИ (HANDLERS) ---
+
+  /** Запуск урока через API */
   const handleStartLesson = async (sectionType: string) => {
     try {
       setIsInitializing(true);
       const token = localStorage.getItem("auth_token");
       if (!token) throw new Error("No auth token");
 
-      console.log(`Starting lesson for section: ${sectionType}`);
-
-      // 1. Создаем сессию
       const res = await fetch(`${API_URL}/session/begin-session`, {
         method: "POST",
         headers: {
@@ -199,8 +206,6 @@ function App() {
       const data = await res.json();
       const realSessionId = data.id;
 
-      // 2. Создаем уровень с выбранным типом!
-      // Бэкенд ждет: 'reading', 'vocabulary' или 'writing'
       const levelRes = await fetch(`${API_URL}/session/begin-level`, {
         method: "POST",
         headers: {
@@ -214,36 +219,29 @@ function App() {
         }),
       });
 
-      if (!levelRes.ok) {
-        // Если ошибка 422, значит передали что-то не то
-        const errText = await levelRes.text();
-        console.error("Level creation failed:", errText);
-        throw new Error("Invalid section type: " + sectionType);
-      }
+      if (!levelRes.ok) throw new Error("Invalid section type: " + sectionType);
 
-      // 3. Переходим к уроку
       localStorage.setItem("session_id", realSessionId);
       setCurrentLessonId(realSessionId);
       setScreen("lesson");
     } catch (e: any) {
-      console.error("Lesson start error:", e);
-      alert(`Не удалось начать урок (${sectionType}). Проверьте консоль.`);
+      alert(`Не удалось начать урок: ${e.message}`);
     } finally {
       setIsInitializing(false);
     }
   };
-  // ----------------------------------------------------
 
+  /** Обработка регистрации */
   const handleRegisterFormSubmit = async (data: any) => {
     try {
       await register(data);
       setAuthMode("login");
-      console.log("Account created successfully! Please log in.");
     } catch (e: any) {
       alert(e.message || "Registration failed");
     }
   };
 
+  /** Финализация настроек нового пользователя */
   const handleFinalizeSetup = async () => {
     const langCode = learningLanguage;
     const lvlCode = learningLevel;
@@ -271,26 +269,22 @@ function App() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Server error: ${res.status} ${errText}`);
-      }
+      if (!res.ok) throw new Error("Server initialization error");
 
       localStorage.setItem("setup_complete", "true");
       setScreen("dashboard");
     } catch (e: any) {
-      console.error(e);
       alert("Ошибка сохранения настроек: " + e.message);
     } finally {
       setIsInitializing(false);
     }
   };
 
+  /** Логика кнопки "Назад" в зависимости от текущего экрана */
   const handleBack = () => {
     if (screen === "lesson") setScreen("dashboard");
-    else if (screen === "forgot-password") setScreen("auth");
-    else if (screen === "choose-learning-language")
-      setScreen("choose-ui-language");
+    else if (screen === "forgot-password" || screen === "reset-password") setScreen("auth");
+    else if (screen === "choose-learning-language") setScreen("choose-ui-language");
     else if (screen === "choose-level") setScreen("choose-learning-language");
     else if (screen === "level-test") setScreen("choose-level");
   };
@@ -306,16 +300,8 @@ function App() {
       {showHeader && (
         <header className="app-header">
           {showBackButton ? (
-            <button className="app-back-button" onClick={handleBack}>
-              ←
-            </button>
+            <button className="app-back-button" onClick={handleBack}>←</button>
           ) : (
-            <div className="header-logo-pill">
-              <div className="header-logo-circle">L</div>
-              <div className="header-logo-text">LangProject</div>
-            </div>
-          )}
-          {showBackButton && (
             <div className="header-logo-pill">
               <div className="header-logo-circle">L</div>
               <div className="header-logo-text">LangProject</div>
@@ -324,41 +310,22 @@ function App() {
         </header>
       )}
 
-      <main
-        className="app-content"
-        style={screen === "lesson" ? { padding: 0 } : {}}
-      >
-        <div
-          className="app-center-block"
-          style={screen === "lesson" ? { maxWidth: "none" } : {}}
-        >
-          {/* ... Auth, ForgotPassword, ChooseScreens  ... */}
+      <main className="app-content" style={screen === "lesson" ? { padding: 0 } : {}}>
+        <div className="app-center-block" style={screen === "lesson" ? { maxWidth: "none" } : {}}>
+          
+          {/* ЭКРАН АВТОРИЗАЦИИ */}
           {screen === "auth" && (
             <>
               <div className="page-header-block">
-                <h1 className="page-title">
-                  {t(uiLanguage, "auth.welcomeTitle")}
-                </h1>
-                <p className="page-subtitle">
-                  {t(uiLanguage, "auth.welcomeSubtitle")}
-                </p>
+                <h1 className="page-title">{t(uiLanguage, "auth.welcomeTitle")}</h1>
+                <p className="page-subtitle">{t(uiLanguage, "auth.welcomeSubtitle")}</p>
               </div>
               <div className="auth-pill-container">
                 <div className="auth-tabs-pill">
-                  <button
-                    className={`auth-tabs-btn ${
-                      authMode === "login" ? "active" : ""
-                    }`}
-                    onClick={() => setAuthMode("login")}
-                  >
+                  <button className={`auth-tabs-btn ${authMode === "login" ? "active" : ""}`} onClick={() => setAuthMode("login")}>
                     {t(uiLanguage, "auth.login")}
                   </button>
-                  <button
-                    className={`auth-tabs-btn ${
-                      authMode === "register" ? "active" : ""
-                    }`}
-                    onClick={() => setAuthMode("register")}
-                  >
+                  <button className={`auth-tabs-btn ${authMode === "register" ? "active" : ""}`} onClick={() => setAuthMode("register")}>
                     {t(uiLanguage, "auth.signup")}
                   </button>
                 </div>
@@ -382,13 +349,20 @@ function App() {
             </>
           )}
 
+          {/* ЭКРАН ЗАБЫЛИ ПАРОЛЬ */}
           {screen === "forgot-password" && (
-            <ForgotPasswordScreen
-              initialEmail={""}
-              onBack={() => setScreen("auth")}
+            <ForgotPasswordScreen initialEmail={""} onBack={() => setScreen("auth")} />
+          )}
+
+          {/* ЭКРАН УСТАНОВКИ НОВОГО ПАРОЛЯ */}
+          {screen === "reset-password" && (
+            <ResetPasswordScreen 
+              onSuccess={() => setScreen("auth")} 
+              onBack={() => setScreen("auth")} 
             />
           )}
 
+          {/* ЭКРАНЫ НАСТРОЙКИ (ВЫБОР ЯЗЫКОВ И ТЕСТ) */}
           {screen === "choose-ui-language" && (
             <ChooseLanguageScreen
               uiLanguage={uiLanguage}
@@ -438,56 +412,38 @@ function App() {
             />
           )}
 
+          {/* ДАШБОРД */}
           {screen === "dashboard" && (
             <DashboardScreen
               uiLanguage={uiLanguage}
               learningLevel={learningLevel}
               onOpenPath={(selectedId) => {
-                // Если нажали "Start Test", выбираем случайную тему
                 if (selectedId === "random") {
                   const topics = ["vocabulary", "reading", "writing"];
-                  const randomTopic =
-                    topics[Math.floor(Math.random() * topics.length)];
+                  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
                   handleStartLesson(randomTopic);
                 } else {
-                  // Иначе запускаем то, что выбрали (reading, vocabulary, writing)
                   handleStartLesson(selectedId);
                 }
               }}
             />
           )}
 
+          {/* ЭКРАН УРОКА */}
           {screen === "lesson" && currentLessonId && (
-            <LessonScreen
-              lessonId={currentLessonId}
-              onBack={() => setScreen("dashboard")}
-            />
+            <LessonScreen lessonId={currentLessonId} onBack={() => setScreen("dashboard")} />
           )}
         </div>
       </main>
 
-      {/* Footer */}
+      {/* FOOTER (ПОДВАЛ) */}
       {screen !== "lesson" && (
         <footer className="app-footer">
-          <span className="footer-text">
-            © 2025 LangProject. All rights reserved.
-          </span>
+          <span className="footer-text">© 2025 LangProject. All rights reserved.</span>
           <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-            <a
-              className="footer-link"
-              href="#"
-              onClick={(e) => e.preventDefault()}
-            >
-              LinkedIn
-            </a>
+            <a className="footer-link" href="#" onClick={(e) => e.preventDefault()}>LinkedIn</a>
             {isAuthenticated && (
-              <button
-                className="logout-btn"
-                onClick={() => {
-                  logout();
-                  setScreen("auth");
-                }}
-              >
+              <button className="logout-btn" onClick={() => { logout(); setScreen("auth"); }}>
                 LOG OUT
               </button>
             )}
