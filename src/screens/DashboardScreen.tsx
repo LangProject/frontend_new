@@ -18,6 +18,7 @@ interface Props {
   onOpenPath: (topicId: string) => void;
 }
 
+// Поправил название интерфейса
 interface DashboardStats {
   elo: number;
   level: string;
@@ -27,11 +28,13 @@ interface DashboardStats {
 }
 
 export const DashboardScreen = ({ uiLanguage, onOpenPath }: Props) => {
-  const [stats, setStats] = useState<DashboardStats>({
-    elo: 0, level: "A1", reading_elo: 0, vocabulary_elo: 0, writing_elo: 0,
-  });
-
-  useEffect(() => { loadStats(); }, []);
+  // Исправил тип на DashboardStats
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+    
+  useEffect(() => { 
+    loadStats(); 
+  }, []);
 
   const loadStats = async () => {
     try {
@@ -43,7 +46,11 @@ export const DashboardScreen = ({ uiLanguage, onOpenPath }: Props) => {
         vocabulary_elo: s.vocabulary_elo || 0,
         writing_elo: s.writing_elo || 0,
       });
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e); 
+    } finally {
+      setLoading(false); // Указываем, что загрузка завершена
+    }
   };
 
   const calculateProgress = (elo: number) => {
@@ -75,42 +82,53 @@ export const DashboardScreen = ({ uiLanguage, onOpenPath }: Props) => {
     </div>
   );
 
+  // 1. Проверка на загрузку: если данных еще нет, показываем спиннер или пустоту
+  if (loading || !stats) {
+    return <div className="lp-container">Loading...</div>;
+  }
+
   const totalInfo = calculateProgress(stats.elo);
 
   return (
     <div className="lp-container">
       <div className="lp-header">
-        {/* ИСПОЛЬЗУЕМ КЛЮЧ dashboard.title ЧТОБЫ НЕ БЫЛО ПОДЧЕРКИВАНИЙ */}
         <h1 className="lp-main-title">
-          {t(uiLanguage, "dashboard.title")} {stats.level}
+         {t(uiLanguage, "dashboard.title")} {totalInfo.levelLabel}
         </h1>
         <p className="lp-subtitle">{t(uiLanguage, "dashboard.subtitle")}</p>
       </div>
 
       <div className="lp-grid">
         {[
+          // 2. Исправлено: заменяем несуществующий ratings на данные из stats
           { id: "reading", title: t(uiLanguage, "dashboard.reading"), icon: readingIcon, elo: stats.reading_elo, color: "#60a5fa" },
           { id: "vocabulary", title: t(uiLanguage, "dashboard.vocabulary"), icon: vocabIcon, elo: stats.vocabulary_elo, color: "#f472b6" },
           { id: "writing", title: t(uiLanguage, "dashboard.writing"), icon: writingIcon, elo: stats.writing_elo, color: "#34d399" },
         ].map((topic) => {
           const prog = calculateProgress(topic.elo);
+          
           return (
             <div key={topic.id} className="lp-card" onClick={() => onOpenPath(topic.id)}>
               <div className="lp-card-top">
-                <div className="lp-icon-wrapper"><img src={topic.icon} className="lp-icon" alt="" /></div>
+                <div className="lp-icon-wrapper">
+                   <img src={topic.icon} className="lp-icon" alt="" />
+                </div>
                 <div className="lp-info">
                   <div className="lp-title">{topic.title}</div>
-                  <div className="lp-level">{t(uiLanguage, "dashboard.level")} <span style={{ color: topic.color }}>{prog.levelLabel}</span></div>
+                  <div className="lp-level">
+                    {t(uiLanguage, "dashboard.level")} 
+                    {/* Используем рассчитанный label (например, A1, B2) */}
+                    <span style={{ color: topic.color }}> {prog.levelLabel}</span>
+                  </div>
                 </div>
                 <div className="lp-arrow-btn">›</div>
               </div>
-              {renderPencil(prog.percent, prog.label, topic.color, "small")}
+              {renderPencil(prog.percent, `${topic.elo} ELO`, topic.color, "small")}
             </div>
           );
         })}
       </div>
 
-      {/* ТЕКСТ УДАЛЕН, ОСТАЛСЯ ТОЛЬКО КАРАНДАШ */}
       <div className="lp-total-only-pencil" style={{ marginTop: '40px' }}>
         {renderPencil(totalInfo.percent, `ELO: ${totalInfo.label}`, "#fbbf24", "large")}
       </div>

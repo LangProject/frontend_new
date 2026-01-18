@@ -50,11 +50,48 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
   const [stats, setStats] = useState<UserStats>({ elo: 0, level: "A1" });
+  const [sectionElo, setSectionElo] = useState<number>(0); // ЭЛО конкретного урока/секции
+  const [eloChange, setEloChange] = useState<number | null>(null);
+
+  const getProgressInfo = () => {
+    // Сортируем пороги ELO для правильного расчета
+    const sortedLevels = Object.entries(ELO_THRESHOLDS).sort((a, b) => a[1] - b[1]);
+    const currentElo = sectionElo;
+    let start = 0;
+    let end = sortedLevels[0][1];
+
+    // Определяем текущий диапазон уровня
+    for (let i = 0; i < sortedLevels.length; i++) {
+      if (currentElo >= sortedLevels[i][1]) {
+        start = sortedLevels[i][1];
+        const nextLevel = sortedLevels[i + 1];
+        end = nextLevel ? nextLevel[1] : start + 500;
+      } else {
+        break;
+      }
+    }
+
+    const range = end - start;
+    const gained = currentElo - start;
+    
+    // Вычисляем процент заполнения (минимум 5% для красоты карандаша)
+    let percent = (gained / range) * 100;
+    if (percent < 5) percent = 5;
+    if (percent > 100) percent = 100;
+
+    return {
+      percent,
+      label: `${currentElo} / ${end}`
+    };
+  };
+
+  const [userStats, setUserStats] = useState<any>(null);
+  
 
   const [loading, setLoading] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [eloChange, setEloChange] = useState<number | null>(null);
+  
 
   // Состояния для ответов
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
@@ -77,15 +114,29 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
-  const init = async () => {
-    try {
-      const s = await LessonService.getStats();
-      setStats(s);
-      await loadNextTask();
-    } catch (error: any) {
-      handleSessionError(error);
-    }
-  };
+ const init = async () => {
+  try {
+    setLoading(true);
+    // 1. Получаем свежие данные (как в loadStats на дашборде)
+    const s = await LessonService.getStats();
+    
+    // 2. Определяем, какое ELO брать, основываясь на пропе section
+    // Если section === "vocabulary", возьмем s.vocabulary_elo
+    const eloKey = `${section}_elo` as keyof typeof s;
+    const currentElo = (s[eloKey] as number) || s.elo || 0; 
+
+    // 3. Сохраняем данные. 
+    // ВАЖНО: используем 's' напрямую для расчетов ниже, а не стейт 'stats'
+    setStats(s);
+    setSectionElo(currentElo);
+
+    await loadNextTask();
+  } catch (error: any) {
+    handleSessionError(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSessionError = (error: any) => {
     console.error("API Error:", error);
@@ -103,11 +154,12 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
     try {
       const t = await LessonService.getNextTask(section);
       if (t) {
-       // Пропускаем fill_blank только в секции reading
-if (section === "reading" && t.type === "fill_blank") {
-   await loadNextTask();
-   return;
-}
+        // ИСПРАВЛЕНО: Полный пропуск fill_blank для всех секций
+        if (t.type === "fill_blank") {
+           await loadNextTask();
+           return;
+        }
+
         if (t.type === "definition_match" && (t as ExtendedTask).definitions) {
           t.options = (t as ExtendedTask).definitions;
         }
@@ -138,42 +190,67 @@ if (section === "reading" && t.type === "fill_blank") {
 
   const handleCheck = async () => {
     if (!task) return;
-    const oldElo = stats.elo;
 
     let answer: any;
 
     switch (task.type) {
       case "match_pairs":
+        // ИСПРАВЛЕНИЕ 1: Проверяем количество, но формируем ответ на основе task.pairs,
+        // чтобы гарантировать ПРАВИЛЬНЫЙ ПОРЯДОК пар, как ожидает сервер.
         if (task.pairs && Object.keys(matches).length !== task.pairs.length) return;
-        answer = Object.entries(matches).map(([left, right]) => ({ left, right }));
+        
+        // Мы берем пару из задания (p) и ищем, что пользователь выбрал для p.left
+        answer = task.pairs!.map((p) => ({
+          left: p.left,
+          right: matches[p.left] // Берем выбор пользователя для этого слова
+        }));
         break;
-        case "sentence_reorder":
-        if (sentenceIndices.length === 0) return; 
-        answer = sentenceIndices; // Отправляем массив чисел [0, 2, 1...]
+
+      case "sentence_reorder":
+        if (sentenceIndices.length === 0) return;
+        answer = sentenceIndices;
         break;
+
       case "single_choice":
       case "definition_match":
-      case "error_identification":
         if (selectedOptionIndex === null || !task.options) return;
-        answer = task.type === "error_identification" 
-          ? selectedOptionIndex 
-          : task.options[selectedOptionIndex];
+        
+        // ИСПРАВЛЕНИЕ 2: Безопасное извлечение значения.
+        // Если options - это массив объектов (как в JSON), берем .choice.
+        // Если это массив строк, берем саму строку.
+        const selectedOpt = task.options[selectedOptionIndex];
+        const answerValue = typeof selectedOpt === 'object' && selectedOpt !== null && 'choice' in selectedOpt 
+            ? (selectedOpt as any).choice 
+            : selectedOpt;
+
+        answer = answerValue;
+        
         if (task.type === "definition_match") answer = [answer]; 
+        break;
+
+      case "error_identification":
+        if (selectedOptionIndex === null) return;
+        answer = selectedOptionIndex; 
         break;
 
       case "multiple_choice":
         if (selectedIndices.length === 0 || !task.options) return;
-        answer = selectedIndices.map((i) => task.options![i]);
+        // Здесь тоже может потребоваться .choice, если options - объекты
+        answer = selectedIndices.map((i) => {
+           const opt = task.options![i];
+           return (typeof opt === 'object' && opt !== null && 'choice' in opt) 
+             ? (opt as any).choice 
+             : opt;
+        });
         break;
 
       default:
         if (!textInput.trim()) return;
         answer = textInput.trim();
     }
-
     setLoading(true);
 
-  try {
+    try {
       const result = await LessonService.submitAnswer({
         exercise_id: task.id,
         type: task.type,
@@ -185,47 +262,28 @@ if (section === "reading" && t.type === "fill_blank") {
       setFeedback(result);
       setIsChecked(true);
 
-      const scoreVal = Number(result.score);
-      // Базовая проверка от сервера
+      const scoreVal = result.score !== undefined ? Number(result.score) : null;
       let success =
         result.status === "correct" ||
         result.correct === true ||
         result.is_correct === true ||
-        (!isNaN(scoreVal) && scoreVal >= 0.9);
-
-    // --- ФИНАЛЬНЫЙ FALLBACK ДЛЯ REORDER ---
-      if (!success && task.type === "sentence_reorder") {
-        // Проверяем наличие правильного порядка и в задании, и в ответе сервера
-        const correctOrder = (task as any).correct_order || (result as any).correct_order;
-        
-        if (Array.isArray(answer) && Array.isArray(correctOrder)) {
-          // Сравниваем длину и каждый элемент (приводя к числу для надежности)
-          success = answer.length === correctOrder.length && 
-                    answer.every((val, index) => Number(val) === Number(correctOrder[index]));
-        }
-      }
-      // Fallback для текстовых ответов (оставляем твой)
-      if (!success && typeof answer === "string") {
-        const userText = normalizeText(answer);
-        const fb = result as any;
-        if (
-          (fb.correct_conjugation && normalizeText(fb.correct_conjugation) === userText) ||
-          (fb.correct_answer && normalizeText(fb.correct_answer) === userText) ||
-          (fb.solution && normalizeText(fb.solution) === userText)
-        ) {
-          success = true;
-        }
-      }
-
+        (!isNaN(scoreVal) && scoreVal >= 0.5);
 
       setIsCorrect(success);
-      if (success) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const newStats = await LessonService.getStats();
-        setStats(newStats);
-        const diff = newStats.elo - oldElo;
-        if (diff !== 0) setEloChange(diff);
+
+      // ОБНОВЛЕНИЕ ЭЛО: Исправлена опечатка newSectionElo -> newElo
+      const newStats = await LessonService.getStats();
+      const newElo = (newStats.language_data.ratings as any)[section]?.elo || 0;
+      const diff = newElo - sectionElo;
+      
+      if (diff !== 0) {
+        setEloChange(newElo - sectionElo);
+        setSectionElo(newElo);
+        setTimeout(() => setEloChange(null), 3000);
       }
+      
+      setStats(newStats);
+
     } catch (error: any) {
       handleSessionError(error);
     } finally {
@@ -237,69 +295,40 @@ if (section === "reading" && t.type === "fill_blank") {
     loadNextTask();
   };
 
- const getFeedbackText = () => {
-    if (isCorrect) return "Correct! Great job!";
-    if (!feedback) return "Incorrect answer";
+ 
 
-   // 1. Приоритет для REORDER (собираем предложение из индексов)
-    if (task?.type === "sentence_reorder" && task.words) {
-      // Ищем порядок в задании или в пришедшем фидбеке
-      const order = (task as any).correct_order || (feedback as any).correct_order;
-      
-      if (order && Array.isArray(order)) {
-        const correctSentence = order.map((idx: number) => task.words![idx]).join(" ");
-        return `Wrong answer! Correct: ${correctSentence}`;
-      }
+const getFeedbackText = () => {
+    if (isCorrect) return "Excellent! Correct!";
+    if (!feedback) return "Wrong answer!";
+
+    const getCorrectPairsText = () => {
+    if (!task?.pairs) return "";
+    return task.pairs
+      .map((p) => `${p.left} — ${p.right}`)
+      .join("; ");
+  };
+    if (task?.type === "match_pairs") {
+      return `Wrong answer! Correct pairs: ${getCorrectPairsText()}`;
     }
-
-    // 2. Ищем готовый текст от бэкенда (для Writing/Conjugation)
     const sol = feedback.solution || 
                 feedback.correct_answer || 
                 (feedback as any).correct_sentence || 
-                (feedback as any).correct_conjugation;
-    if (sol) return `Wrong answe! Correct: ${sol}`;
+                (feedback as any).correct_conjugation || // Для спряжений
+                (task as any).correct_answer;
 
-    // 3. Для тестов (выбор вариантов)
+    if (sol) return `Wrong answer! Correct answer: ${sol}`;
+
     if (feedback.options) {
       const correctOpts = feedback.options.filter((o) => o.is_correct);
       if (correctOpts.length > 0) {
-        return `Wrong answer! Correct: ${correctOpts.map((o) => o.choice).join(", ")}`;
+        return `Wrong answer! Correct answer: ${correctOpts.map((o) => o.choice).join(", ")}`;
       }
     }
 
-    // 4. Для сопоставления пар
-    if (task?.type === "match_pairs" && task.pairs) {
-      const wrongPairs = task.pairs.filter((p) => matches[p.left] !== p.right);
-      if (wrongPairs.length > 0) {
-        return ` Incorrect. Corrections: ${wrongPairs.map((p) => `${p.left} → ${p.right}`).join(", ")}`;
-      }
-    }
+    if (feedback.explanation) return `Wrong answer! ${feedback.explanation}`;
 
-    return "Incorrect answer";
+    return "Wrong answer!";
   };
-
-  const getProgressInfo = () => {
-    const sortedLevels = Object.entries(ELO_THRESHOLDS).sort((a, b) => a[1] - b[1]);
-    const currentElo = stats.elo;
-    let start = 0;
-    let end = sortedLevels[0][1];
-
-    for (let i = 0; i < sortedLevels.length; i++) {
-      if (currentElo >= sortedLevels[i][1]) {
-        start = sortedLevels[i][1];
-        end = sortedLevels[i + 1] ? sortedLevels[i + 1][1] : start + 500;
-      } else {
-        break;
-      }
-    }
-    const range = end - start;
-    const gained = currentElo - start;
-    const percent = Math.max((gained / range) * 100, 5);
-    return { percent: Math.min(percent, 100), label: `${currentElo} / ${end}` };
-  };
-
-  const progressInfo = getProgressInfo();
-  const bannerClass = isCorrect ? "correct" : "wrong";
 
   // --- RENDERERS ---
 
@@ -350,19 +379,28 @@ if (section === "reading" && t.type === "fill_blank") {
 
   const renderMatchPairs = () => {
     if (!task?.pairs) return null;
+    
+    // 1. Создаем карту эталонных ответов для быстрой сверки: { "слово": "перевод" }
+    const correctMap: Record<string, string> = {};
+    task.pairs.forEach(p => { correctMap[p.left] = p.right; });
+
+    // Список правых элементов (переводов)
     const rightItems = task.pairs.map((p) => p.right);
+
     return (
       <div className="ls-match-grid">
+        {/* Левая колонка (немецкие слова) */}
         <div className="ls-match-col">
           {task.pairs.map((pair) => {
             const isMatched = !!matches[pair.left];
             const isSelected = selectedLeft === pair.left;
             let extraClass = "";
-            if (isChecked) {
-              const userChoice = matches[pair.left];
-              if (userChoice === pair.right) extraClass = " correct";
-              else extraClass = " wrong";
+            
+            if (isChecked && isMatched) {
+              // Сверяем: то что выбрал юзер (matches[pair.left]) == эталон (correctMap[pair.left])
+              extraClass = matches[pair.left] === correctMap[pair.left] ? " correct" : " wrong";
             }
+            
             return (
               <button
                 key={pair.left}
@@ -375,17 +413,20 @@ if (section === "reading" && t.type === "fill_blank") {
             );
           })}
         </div>
+
+        {/* Правая колонка (английские переводы) */}
         <div className="ls-match-col">
           {rightItems.map((rightText, idx) => {
-            const isMatched = Object.values(matches).includes(rightText);
+            // Ищем, к какому левому слову юзер привязал этот правый текст
+            const leftKey = Object.keys(matches).find(key => matches[key] === rightText);
+            const isMatched = !!leftKey;
             let extraClass = "";
-            if (isChecked && isMatched) {
-              const leftKey = Object.keys(matches).find((key) => matches[key] === rightText);
-              if (leftKey) {
-                const isCorrectLink = task.pairs?.some((p) => p.left === leftKey && p.right === rightText);
-                extraClass = isCorrectLink ? " correct" : " wrong";
-              }
+            
+            if (isChecked && isMatched && leftKey) {
+              // Проверяем правильность этой конкретной связи
+              extraClass = rightText === correctMap[leftKey] ? " correct" : " wrong";
             }
+
             return (
               <button
                 key={idx}
@@ -403,21 +444,9 @@ if (section === "reading" && t.type === "fill_blank") {
             );
           })}
         </div>
-        {!isChecked && Object.keys(matches).length > 0 && (
-          <button
-            className="ls-reset-match-btn"
-            onClick={() => {
-              setMatches({});
-              setSelectedLeft(null);
-            }}
-          >
-            Reset Pairs
-          </button>
-        )}
       </div>
     );
   };
-
   const renderSingleChoice = () => (
     <div className="ls-options-grid">
       {(task?.options || []).map((opt, idx) => {
@@ -617,6 +646,9 @@ const renderSentenceReorder = () => {
     }
   };
 
+const progressInfo = getProgressInfo(); 
+  const bannerClass = isCorrect ? "correct" : "wrong";
+
   if (loading && !isChecked) return <div className="ls-container"><div className="ls-loading">Loading...</div></div>;
   if (!task) return <div className="ls-container"><div className="ls-loading">No task loaded</div></div>;
 
@@ -624,16 +656,19 @@ const renderSentenceReorder = () => {
     <div className="ls-container">
       <div className="ls-inner-content">
         <div className="ls-top-bar">
-          <div className="ls-elo-counter">
-            <span>⚡ {stats.elo}</span>
-            {eloChange && <span className={`ls-elo-change ${eloChange > 0 ? "positive" : "negative"}`}>{eloChange > 0 ? `+${eloChange}` : eloChange}</span>}
-          </div>
           <div className="ls-pencil-wrapper">
             <div className="ls-pencil-progress">
               <div className="ls-p-eraser"></div>
               <div className="ls-p-metal"></div>
               <div className="ls-p-body-container">
-                <div className="ls-p-fill" style={{ width: `${progressInfo.percent}%` }}></div>
+                <div className="ls-p-fill" style={{ 
+                                             width: `${progressInfo.percent}%`,
+  // Цвета такие же, как в массиве .map на DashboardScreen
+  backgroundColor: section === 'reading' ? '#60a5fa' : 
+                   section === 'vocabulary' ? '#f472b6' : '#34d399' 
+}}>
+
+</div>
                 <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold", color: "#333", zIndex: 10 }}>
                   {progressInfo.label}
                 </div>

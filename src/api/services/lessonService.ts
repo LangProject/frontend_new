@@ -1,5 +1,9 @@
 import axios from "axios";
 
+/**
+ * Функция для формирования заголовков запроса.
+ * Извлекает session_id и токен из localStorage.
+ */
 const getHeaders = () => {
   const sessionId = localStorage.getItem("session_id");
   const token = localStorage.getItem("auth_token");
@@ -8,13 +12,18 @@ const getHeaders = () => {
     "Content-Type": "application/json",
   };
 
+  // Обязательный заголовок x-session-id для работы с сессиями
   if (sessionId) headers["x-session-id"] = sessionId;
+  // Заголовок авторизации, если используется Bearer токен
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   return headers;
 };
 
 export const LessonService = {
+  /**
+   * Получение статистики пользователя по разным навыкам (Reading, Vocabulary, Writing).
+   */
   getStats: async () => {
     try {
       const response = await axios.get("/user/stats", {
@@ -22,7 +31,7 @@ export const LessonService = {
       });
       const data = response.data;
 
-      // Создаем объект со всеми статами
+      // Структура по умолчанию (fallback)
       let result = {
         elo: 0, level: "A1",
         reading_elo: 0, reading_level: "A1",
@@ -33,25 +42,28 @@ export const LessonService = {
       if (data?.language_data?.ratings) {
         const ratings = data.language_data.ratings;
 
+        // Обработка данных по чтению
         if (ratings.reading) {
             result.reading_elo = Math.round(ratings.reading.elo || 0);
             result.reading_level = ratings.reading.cefr || "A1";
         }
+        // Обработка данных по словарному запасу
         if (ratings.vocabulary) {
             result.vocabulary_elo = Math.round(ratings.vocabulary.elo || 0);
             result.vocabulary_level = ratings.vocabulary.cefr || "A1";
         }
+        // Обработка данных по письму
         if (ratings.writing) {
             result.writing_elo = Math.round(ratings.writing.elo || 0);
             result.writing_level = ratings.writing.cefr || "A1";
         }
         
-        // Общий уровень (Total)
+        // Общий уровень владения языком (Total)
         if (ratings.language_level) {
              result.elo = Math.round(ratings.language_level.elo || 0);
              result.level = ratings.language_level.cefr || "A1";
         } else {
-             // Фолбэк на вокабуляр, если общего нет
+             // Если общий уровень не указан, используем данные вокабуляра
              result.elo = result.vocabulary_elo;
              result.level = result.vocabulary_level;
         }
@@ -68,15 +80,21 @@ export const LessonService = {
     }
   },
 
-  // Добавили аргумент section, чтобы сервер знал, какие задания давать
+  /**
+   * Запрос на генерацию следующего задания.
+   * @param section - категория задания (например, 'vocabulary', 'reading', 'writing')
+   */
   getNextTask: async (section: string) => {
     const response = await axios.get("/session/exercise", {
       headers: getHeaders(),
-      params: { section: section } // Передает ?section=vocabulary в URL
+      params: { section: section } // Передает параметр ?section=... в URL
     });
     return response.data;
   },
 
+  /**
+   * Отправка ответа пользователя на проверку.
+   */
   submitAnswer: async (payload: {
     exercise_id: string;
     type: string;
@@ -104,6 +122,9 @@ export const LessonService = {
     }
   },
 
+  /**
+   * Завершение текущего уровня (зарезервировано).
+   */
   endLevel: async () => {
     // await axios.post("/session/end-level", {}, { headers: getHeaders() });
   },

@@ -33,7 +33,18 @@ export interface AnswerPayload {
   answer: AnswerValue;
 }
 
-export interface UserStats {
+export interface EloRating {
   elo: number;
-  level: string;
+  cefr: string;
+}
+
+export interface UserStats {
+  language_data: {
+    ratings: {
+      reading: EloRating;
+      vocabulary: EloRating;
+      writing: EloRating;
+      language_level: EloRating; // Общий уровень
+    };
+  };
 }
