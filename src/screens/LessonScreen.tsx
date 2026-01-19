@@ -316,6 +316,37 @@ case "definition_match":
   }
 }
 
+// Автопроверка для поиска ошибок (Error Identification) по слову
+if (!isCorrectResp && task.type === "error_identification") {
+  const sentenceWords = task.sentence.split(' ');
+  const clickedWord = sentenceWords[answer]; // answer здесь это индекс из switch
+  const targetWord = result.error_word;
+
+  console.log("📝 Checking Word:", { clickedWord, targetWord });
+
+  if (clickedWord && targetWord && normalizeText(clickedWord) === normalizeText(targetWord)) {
+    isCorrectResp = true;
+  }
+}
+
+if (!isCorrectResp && task.type === "match_pairs") {
+  const userPairs = answer; // Массив {left, right}
+  const correctPairs = result.pairs; // Массив из ответа сервера
+
+  if (Array.isArray(userPairs) && Array.isArray(correctPairs)) {
+    // Проверяем, что каждая пара пользователя есть в списке правильных пар сервера
+    const allMatchesCorrect = userPairs.every(uPair => 
+      correctPairs.some(cPair => 
+        normalizeText(uPair.left) === normalizeText(cPair.left) &&
+        normalizeText(uPair.right) === normalizeText(cPair.right)
+      )
+    );
+
+    if (allMatchesCorrect && userPairs.length === correctPairs.length) {
+      isCorrectResp = true;
+    }
+  }
+}
     // Дополнительная проверка для переводов (Soft Check)
     if (!isCorrectResp && task.type === "translation") {
       const userClean = normalizeText(textInput); 
