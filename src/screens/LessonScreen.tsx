@@ -302,6 +302,37 @@ case "definition_match":
       result.status === "correct" ||
       (scoreVal !== null && scoreVal >= 0.5);
 
+if (task.type === "multiple_choice") {
+      const serverOptions = result.options; 
+      
+      if (Array.isArray(serverOptions) && Array.isArray(answer)) {
+        // Берем правильные ответы из ответа сервера
+        const correctAnswers = serverOptions
+          .filter((opt: any) => opt.is_correct === true)
+          .map((opt: any) => normalizeText(opt.choice || opt.definition));
+
+        // Берем ответы пользователя
+        const userAnswers = answer.map((a: any) => normalizeText(a));
+
+        // Проверяем количество
+        const isLengthEqual = correctAnswers.length === userAnswers.length;
+        
+        // Проверяем, что все выбранные есть в списке правильных
+        const allSelectedAreCorrect = userAnswers.every((userAns: string) => 
+          correctAnswers.includes(userAns)
+        );
+
+        // Если совпадает количество И содержание — верно. Иначе — ошибка.
+        if (isLengthEqual && allSelectedAreCorrect) {
+           isCorrectResp = true;
+        } else {
+           isCorrectResp = false;
+        }
+      }
+    }
+
+
+
       if (!isCorrectResp && (task.type === "conjugation" || task.type === "verb_conjugation")) {
   const userClean = normalizeText(textInput); 
   // Берем правильный ответ из разных возможных полей сервера
@@ -640,8 +671,7 @@ const getFeedbackText = () => {
     </div>
   );
 };
-
-  const renderMultipleChoice = () => {
+const renderMultipleChoice = () => {
     const toggle = (i: number) => {
       if (isChecked) return;
       setSelectedIndices((prev) =>
@@ -652,37 +682,41 @@ const getFeedbackText = () => {
     return (
       <div className="ls-options-grid">
         {(task?.options || []).map((opt: any, idx) => {
-          // --- 1. ГЛАВНОЕ ИСПРАВЛЕНИЕ: ОПРЕДЕЛЕНИЕ ТЕКСТА ---
+          // Определяем текст опции
           let textLabel = "";
-          
           if (typeof opt === "string") {
-            // Если это просто строка ("Sonne"), берем её как есть
             textLabel = opt;
           } else if (opt && typeof opt === "object") {
-            // Если это объект, пытаемся достать текст
             textLabel = opt.choice || opt.definition || "";
           }
-          // --------------------------------------------------
 
           const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
           
+          // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА СТИЛЕЙ 🔥
           if (isChecked) {
              let isThisOptionCorrect = false;
              const optNorm = normalizeText(textLabel);
 
-             // Проверка правильности
+             // Проверка: является ли эта опция правильной (по ответу сервера)
              if (feedback?.options) {
-               // Ищем совпадение текста в правильных ответах
                isThisOptionCorrect = feedback.options.find((o) => 
                  normalizeText(o.choice || o.definition) === optNorm && o.is_correct
                ) !== undefined;
              } 
              
              if (isThisOptionCorrect) {
-                 cls += " correct"; 
-             } else if (isSel) {
-                 cls += " wrong";   
+                 // Это ПРАВИЛЬНЫЙ вариант
+                 if (isSel) {
+                     cls += " correct"; // Выбран -> Зеленый
+                 } else {
+                     cls += " wrong";   // НЕ выбран -> Красный (как ты просил)
+                 }
+             } else {
+                 // Это НЕПРАВИЛЬНЫЙ вариант
+                 if (isSel) {
+                     cls += " wrong";   // Выбран по ошибке -> Красный
+                 }
              }
              
           } else if (isSel) {
