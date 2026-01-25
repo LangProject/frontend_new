@@ -24,10 +24,10 @@ async function request<T>(
   );
 
   // 2. Формируем заголовки
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...((options.headers as any) || {}),
-  };
+  const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+  ...(options.headers as Record<string, string> || {}),
+};
 
   // Добавляем токен авторизации
   if (token) {

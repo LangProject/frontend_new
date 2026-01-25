@@ -1,9 +1,26 @@
 // src/lessons/types.ts
-import type { ExerciseType } from "../screens/ExerciseDemoScreen";
+export type ExerciseType = 'grammar' | 'vocabulary' | 'listening';
 
-export interface LessonExercise {
+export type TaskType = 
+  | 'multiple_choice' 
+  | 'match_pairs'
+  | 'definition_match'
+  | 'error_identification'
+  | 'fill_gap'
+  | 'conjugation'
+  | 'verb_conjugation'
+  | 'error_correction';
+
+export interface ExtendedTask {
   id: string;
-  type: ExerciseType;
+  type: TaskType;
+  question: string;
+  sentence?: string;
+  solution?: string;
+  explanation?: string;
+  correct_translation?: string;
+  words?: string[];
+  language_data?: any;
 }
 
 export interface Lesson {
@@ -12,9 +29,19 @@ export interface Lesson {
   exercises: LessonExercise[];
 }
 
+export interface LessonExercise {
+  id: string;
+  type: ExerciseType;
+}
+
 export interface LessonProgress {
   currentIndex: number;
   total: number;
   completed: boolean;
   correctCount: number;
+}
+
+export interface LessonFeedback {
+  solution?: string;
+  explanation?: string;
 }

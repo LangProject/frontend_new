@@ -37,7 +37,7 @@ const ELO_THRESHOLDS: Record<string, number> = {
 };
 
 // Функция для мягкого сравнения строк
-const normalizeText = (text: string | undefined | null) => {
+const _normalizeText = (text: string | undefined | null) => {
   if (!text) return "";
   return text
     .toLowerCase()
@@ -49,9 +49,9 @@ const normalizeText = (text: string | undefined | null) => {
 export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null);
-  const [stats, setStats] = useState<UserStats>({ elo: 0, level: "A1" });
+  const [_stats, setStats] = useState<UserStats>({ elo: 0, level: "A1" });
   const [sectionElo, setSectionElo] = useState<number>(0);
-  const [eloChange, setEloChange] = useState<number | null>(null);
+  const [_eloChange, setEloChange] = useState<number | null>(null);
   const [shuffledLeft, setShuffledLeft] = useState<any[]>([]);
   const [shuffledRight, setShuffledRight] = useState<string[]>([]);
 
@@ -130,7 +130,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
 };
 
 
-const shuffleArray = <T,>(array: T[]): T[] => {
+const _shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
