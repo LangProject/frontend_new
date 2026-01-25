@@ -1,6 +1,6 @@
 // src/utils/api.ts
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const BASE_URL = "https://backend-production-bd6c.up.railway.app";
 
 // Типы ошибок для удобства
 class ApiError extends Error {
