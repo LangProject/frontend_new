@@ -131,7 +131,7 @@ const ru: Dict = {
   "level.selectTitle": "Ваш уровень?",
   "level.selectSubtitle": "Укажите текущий уровень знаний.",
   "level.testTitle": "Не знаете свой уровень?",
-  "level.testSubtitle": "Проудите быстрый тест.",
+  "level.testSubtitle": "Пройдите быстрый тест.",
 
   // Dashboard RU
   "dashboard.title": "Путь обучения",
