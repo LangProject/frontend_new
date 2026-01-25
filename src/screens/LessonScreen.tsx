@@ -166,11 +166,11 @@ const loadNextTask = async () => {
     const taskData = await LessonService.getNextTask(section);
 
     if (taskData) {
-      // Пропуск определенных типов, если это нужно по логике
-      if (taskData.type === "fill_blank") {
-        await loadNextTask();
-        return;
-      }
+      // // Пропуск определенных типов, если это нужно по логике
+      // if (taskData.type === "fill_blank") {
+      //   await loadNextTask();
+      //   return;
+      // }
 
       // 2. Логика для ПАР (перемешивание)
       if (taskData.type === "match_pairs" && (taskData as any).pairs) {
