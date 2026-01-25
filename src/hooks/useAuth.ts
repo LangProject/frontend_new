@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 // Оставляем пустым, так как работает прокси
-const API_URL = "";
+const API_URL = "https://backend-production-bd6c.up.railway.app";
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
