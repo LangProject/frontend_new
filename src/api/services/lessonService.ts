@@ -1,4 +1,4 @@
-import axios from "axios";
+import $api from "../../api/axiosClient.ts";
 
 /**
  * Функция для формирования заголовков запроса.
@@ -26,7 +26,7 @@ export const LessonService = {
    */
   getStats: async () => {
     try {
-      const response = await axios.get("/user/stats", {
+      const response = await $api.get("/user/stats", {
         headers: getHeaders(),
       });
       const data = response.data;
@@ -85,7 +85,7 @@ export const LessonService = {
    * @param section - категория задания (например, 'vocabulary', 'reading', 'writing')
    */
   getNextTask: async (section: string) => {
-    const response = await axios.get("/session/exercise", {
+    const response = await $api.get("/session/exercise", {
       headers: getHeaders(),
       params: { section: section } // Передает параметр ?section=... в URL
     });
@@ -107,7 +107,7 @@ export const LessonService = {
     };
 
     try {
-      const response = await axios.post("/session/answer", body, {
+      const response = await $api.post("/session/answer", body, {
         headers: getHeaders(),
       });
       return response.data;
@@ -126,6 +126,6 @@ export const LessonService = {
    * Завершение текущего уровня (зарезервировано).
    */
   endLevel: async () => {
-    // await axios.post("/session/end-level", {}, { headers: getHeaders() });
+    // await $api.post("/session/end-level", {}, { headers: getHeaders() });
   },
 };
