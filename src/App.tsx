@@ -64,7 +64,7 @@ const BACKEND_TO_FRONTEND_LANG: Record<string, string> = {
   Polish: "pl",
 };
 
-const API_URL = ""; // Пусто, так как используется Vite Proxy
+const API_URL = "https://backend-production-bd6c.up.railway.app";
 
 function App() {
   /** Логика авторизации из кастомного хука */

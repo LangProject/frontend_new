@@ -8,7 +8,7 @@ import { ChooseLevelScreen } from "./ChooseLevelScreen";
 import type { UiLangCode } from "../utils/detectUiLanguage";
 
 // --- НАСТРОЙКИ ---
-const API_URL = ""; // Оставьте пустым, если используете Vite proxy
+const API_URL = "https://backend-production-bd6c.up.railway.app";
 
 // Маппинг кодов (фронт) в полные названия (бэк)
 // Бэкенд (судя по OpenAPI) ожидает полные названия: "english", "spanish" и т.д.
