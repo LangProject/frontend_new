@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { API_URL } from "../config";
 
 /**
  * Интерфейс пропсов для экрана установки нового пароля
@@ -37,7 +38,7 @@ export const ResetPasswordScreen = ({ onSuccess, onBack }: ResetPasswordScreenPr
   const handleReset = async () => {
     try {
       // Согласно Swagger: токен в query-параметрах, email и пароль в body
-      const response = await fetch(`/auth/reset-password?token=${token}`, {
+      const response = await fetch(`${API_URL}/auth/reset-password?token=${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -49,7 +50,7 @@ export const ResetPasswordScreen = ({ onSuccess, onBack }: ResetPasswordScreenPr
         window.history.replaceState({}, document.title, window.location.pathname);
         onSuccess();
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         alert(errorData.detail || "Ошибка при смене пароля.");
       }
     } catch (e) {
