@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
 
+const API_URL = "https://backend-production-bd6c.up.railway.app";
+
 /**
  * Интерфейс пропсов для экрана запроса сброса пароля
  * @param initialEmail - необязательный email для предзаполнения
@@ -34,8 +36,7 @@ export const ForgotPasswordScreen = ({
     }
 
     try {
-      // Согласно Swagger: POST запрос на /auth/reset-password-request
-      const response = await fetch("/auth/reset-password-request", {
+      const response = await fetch(`${API_URL}/auth/reset-password-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
