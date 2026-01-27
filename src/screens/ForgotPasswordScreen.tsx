@@ -36,7 +36,7 @@ export const ForgotPasswordScreen = ({
 
     try {
       // Согласно Swagger: POST запрос на /auth/reset-password-request
-      const response = await fetch("`${API_URL}/auth/reset-password-request`", {
+      const response = await fetch(`${API_URL}/auth/reset-password-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
