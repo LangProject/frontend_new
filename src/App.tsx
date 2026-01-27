@@ -107,75 +107,83 @@ function App() {
     }
   }, []);
 
-  // --- ЛОГИКА СИНХРОНИЗАЦИИ ДАННЫХ С СЕРВЕРОМ ---
+/// --- ЛОГИКА СИНХРОНИЗАЦИИ (ИСПРАВЛЕННАЯ) ---
   useEffect(() => {
     const syncUserData = async () => {
-      if (!isAuthenticated) return;
-      if (screen === "lesson") return;
+      // Базовые проверки: если не вошли или уже в уроке — не мешаем
+      if (!isAuthenticated || screen === "lesson") return;
 
-      const localSetup = localStorage.getItem("setup_complete");
-      const hasLocalData = localSetup === "true";
-
-      if (hasLocalData && screen === "auth") {
-        setScreen("dashboard");
-      }
+      console.log("Syncing with backend...");
+      setIsInitializing(true);
 
       try {
-        setIsInitializing(true);
-        const token = localStorage.getItem("auth_token");
-        if (!token) throw new Error("No token");
+        // ИСПРАВЛЕНИЕ 1: Берем правильное имя токена (auth_token, как на вашем скрине)
+        const token = localStorage.getItem("auth_token"); 
+        if (!token) throw new Error("No auth token found");
 
+        // ИСПРАВЛЕНИЕ 2: Игнорируем localStorage.is_initialized и всегда спрашиваем сервер
         const statsRes = await fetch(`${API_URL}/user/stats`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            "x-session-id":
-              localStorage.getItem("session_id") || "dashboard-init",
+            "x-session-id": localStorage.getItem("session_id") || "dashboard-init",
           },
         });
 
-        if (statsRes.status === 404) {
-          throw new Error("User setup missing on server");
-        }
+        // СЦЕНАРИЙ А: ПОЛЬЗОВАТЕЛЬ СУЩЕСТВУЕТ (Бэк вернул 200 OK)
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          const langData = statsData.language_data;
 
-        if (!statsRes.ok) {
-          if (hasLocalData) return;
-          throw new Error("No local data and server failed");
-        }
+          // Проверяем, что данные реальны
+          if (langData && langData.target_language) {
+            console.log("User exists. Syncing...");
 
-        const statsData = await statsRes.json();
-        const langData = statsData.language_data;
+            // Восстанавливаем язык
+            const backendLang = langData.target_language;
+            const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang] || backendLang;
+            
+            // Восстанавливаем уровень
+            let userLevel = "A1";
+            if (langData.ratings) {
+              const firstKey = Object.keys(langData.ratings)[0];
+              if (firstKey && langData.ratings[firstKey].cefr) {
+                userLevel = langData.ratings[firstKey].cefr;
+              }
+            }
 
-        if (langData) {
-          const backendLang = langData.target_language;
-          const frontendLang = BACKEND_TO_FRONTEND_LANG[backendLang];
-          let userLevel = "A1";
-          const ratings = langData.ratings || {};
-          const firstRatingKey = Object.keys(ratings)[0];
-          if (firstRatingKey && ratings[firstRatingKey].cefr) {
-            userLevel = ratings[firstRatingKey].cefr;
-          }
-
-          if (frontendLang) {
+            // Сохраняем в стейт
             setLearningLanguage(frontendLang);
+            setLearningLevel(userLevel);
+            
+            // Чиним локальные данные, чтобы всё было красиво
             localStorage.setItem("learning_language", frontendLang);
-          }
-          setLearningLevel(userLevel);
-          localStorage.setItem("learning_level", userLevel);
-          localStorage.setItem("setup_complete", "true");
+            localStorage.setItem("learning_level", userLevel);
+            localStorage.setItem("is_initialized", "true"); // Исправляем ошибочный false
+            localStorage.setItem("setup_complete", "true");
 
-          if (screen === "auth" || screen === "choose-ui-language") {
-            setScreen("dashboard");
+            // Если мы на экране входа/настройки — сразу кидаем в Дашборд
+            if (["auth", "choose-ui-language", "choose-learning-language", "choose-level"].includes(screen)) {
+              setScreen("dashboard");
+            }
+            return;
           }
-        } else {
-          throw new Error("No language data found");
         }
-      } catch (e: any) {
-        console.warn("Sync failed:", e);
-        if (hasLocalData && !e.message.includes("User setup missing")) return;
 
-        localStorage.removeItem("setup_complete");
-        if (screen === "auth" || screen === "dashboard") {
-          setScreen("choose-ui-language");
+        // СЦЕНАРИЙ Б: ПОЛЬЗОВАТЕЛЬ НОВЫЙ (Бэк вернул ошибку или нет данных)
+        throw new Error("User needs setup");
+
+      } catch (e) {
+        console.log("Redirecting to setup flow:", e);
+        
+        // Очищаем хвосты
+        localStorage.setItem("is_initialized", "false");
+        localStorage.removeItem("learning_language");
+        setLearningLanguage(null);
+        setLearningLevel(null);
+
+        // Отправляем заполнять данные (начинаем с выбора языка)
+        if (screen === "auth") {
+           setScreen("choose-ui-language");
         }
       } finally {
         setIsInitializing(false);

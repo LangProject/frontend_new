@@ -680,7 +680,7 @@ const renderMultipleChoice = () => {
     return (
       <div className="ls-options-grid">
         {(task?.options || []).map((opt: any, idx) => {
-          
+          // Определяем текст опции
           let textLabel = "";
           if (typeof opt === "string") {
             textLabel = opt;
@@ -691,12 +691,12 @@ const renderMultipleChoice = () => {
           const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
           
-          
+          // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА СТИЛЕЙ 🔥
           if (isChecked) {
              let isThisOptionCorrect = false;
              const optNorm = normalizeText(textLabel);
 
-             
+             // Проверка: является ли эта опция правильной (по ответу сервера)
              if (feedback?.options) {
                isThisOptionCorrect = feedback.options.find((o) => 
                  normalizeText(o.choice || o.definition) === optNorm && o.is_correct
@@ -704,16 +704,16 @@ const renderMultipleChoice = () => {
              } 
              
              if (isThisOptionCorrect) {
-                 
+                 // Это ПРАВИЛЬНЫЙ вариант
                  if (isSel) {
-                     cls += " correct"; 
+                     cls += " correct"; // Выбран -> Зеленый
                  } else {
-                     cls += " wrong";   
+                     cls += " wrong";   // НЕ выбран -> Красный (как ты просил)
                  }
              } else {
-                 
+                 // Это НЕПРАВИЛЬНЫЙ вариант
                  if (isSel) {
-                     cls += " wrong";   
+                     cls += " wrong";   // Выбран по ошибке -> Красный
                  }
              }
              

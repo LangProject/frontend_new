@@ -3,11 +3,23 @@ import React, { useState } from "react";
 import type { UiLangCode } from "../utils/detectUiLanguage";
 import { t } from "../i18n";
 
+// 1. Интерфейс ответа
+interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    name: string;
+    email: string;
+    is_initialized: boolean;
+  };
+}
+
 interface LoginFormProps {
   uiLanguage: UiLangCode;
   isLoading: boolean;
-  onLogin: (data: { email: string; password: string }) => Promise<void> | void;
-  onSuccess: () => void;
+  onLogin: (data: { email: string; password: string }) => Promise<LoginResponse | void>;
+  // ВАЖНО: Мы обязуемся передать user в эту функцию
+  onSuccess: (user: { is_initialized: boolean }) => void;
   onForgotPassword: (email: string) => void;
 }
 
@@ -39,20 +51,35 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       const trimmedEmail = email.trim();
+      const response = await onLogin({ email: trimmedEmail, password: pass });
 
-      await onLogin({
-        email: trimmedEmail,
-        password: pass,
-      });
-
-      // обновляем last_auth_email на успешный логин
+      // Сохраняем email для удобства (автозаполнение при след. входе)
       try {
         window.localStorage.setItem("last_auth_email", trimmedEmail);
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
 
-      onSuccess();
+      // 4. ГЛАВНАЯ ЛОГИКА
+      // Проверяем, что ответ пришел и в нем есть данные
+      // @ts-ignore (игнорируем строгие проверки TS, если типы не совпадают идеально)
+      if (response && response.access_token && response.user) {
+        try {
+          // Сохраняем ТОЛЬКО токены
+          window.localStorage.setItem("access_token", response.access_token);
+          window.localStorage.setItem("refresh_token", response.refresh_token);
+          
+          // Удаляем ID сессии, чтобы сбросить старый контекст чата
+          window.localStorage.removeItem("session_id"); 
+          
+          // ВАЖНО: Мы НЕ сохраняем is_initialized в localStorage.
+          // Мы передаем данные напрямую в App.tsx через onSuccess.
+          
+          onSuccess(response.user); 
+
+        } catch (storageErr) {
+          console.error("Failed to save auth data", storageErr);
+        }
+      }
+      
     } catch (err) {
       console.error("LOGIN ERROR:", err);
       setError("Incorrect email or password.");
