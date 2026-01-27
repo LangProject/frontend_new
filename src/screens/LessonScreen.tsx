@@ -107,7 +107,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
       localStorage.setItem("session_id", lessonId);
       init();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [lessonId]);
 
  const init = async () => {
@@ -143,8 +143,8 @@ const normalizeText = (text: string | undefined | null) => {
   if (!text) return "";
   return text
     .toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // удаляем знаки препинания
-    .replace(/\s{2,}/g, " ")    // убираем двойные пробелы
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") 
+    .replace(/\s{2,}/g, " ")    
     .trim();
 };
 
@@ -162,27 +162,27 @@ const loadNextTask = async () => {
   setTask(null);
 
   try {
-    // 1. Получаем задачу (используем только один вызов)
+    
     const taskData = await LessonService.getNextTask(section);
 
     if (taskData) {
-      // Пропуск определенных типов, если это нужно по логике
+      
       if (taskData.type === "fill_blank") {
         await loadNextTask();
         return;
       }
 
-      // 2. Логика для ПАР (перемешивание)
+     
       if (taskData.type === "match_pairs" && (taskData as any).pairs) {
         const originalPairs = (taskData as any).pairs;
-        // Перемешиваем левую колонку
+       
         setShuffledLeft([...originalPairs].sort(() => Math.random() - 0.5));
-        // Перемешиваем правую колонку
+        
         const rights = originalPairs.map((p: any) => p.right);
         setShuffledRight([...rights].sort(() => Math.random() - 0.5));
       }
 
-      // 3. Логика для ОПРЕДЕЛЕНИЙ
+      
       if (taskData.type === "definition_match" && (taskData as any).definitions) {
         (taskData as ExtendedTask).definitions = (taskData as any).definitions;
         taskData.options = (taskData as any).definitions.map((d: any) =>
@@ -190,7 +190,7 @@ const loadNextTask = async () => {
         );
       }
 
-      // 4. Устанавливаем задачу в стейт
+      
       setTask(taskData as ExtendedTask);
       
     } else {
@@ -226,7 +226,7 @@ const loadNextTask = async () => {
 
   let answer: any;
 
-  // 1. Формирование ответа в зависимости от типа задачи
+  
   switch (task.type) {
     case "match_pairs":
       if (!task.pairs || Object.keys(matches).length !== task.pairs.length) return;
@@ -238,7 +238,7 @@ const loadNextTask = async () => {
       answer = sentenceIndices;
       break;
 
-    // СТАЛО:
+    
 case "single_choice":
   if (selectedOptionIndex === null || !task.options) return;
   const optSC = task.options[selectedOptionIndex];
@@ -251,10 +251,10 @@ case "definition_match":
   if (selectedOptionIndex === null || !task.options) return;
   const optDM = task.options[selectedOptionIndex];
   const valDM = typeof optDM === 'object' && optDM !== null && 'definition' in optDM 
-      ? (optDM as any).definition // или .choice, проверьте как в вашей задаче
+      ? (optDM as any).definition 
       : optDM;
   
-  // Ключевое изменение: оборачиваем в массив [ ], так как сервер ждет list
+  
   answer = [valDM]; 
   break;
 
@@ -306,23 +306,23 @@ if (task.type === "multiple_choice") {
       const serverOptions = result.options; 
       
       if (Array.isArray(serverOptions) && Array.isArray(answer)) {
-        // Берем правильные ответы из ответа сервера
+        
         const correctAnswers = serverOptions
           .filter((opt: any) => opt.is_correct === true)
           .map((opt: any) => normalizeText(opt.choice || opt.definition));
 
-        // Берем ответы пользователя
+      
         const userAnswers = answer.map((a: any) => normalizeText(a));
 
-        // Проверяем количество
+       
         const isLengthEqual = correctAnswers.length === userAnswers.length;
         
-        // Проверяем, что все выбранные есть в списке правильных
+        
         const allSelectedAreCorrect = userAnswers.every((userAns: string) => 
           correctAnswers.includes(userAns)
         );
 
-        // Если совпадает количество И содержание — верно. Иначе — ошибка.
+   
         if (isLengthEqual && allSelectedAreCorrect) {
            isCorrectResp = true;
         } else {
@@ -335,7 +335,6 @@ if (task.type === "multiple_choice") {
 
       if (!isCorrectResp && (task.type === "conjugation" || task.type === "verb_conjugation")) {
   const userClean = normalizeText(textInput); 
-  // Берем правильный ответ из разных возможных полей сервера
   const serverCorrect = normalizeText(
     result.correct_conjugation || 
     result.correct_answer || 
@@ -347,10 +346,10 @@ if (task.type === "multiple_choice") {
   }
 }
 
-// Автопроверка для поиска ошибок (Error Identification) по слову
+
 if (!isCorrectResp && task.type === "error_identification") {
   const sentenceWords = task.sentence.split(' ');
-  const clickedWord = sentenceWords[answer]; // answer здесь это индекс из switch
+  const clickedWord = sentenceWords[answer]; 
   const targetWord = result.error_word;
 
   console.log("📝 Checking Word:", { clickedWord, targetWord });
@@ -361,11 +360,11 @@ if (!isCorrectResp && task.type === "error_identification") {
 }
 
 if (!isCorrectResp && task.type === "match_pairs") {
-  const userPairs = answer; // Массив {left, right}
-  const correctPairs = result.pairs; // Массив из ответа сервера
+  const userPairs = answer; 
+  const correctPairs = result.pairs; 
 
   if (Array.isArray(userPairs) && Array.isArray(correctPairs)) {
-    // Проверяем, что каждая пара пользователя есть в списке правильных пар сервера
+   
     const allMatchesCorrect = userPairs.every(uPair => 
       correctPairs.some(cPair => 
         normalizeText(uPair.left) === normalizeText(cPair.left) &&
@@ -378,7 +377,6 @@ if (!isCorrectResp && task.type === "match_pairs") {
     }
   }
 }
-    // Дополнительная проверка для переводов (Soft Check)
     if (!isCorrectResp && task.type === "translation") {
       const userClean = normalizeText(textInput); 
       const serverClean = normalizeText(result.correct_translation || result.correct_sentence || result.solution);
@@ -387,7 +385,7 @@ if (!isCorrectResp && task.type === "match_pairs") {
       }
     }
 
-    // Дополнительная проверка для определений и опций
+    
     if (!isCorrectResp) {
       const items = result.options || result.definitions;
       if (Array.isArray(items)) {
@@ -443,19 +441,19 @@ const getFeedbackText = () => {
     if (isCorrect) return "Excellent! Correct!";
 
     // --- 1. ПРОВЕРКА ОТВЕТА ОТ СЕРВЕРА (FEEDBACK) ---
-    // Именно здесь лежит правильный ответ для definition_match
+  
     
-    // [FIX] Ищем правильный ответ в массиве definitions, который пришел от БЭКА
+   
     if (feedback && (feedback as any).definitions) {
        const defs = (feedback as any).definitions;
-       // Ищем элемент, у которого is_correct === true
+       
        const correctItem = defs.find((d: any) => d.is_correct === true);
        if (correctItem) {
           return `Wrong answer! Correct: ${correctItem.definition}`;
        }
     }
 
-    // Проверяем стандартные поля ответа
+    
     const sol = feedback?.solution || 
                 feedback?.correct_answer || 
                 (feedback as any)?.correct_sentence || 
@@ -464,7 +462,7 @@ const getFeedbackText = () => {
     
     if (sol) return `Wrong answer! Correct: ${sol}`;
 
-    // Если ответ пришел в виде options (старый формат)
+   
     if (feedback?.options) {
       const correctOpts = feedback.options.filter((o) => o.is_correct);
       if (correctOpts.length > 0) {
@@ -472,11 +470,11 @@ const getFeedbackText = () => {
       }
     }
 
-    // [FIX] Sentence Reorder: Собираем предложение сами, так как оно известно заранее
+    
     if (task?.type === "sentence_reorder" && feedback) {
        const fb = feedback as any;
        
-       // Проверяем, пришел ли порядок и слова в ответе сервера
+     
        if (fb.correct_order && fb.words) {
            const correctSentence = fb.correct_order
              .map((idx: number) => fb.words[idx])
@@ -489,15 +487,15 @@ const getFeedbackText = () => {
     
 
 
-    // Match Pairs: Ответ известен заранее
+   
     if (task?.type === "match_pairs" && task.pairs) {
        const pairsText = task.pairs.map((p) => `${p.left} — ${p.right}`).join("; ");
        return `Wrong answer! Pairs: ${pairsText}`;
     }
 
-    // Translation: Ответ известен заранее
+    
     if (task?.type === "translation") {
-       // Берем то, что есть: или correct_translation (как в JSON), или старые поля
+       
        const answer = task.correct_translation || task.translation || task.sentence;
        
        if (answer) {
@@ -505,7 +503,7 @@ const getFeedbackText = () => {
        }
     }
 
-    // Если есть объяснение ошибки
+    
     if (feedback?.explanation) return `Wrong answer! ${feedback.explanation}`;
 
     return "Wrong answer!";
@@ -621,7 +619,7 @@ const getFeedbackText = () => {
   );
 };
         
-  // --- ИСПРАВЛЕННЫЙ РЕНДЕР ОДИНОЧНОГО ВЫБОРА (для Single Choice и Definition Match) ---
+  
  const renderSingleChoice = () => {
   return (
     <div className="ls-options-grid">
@@ -632,23 +630,23 @@ const getFeedbackText = () => {
           let isThisOptionCorrect = false;
           const optNorm = normalizeText(opt);
 
-          // 1. Проверяем definitions из ответа сервера (Твой случай!)
+         
           if ((feedback as any)?.definitions) {
              const defs = (feedback as any).definitions;
-             // Находим, является ли текущий текст (opt) правильным
+             
              const match = defs.find((d: any) => 
                 normalizeText(d.definition) === optNorm && d.is_correct === true
              );
              if (match) isThisOptionCorrect = true;
           }
           
-          // 2. Стандартная проверка options
+          
           else if (feedback?.options) {
             isThisOptionCorrect = feedback.options.find((o) => 
                normalizeText(o.choice || o.definition) === optNorm && o.is_correct
             ) !== undefined;
           } 
-          // 3. Простая проверка по строке
+          
           else {
             const correctText = (feedback as any)?.solution || (feedback as any)?.correct_answer;
             if (correctText && normalizeText(correctText) === optNorm) {
@@ -682,7 +680,7 @@ const renderMultipleChoice = () => {
     return (
       <div className="ls-options-grid">
         {(task?.options || []).map((opt: any, idx) => {
-          // Определяем текст опции
+          
           let textLabel = "";
           if (typeof opt === "string") {
             textLabel = opt;
@@ -693,12 +691,12 @@ const renderMultipleChoice = () => {
           const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
           
-          // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА СТИЛЕЙ 🔥
+          
           if (isChecked) {
              let isThisOptionCorrect = false;
              const optNorm = normalizeText(textLabel);
 
-             // Проверка: является ли эта опция правильной (по ответу сервера)
+             
              if (feedback?.options) {
                isThisOptionCorrect = feedback.options.find((o) => 
                  normalizeText(o.choice || o.definition) === optNorm && o.is_correct
@@ -706,16 +704,16 @@ const renderMultipleChoice = () => {
              } 
              
              if (isThisOptionCorrect) {
-                 // Это ПРАВИЛЬНЫЙ вариант
+                 
                  if (isSel) {
-                     cls += " correct"; // Выбран -> Зеленый
+                     cls += " correct"; 
                  } else {
-                     cls += " wrong";   // НЕ выбран -> Красный (как ты просил)
+                     cls += " wrong";   
                  }
              } else {
-                 // Это НЕПРАВИЛЬНЫЙ вариант
+                 
                  if (isSel) {
-                     cls += " wrong";   // Выбран по ошибке -> Красный
+                     cls += " wrong";   
                  }
              }
              
