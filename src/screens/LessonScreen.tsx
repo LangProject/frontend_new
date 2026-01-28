@@ -36,15 +36,7 @@ const ELO_THRESHOLDS: Record<string, number> = {
   C2: 1900,
 };
 
-// Функция для мягкого сравнения строк
-const normalizeText = (text: string | undefined | null) => {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .replace(/[.,!?;:]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-};
+
 
 export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [task, setTask] = useState<ExtendedTask | null>(null);
@@ -54,6 +46,7 @@ export const LessonScreen = ({ lessonId, section, onBack }: Props) => {
   const [eloChange, setEloChange] = useState<number | null>(null);
   const [shuffledLeft, setShuffledLeft] = useState<any[]>([]);
   const [shuffledRight, setShuffledRight] = useState<string[]>([]);
+  const [isExiting, setIsExiting] = useState(false);
 
   const getProgressInfo = () => {
     const sortedLevels = Object.entries(ELO_THRESHOLDS).sort((a, b) => a[1] - b[1]);
@@ -691,7 +684,7 @@ const renderMultipleChoice = () => {
           const isSel = selectedIndices.includes(idx);
           let cls = "ls-option-card";
           
-          // 🔥 ИСПРАВЛЕННАЯ ЛОГИКА СТИЛЕЙ 🔥
+          // ÷ИСПРАВЛЕННАЯ ЛОГИКА СТИЛЕЙ 
           if (isChecked) {
              let isThisOptionCorrect = false;
              const optNorm = normalizeText(textLabel);
@@ -837,6 +830,20 @@ const renderMultipleChoice = () => {
     }
   };
 
+
+const handleQuit = async () => {
+    if (isExiting) return;
+    setIsExiting(true);
+    
+    try {
+      await LessonService.endLevel(); 
+      console.log("✅ Level ended successfully");
+    } catch (error) {
+      console.error("❌ Error ending level:", error);
+    } finally {
+      onBack();
+    }
+};
   const progressInfo = getProgressInfo(); 
   const bannerClass = isCorrect ? "ls-banner-success" : "ls-banner-error";
 
@@ -880,8 +887,11 @@ const renderMultipleChoice = () => {
           </div>
         )}
 
+
         <div className="ls-footer">
-          <button className="ls-quit-btn" onClick={onBack}>✕</button>
+        <button className="ls-quit-btn" onClick={handleQuit}>
+          ✕
+        </button>
           {!isChecked ? (
             <button className="ls-main-btn" onClick={handleCheck}>
               CHECK

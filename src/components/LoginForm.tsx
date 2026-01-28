@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import type { UiLangCode } from "../utils/detectUiLanguage";
 import { t } from "../i18n";
 
-// 1. Интерфейс ответа
 interface LoginResponse {
   access_token: string;
   refresh_token: string;
@@ -18,7 +17,7 @@ interface LoginFormProps {
   uiLanguage: UiLangCode;
   isLoading: boolean;
   onLogin: (data: { email: string; password: string }) => Promise<LoginResponse | void>;
-  // ВАЖНО: Мы обязуемся передать user в эту функцию
+  // Передаем user, чтобы App решил, вызывать ли stats
   onSuccess: (user: { is_initialized: boolean }) => void;
   onForgotPassword: (email: string) => void;
 }
@@ -30,6 +29,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
   onForgotPassword,
 }) => {
+  // Пытаемся достать запомненный email
   const [email, setEmail] = useState(() => {
     if (typeof window === "undefined") return "";
     try {
@@ -53,26 +53,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       const trimmedEmail = email.trim();
       const response = await onLogin({ email: trimmedEmail, password: pass });
 
-      // Сохраняем email для удобства (автозаполнение при след. входе)
+      // Запоминаем email для удобства при следующем входе
       try {
         window.localStorage.setItem("last_auth_email", trimmedEmail);
       } catch { /* ignore */ }
 
-      // 4. ГЛАВНАЯ ЛОГИКА
-      // Проверяем, что ответ пришел и в нем есть данные
-      // @ts-ignore (игнорируем строгие проверки TS, если типы не совпадают идеально)
+      // @ts-ignore
       if (response && response.access_token && response.user) {
         try {
-          // Сохраняем ТОЛЬКО токены
+          // 1. Сохраняем токены
           window.localStorage.setItem("access_token", response.access_token);
           window.localStorage.setItem("refresh_token", response.refresh_token);
           
-          // Удаляем ID сессии, чтобы сбросить старый контекст чата
-          window.localStorage.removeItem("session_id"); 
-          
-          // ВАЖНО: Мы НЕ сохраняем is_initialized в localStorage.
-          // Мы передаем данные напрямую в App.tsx через onSuccess.
-          
+          // 2. Передаем управление в App.tsx. 
+          // Самостоятельно Stats мы тут НЕ вызываем.
           onSuccess(response.user); 
 
         } catch (storageErr) {
@@ -84,10 +78,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       console.error("LOGIN ERROR:", err);
       setError("Incorrect email or password.");
     }
-  };
-
-  const handleForgot = () => {
-    onForgotPassword(email.trim());
   };
 
   return (
@@ -114,7 +104,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         />
       </label>
 
-      <button type="button" className="auth-forgot" onClick={handleForgot}>
+      <button type="button" className="auth-forgot" onClick={() => onForgotPassword(email.trim())}>
         {t(uiLanguage, "auth.forgotPassword") ?? "Forgot password?"}
       </button>
 
