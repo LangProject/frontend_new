@@ -36,7 +36,7 @@ const en: Dict = {
   "level.testTitle": "Don't know your level?",
   "level.testSubtitle": "Find your level quickly.",
 
-  // 🔥 DASHBOARD (Новые переводы)
+  // DASHBOARD (Новые переводы)
   "dashboard.title": "Learning Path",
   "dashboard.subtitle": "Your personal plan",
   "dashboard.level": "Level",
