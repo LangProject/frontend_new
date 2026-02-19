@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { PrimaryButton } from "../components/PrimaryButton";
-import { API_URL } from "../config";
 
 const API_URL = "https://backend-production-bd6c.up.railway.app";
 
